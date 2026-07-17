@@ -119,6 +119,45 @@ npm run dev
 
 ---
 
+## Deploy (Firebase App Hosting — test)
+
+Target hosting is **Firebase App Hosting** (Next.js SSR on Cloud Run).
+
+### Before you start
+1. Firebase project on the **Blaze** plan (required for App Hosting).
+2. Auth, Firestore, and Storage enabled (same as local).
+3. This GitHub repo accessible to your Firebase / Google account.
+4. Live git branch: **`master`** (this repo does not use `main`).
+
+### Console steps
+1. Open [Firebase Console](https://console.firebase.google.com/) → your project.
+2. Go to **App Hosting** → **Get started** / **Create backend**.
+3. Connect **GitHub** → select `Akaikovm/seriousflux-ecommerce-template`.
+4. Set:
+   - **Root directory:** `/` (repo root)
+   - **Live branch:** `master`
+   - Automatic rollouts: on (recommended for testing)
+5. Create the backend and wait for the first build.
+6. Under the backend → **Environment**, add the same keys as `.env.example` / `.env.local` (`NEXT_PUBLIC_FIREBASE_*`).  
+   They must be available at **build and runtime**.
+7. Trigger a new rollout (or push a commit) so the env vars are picked up.
+8. Open the App Hosting URL when the rollout succeeds.
+
+Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime sizing; env can stay in Console for now).
+
+### Smoke-test checklist after deploy
+- `/` loads with store name from Firestore
+- `/admin/login` works with your Auth user
+- Catalog / cart / checkout still talk to the same Firebase project
+- Image upload only works if Storage rules allow your admin user
+
+### Local production build check
+
+```bash
+npm run build
+npm run start
+```
+
 ## Scripts
 
 | Command | Description |
