@@ -49,10 +49,14 @@ function providerLabel(provider: string): string {
   switch (provider) {
     case "mercadopago":
       return "Mercado Pago";
+    case "cash_on_delivery":
+      return "Cash on Delivery";
     case "stripe":
       return "Stripe";
     case "paypal":
       return "PayPal";
+    case "bank_transfer":
+      return "Bank Transfer";
     default:
       return provider;
   }

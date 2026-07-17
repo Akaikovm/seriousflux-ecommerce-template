@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PAYMENT_METHODS } from "@/features/payments/types";
+
 export const checkoutFormSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required."),
   email: z
@@ -14,6 +16,9 @@ export const checkoutFormSchema = z.object({
   postalCode: z.string().trim().min(1, "Postal code is required."),
   country: z.string().trim().min(1, "Country is required."),
   shippingMethodId: z.string().trim().min(1, "Select a shipping method."),
+  paymentMethod: z.enum(PAYMENT_METHODS, {
+    message: "Select a payment method.",
+  }),
 });
 
 export type CheckoutFormSchemaValues = z.infer<typeof checkoutFormSchema>;

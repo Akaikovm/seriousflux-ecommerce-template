@@ -30,7 +30,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Clean separation: UI → features → services → Firebase
 - Domain services own Firestore/Storage (no Firebase imports in UI)
 - Typed models + Zod validation on admin/checkout forms
-- Payment provider id is abstracted (`mercadopago` | `stripe` | `paypal`) — live Mercado Pago capture is still upcoming
+- Payment provider abstraction with live **Mercado Pago Checkout Pro** + webhooks (see [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)); Cash on Delivery offline; Stripe/PayPal reserved
 
 ---
 
@@ -138,10 +138,11 @@ Target hosting is **Firebase App Hosting** (Next.js SSR on Cloud Run).
    - **Live branch:** `master`
    - Automatic rollouts: on (recommended for testing)
 5. Create the backend and wait for the first build.
-6. Under the backend → **Environment**, add the same keys as `.env.example` / `.env.local` (`NEXT_PUBLIC_FIREBASE_*`).  
+6. Under the backend → **Environment**, add the same keys as `.env.example` / `.env.local` (`NEXT_PUBLIC_FIREBASE_*`, `NEXT_PUBLIC_APP_URL`, Mercado Pago vars).  
    They must be available at **build and runtime**.
-7. Trigger a new rollout (or push a commit) so the env vars are picked up.
-8. Open the App Hosting URL when the rollout succeeds.
+7. Configure Mercado Pago webhook → `https://YOUR_APP_HOSTING_URL/api/webhooks/mercadopago` (details: [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)).
+8. Trigger a new rollout (or push a commit) so the env vars are picked up.
+9. Open the App Hosting URL when the rollout succeeds.
 
 Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime sizing; env can stay in Console for now).
 
@@ -150,6 +151,11 @@ Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime siz
 - `/admin/login` works with your Auth user
 - Catalog / cart / checkout still talk to the same Firebase project
 - Image upload only works if Storage rules allow your admin user
+- Mercado Pago (if enabled): successful pay → Admin order shows **Paid** without manual update
+
+### Payments
+
+See **[`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)** for env vars, webhook setup, production checklist, and troubleshooting.
 
 ### Local production build check
 

@@ -7,6 +7,7 @@ export type {
   OrderShippingAddress,
   OrderShippingMethod,
   OrderPayment,
+  OrderPaymentUpdateInput,
   OrderTotals,
   OrderCreateInput,
   Order,

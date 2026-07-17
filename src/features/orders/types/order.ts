@@ -3,11 +3,16 @@ import type { Timestamp } from "firebase/firestore";
 import type { ProductColor, ProductSize } from "@/features/products/types/product";
 
 /**
- * Supported payment providers.
- * Mercado Pago is the first implementation; Stripe/PayPal are reserved for later.
- * Lives with orders (not settings) until a dedicated payments settings document exists.
+ * Supported payment providers on orders (RFC-016.5).
+ * Implemented today: Mercado Pago, Cash on Delivery.
+ * Reserved for later: Stripe, PayPal, Bank Transfer.
  */
-export type PaymentProviderId = "mercadopago" | "stripe" | "paypal";
+export type PaymentProviderId =
+  | "mercadopago"
+  | "cash_on_delivery"
+  | "stripe"
+  | "paypal"
+  | "bank_transfer";
 
 /**
  * Lifecycle status of an order (fulfillment + payment gate).
@@ -123,17 +128,30 @@ export interface OrderShippingMethod {
 /**
  * Payment metadata for the active provider abstraction.
  * Provider-specific ids live here so Stripe/PayPal can be added later.
+ *
+ * RFC-016 field names (`preferenceId`, `paymentId`, `externalReference`,
+ * `approvedAt`) are canonical for Mercado Pago. Legacy aliases
+ * (`externalId`, `transactionId`, `paidAt`) are kept in sync for Admin UI.
  */
 export interface OrderPayment {
   provider: PaymentProviderId;
 
   status: OrderPaymentStatus;
 
-  /** Provider checkout / preference / session id. */
+  /** Provider checkout / preference / session id (alias of `preferenceId`). */
   externalId?: string;
 
-  /** Provider payment / charge id after capture. */
+  /** Provider payment / charge id after capture (alias of `paymentId`). */
   transactionId?: string;
+
+  /** Mercado Pago preference id (Checkout Pro). */
+  preferenceId?: string;
+
+  /** Mercado Pago payment id after the buyer pays. */
+  paymentId?: string;
+
+  /** Integrator reference sent to the provider (order document id). */
+  externalReference?: string;
 
   /** Amount charged in store currency. */
   amount: number;
@@ -141,8 +159,26 @@ export interface OrderPayment {
   /** ISO 4217 currency code snapshot. */
   currency: string;
 
+  /** When payment was approved / captured (alias of `approvedAt`). */
   paidAt?: Timestamp;
+
+  /** When the provider reported payment approval. */
+  approvedAt?: Timestamp;
 }
+
+/**
+ * Partial payment update used by providers / webhooks (RFC-016).
+ * Only provided fields are written; omitted fields are left unchanged.
+ */
+export type OrderPaymentUpdateInput = {
+  status: OrderPaymentStatus;
+  provider?: PaymentProviderId;
+  preferenceId?: string;
+  paymentId?: string;
+  externalReference?: string;
+  /** When set, written to both `approvedAt` and `paidAt`. */
+  approvedAt?: Date;
+};
 
 /**
  * Monetary totals for an order.

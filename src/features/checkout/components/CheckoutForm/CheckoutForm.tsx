@@ -12,7 +12,17 @@ import {
   STANDARD_SHIPPING_METHOD,
 } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutFormValues } from "@/features/checkout/types";
-import { OrderError, OrderService } from "@/features/orders/services";
+import { OrderError } from "@/features/orders/services";
+import { PaymentMethodSelector } from "@/features/payments/components/PaymentMethodSelector";
+import {
+  PaymentError,
+  PaymentService,
+} from "@/features/payments/services";
+import type {
+  CheckoutPaymentOption,
+  PaymentMethod,
+} from "@/features/payments/types";
+import { PAYMENT_METHODS } from "@/features/payments/types";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
@@ -24,11 +34,16 @@ export type CheckoutFormProps = {
   items: CartItem[];
   currency: string;
   defaultCountry: string;
-  /** Called only after OrderService.create succeeds — before redirect. */
+  /** Enabled + registered options from StoreSettings (RFC-016.5). */
+  paymentOptions: CheckoutPaymentOption[];
+  /** Called only after checkout succeeds — before redirect. */
   onOrderCreated: () => void;
 };
 
-function toInitialValues(defaultCountry: string): CheckoutFormValues {
+function toInitialValues(
+  defaultCountry: string,
+  defaultPaymentMethod: PaymentMethod,
+): CheckoutFormValues {
   return {
     fullName: "",
     email: "",
@@ -39,25 +54,31 @@ function toInitialValues(defaultCountry: string): CheckoutFormValues {
     postalCode: "",
     country: defaultCountry,
     shippingMethodId: STANDARD_SHIPPING_METHOD.id,
+    paymentMethod: defaultPaymentMethod,
   };
 }
 
 /**
- * Controlled checkout form (RFC-013).
- * Persists through OrderService only — never imports Firebase.
+ * Controlled checkout form (RFC-013, RFC-015, RFC-016.5).
+ * Order + payment orchestration goes through PaymentService only.
+ * Payment methods are configuration-driven — no hardcoded provider assumptions.
  */
 export function CheckoutForm({
   items,
   currency,
   defaultCountry,
+  paymentOptions,
   onOrderCreated,
 }: CheckoutFormProps) {
   const router = useRouter();
   const toast = useToast();
   const shippingMethods = getAvailableShippingMethods();
+  const enabledMethodIds = paymentOptions.map((option) => option.id);
+  // First enabled option by sortOrder; PAYMENT_METHODS[0] only seeds empty state (submit blocked).
+  const defaultPaymentMethod = paymentOptions[0]?.id ?? PAYMENT_METHODS[0];
 
   const [values, setValues] = useState<CheckoutFormValues>(() =>
-    toInitialValues(defaultCountry),
+    toInitialValues(defaultCountry, defaultPaymentMethod),
   );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -92,6 +113,13 @@ export function CheckoutForm({
       return;
     }
 
+    if (!enabledMethodIds.includes(parsed.data.paymentMethod)) {
+      setFieldErrors({
+        paymentMethod: "The selected payment method is not available.",
+      });
+      return;
+    }
+
     const method = getShippingMethodById(parsed.data.shippingMethodId);
     if (!method) {
       setFieldErrors({ shippingMethodId: "Select a shipping method." });
@@ -105,39 +133,46 @@ export function CheckoutForm({
       return;
     }
 
+    if (paymentOptions.length === 0) {
+      const message = "No payment methods are available.";
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const order = await new OrderService().create({
-        customerEmail: parsed.data.email,
-        customerName: parsed.data.fullName,
-        customerPhone: parsed.data.phone,
-        items: mapCartItemsToOrderItems(items),
-        shippingAddress: {
-          fullName: parsed.data.fullName,
-          line1: parsed.data.address,
-          city: parsed.data.city,
-          state: parsed.data.state,
-          postalCode: parsed.data.postalCode,
-          country: parsed.data.country,
-          phone: parsed.data.phone,
+      const { redirectUrl } = await new PaymentService().checkout({
+        paymentMethod: parsed.data.paymentMethod,
+        orderInput: {
+          customerEmail: parsed.data.email,
+          customerName: parsed.data.fullName,
+          customerPhone: parsed.data.phone,
+          items: mapCartItemsToOrderItems(items),
+          shippingAddress: {
+            fullName: parsed.data.fullName,
+            line1: parsed.data.address,
+            city: parsed.data.city,
+            state: parsed.data.state,
+            postalCode: parsed.data.postalCode,
+            country: parsed.data.country,
+            phone: parsed.data.phone,
+          },
+          shippingMethod: {
+            id: method.id,
+            label: method.label,
+            cost: method.cost,
+          },
+          currency,
         },
-        shippingMethod: {
-          id: method.id,
-          label: method.label,
-          cost: method.cost,
-        },
-        currency,
       });
 
-      // Clear cart only after a durable Order exists.
       onOrderCreated();
       toast.success("Order placed successfully.");
-      router.push(
-        `/checkout/confirmation?order=${encodeURIComponent(order.id)}&ref=${encodeURIComponent(order.orderNumber)}`,
-      );
+      router.push(redirectUrl);
     } catch (err) {
-      if (err instanceof OrderError) {
+      if (err instanceof PaymentError || err instanceof OrderError) {
         setFormError(err.message);
         toast.error(err.message);
       } else {
@@ -290,13 +325,28 @@ export function CheckoutForm({
         />
       </section>
 
+      <section
+        className="flex flex-col gap-4"
+        aria-labelledby="checkout-payment"
+      >
+        <h2
+          id="checkout-payment"
+          className="text-base font-semibold tracking-tight text-foreground"
+        >
+          Payment method
+        </h2>
+        <PaymentMethodSelector
+          value={values.paymentMethod}
+          onChange={(method) => setField("paymentMethod", method)}
+          options={paymentOptions}
+          disabled={loading}
+          error={fieldErrors.paymentMethod}
+        />
+      </section>
+
       <Button type="submit" fullWidth disabled={loading || items.length === 0}>
         {loading ? "Placing order…" : "Place order"}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">
-        Payment will be available in a future update. Your order is saved as
-        pending payment.
-      </p>
     </form>
   );
 }

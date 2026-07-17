@@ -24,6 +24,7 @@ import type {
   OrderItem,
   OrderPayment,
   OrderPaymentStatus,
+  OrderPaymentUpdateInput,
   OrderShippingAddress,
   OrderShippingMethod,
   OrderTotals,
@@ -60,6 +61,26 @@ export class OrderError extends Error {
 
 function asFiniteNumber(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+/**
+ * Whether applying `next` would regress a stronger payment state.
+ * Duplicate / out-of-order webhooks must not rewind paid or refunded.
+ */
+function isPaymentStatusRegression(
+  current: OrderPaymentStatus,
+  next: OrderPaymentStatus,
+): boolean {
+  if (current === next) {
+    return false;
+  }
+  if (current === "refunded") {
+    return true;
+  }
+  if (current === "paid") {
+    return next === "pending" || next === "authorized" || next === "failed";
+  }
+  return false;
 }
 
 function toOrderError(error: unknown): OrderError {
@@ -400,17 +421,20 @@ export class OrderService {
   }
 
   /**
-   * Updates payment status (Admin ops / future webhooks).
+   * Updates payment status and optional provider metadata (Admin / webhooks).
    *
    * Sync rule: when `payment.status` becomes `"paid"`, order `status` becomes
    * `"paid"` if it is still awaiting payment (`pending_payment` / legacy `pending`).
    * Does not rewind fulfillment past `paid`.
    *
+   * Idempotent: identical `paymentId` + `status` (and unchanged metadata) is a no-op.
+   * Does not regress stronger payment states (e.g. paid → pending from late webhooks).
+   *
    * @throws {OrderError} on validation or Firestore failures.
    */
-  async updatePaymentStatus(
+  async updatePayment(
     id: string,
-    paymentStatus: OrderPaymentStatus,
+    input: OrderPaymentUpdateInput,
   ): Promise<Order> {
     try {
       const allowed: OrderPaymentStatus[] = [
@@ -420,7 +444,7 @@ export class OrderService {
         "failed",
         "refunded",
       ];
-      if (!allowed.includes(paymentStatus)) {
+      if (!allowed.includes(input.status)) {
         throw new OrderError("Invalid payment status.", "invalid-input");
       }
 
@@ -429,15 +453,78 @@ export class OrderService {
         throw new OrderError("Order not found.", "not-found");
       }
 
+      const nextPaymentId = input.paymentId?.trim() || undefined;
+      const nextPreferenceId = input.preferenceId?.trim() || undefined;
+      const nextExternalReference = input.externalReference?.trim() || undefined;
+      const currentPaymentId =
+        current.payment.paymentId ?? current.payment.transactionId;
+      const currentPreferenceId =
+        current.payment.preferenceId ?? current.payment.externalId;
+
+      const samePaymentId =
+        !nextPaymentId || nextPaymentId === currentPaymentId;
+      const sameStatus = input.status === current.payment.status;
+      const samePreference =
+        !nextPreferenceId || nextPreferenceId === currentPreferenceId;
+      const sameReference =
+        !nextExternalReference ||
+        nextExternalReference === current.payment.externalReference;
+      const sameProvider =
+        !input.provider || input.provider === current.payment.provider;
+
+      if (
+        samePaymentId &&
+        sameStatus &&
+        samePreference &&
+        sameReference &&
+        sameProvider
+      ) {
+        return current;
+      }
+
+      if (isPaymentStatusRegression(current.payment.status, input.status)) {
+        return current;
+      }
+
       const now = Timestamp.now();
       const patch: DocumentData = {
-        "payment.status": paymentStatus,
+        "payment.status": input.status,
         updatedAt: now,
       };
 
-      if (paymentStatus === "paid") {
-        if (!current.payment.paidAt) {
-          patch["payment.paidAt"] = now;
+      if (input.provider) {
+        patch["payment.provider"] = input.provider;
+      }
+
+      if (nextPreferenceId) {
+        patch["payment.preferenceId"] = nextPreferenceId;
+        patch["payment.externalId"] = nextPreferenceId;
+      }
+
+      if (nextPaymentId) {
+        patch["payment.paymentId"] = nextPaymentId;
+        patch["payment.transactionId"] = nextPaymentId;
+      }
+
+      if (nextExternalReference) {
+        patch["payment.externalReference"] = nextExternalReference;
+      }
+
+      if (input.status === "paid") {
+        const approvedAt = input.approvedAt
+          ? Timestamp.fromDate(input.approvedAt)
+          : current.payment.approvedAt ??
+            current.payment.paidAt ??
+            now;
+
+        if (!current.payment.paidAt && !current.payment.approvedAt) {
+          patch["payment.paidAt"] = approvedAt;
+          patch["payment.approvedAt"] = approvedAt;
+        } else if (input.approvedAt && !current.payment.approvedAt) {
+          patch["payment.approvedAt"] = approvedAt;
+          if (!current.payment.paidAt) {
+            patch["payment.paidAt"] = approvedAt;
+          }
         }
 
         const canonical = normalizeOrderStatus(current.status);
@@ -455,6 +542,19 @@ export class OrderService {
     } catch (error) {
       throw toOrderError(error);
     }
+  }
+
+  /**
+   * Updates payment status only (Admin ops).
+   * Delegates to {@link updatePayment} so webhook and Admin share one write path.
+   *
+   * @throws {OrderError} on validation or Firestore failures.
+   */
+  async updatePaymentStatus(
+    id: string,
+    paymentStatus: OrderPaymentStatus,
+  ): Promise<Order> {
+    return this.updatePayment(id, { status: paymentStatus });
   }
 
   /**

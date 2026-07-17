@@ -9,7 +9,16 @@ import {
 } from "firebase/firestore";
 
 import { getFirestoreDb } from "@/firebase/firestore";
+import {
+  DEFAULT_PAYMENT_PROVIDERS,
+  mapPaymentProvidersConfig,
+  paymentProvidersFromLegacyFlags,
+  resolvePaymentProvidersConfig,
+  toLegacyEnabledPaymentMethods,
+} from "@/features/payments/lib/resolve-enabled-payment-methods";
 import type {
+  EnabledPaymentMethods,
+  PaymentProvidersConfig,
   StoreSettings,
   StoreSettingsUpdateInput,
 } from "@/features/settings/types";
@@ -45,6 +54,11 @@ export class StoreSettingsError extends Error {
 export function getDefaultStoreSettings(
   now: Timestamp = Timestamp.now(),
 ): StoreSettings {
+  const paymentProviders = mapPaymentProvidersConfig(
+    undefined,
+    DEFAULT_PAYMENT_PROVIDERS,
+  );
+
   return {
     storeName: "Serious Flux",
     tagline: "",
@@ -67,6 +81,8 @@ export function getDefaultStoreSettings(
     address: "",
     shippingEnabled: true,
     maintenanceMode: false,
+    paymentProviders,
+    enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
     createdAt: now,
     updatedAt: now,
   };
@@ -78,6 +94,54 @@ function asString(value: unknown, fallback: string): string {
 
 function asBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function mapLegacyEnabledPaymentMethods(
+  raw: unknown,
+): EnabledPaymentMethods | undefined {
+  if (!raw || typeof raw !== "object") {
+    return undefined;
+  }
+
+  const data = raw as Record<string, unknown>;
+  return {
+    mercadopago: asBoolean(data.mercadopago, true),
+    cashOnDelivery: asBoolean(data.cashOnDelivery, true),
+  };
+}
+
+/**
+ * Resolves paymentProviders from Firestore, with RFC-015 backward compatibility.
+ */
+function resolveMappedPaymentProviders(data: DocumentData): {
+  paymentProviders: PaymentProvidersConfig;
+  enabledPaymentMethods: EnabledPaymentMethods;
+} {
+  if (data.paymentProviders && typeof data.paymentProviders === "object") {
+    const paymentProviders = mapPaymentProvidersConfig(data.paymentProviders);
+    return {
+      paymentProviders,
+      enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
+    };
+  }
+
+  const legacy = mapLegacyEnabledPaymentMethods(data.enabledPaymentMethods);
+  if (legacy) {
+    const paymentProviders = paymentProvidersFromLegacyFlags(legacy);
+    return {
+      paymentProviders,
+      enabledPaymentMethods: legacy,
+    };
+  }
+
+  const paymentProviders = mapPaymentProvidersConfig(
+    undefined,
+    DEFAULT_PAYMENT_PROVIDERS,
+  );
+  return {
+    paymentProviders,
+    enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
+  };
 }
 
 function asTimestamp(value: unknown, fallback: Timestamp): Timestamp {
@@ -115,6 +179,9 @@ export function mapStoreSettings(
       }
     : defaults.hero;
 
+  const { paymentProviders, enabledPaymentMethods } =
+    resolveMappedPaymentProviders(data);
+
   return {
     storeName: asString(data.storeName, defaults.storeName),
     tagline: asString(data.tagline, defaults.tagline),
@@ -137,6 +204,8 @@ export function mapStoreSettings(
     address: asString(data.address, defaults.address),
     shippingEnabled: asBoolean(data.shippingEnabled, defaults.shippingEnabled),
     maintenanceMode: asBoolean(data.maintenanceMode, defaults.maintenanceMode),
+    paymentProviders,
+    enabledPaymentMethods,
     hero,
     createdAt: asTimestamp(data.createdAt, defaults.createdAt),
     updatedAt: asTimestamp(data.updatedAt, defaults.updatedAt),
@@ -176,6 +245,41 @@ function toStoreSettingsError(error: unknown): StoreSettingsError {
     "unknown",
     { cause: error },
   );
+}
+
+function normalizePaymentFields(
+  input: StoreSettingsUpdateInput,
+  current: StoreSettings,
+): {
+  paymentProviders: PaymentProvidersConfig;
+  enabledPaymentMethods: EnabledPaymentMethods;
+} {
+  if (input.paymentProviders !== undefined) {
+    const paymentProviders = mapPaymentProvidersConfig(input.paymentProviders);
+    return {
+      paymentProviders,
+      enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
+    };
+  }
+
+  if (input.enabledPaymentMethods !== undefined) {
+    const paymentProviders = paymentProvidersFromLegacyFlags(
+      input.enabledPaymentMethods,
+      resolvePaymentProvidersConfig(current),
+    );
+    return {
+      paymentProviders,
+      enabledPaymentMethods: input.enabledPaymentMethods,
+    };
+  }
+
+  const paymentProviders = resolvePaymentProvidersConfig(current);
+  return {
+    paymentProviders,
+    enabledPaymentMethods:
+      current.enabledPaymentMethods ??
+      toLegacyEnabledPaymentMethods(paymentProviders),
+  };
 }
 
 /**
@@ -226,18 +330,35 @@ export class StoreSettingsService {
         ? mapStoreSettings(snapshot.data())
         : getDefaultStoreSettings(now);
 
+      const { paymentProviders, enabledPaymentMethods } = normalizePaymentFields(
+        input,
+        current,
+      );
+
       const next: StoreSettings = {
         ...current,
         ...input,
         hero: input.hero !== undefined ? input.hero : current.hero,
+        paymentProviders,
+        enabledPaymentMethods,
         createdAt: current.createdAt,
         updatedAt: now,
       };
 
-      const { createdAt, updatedAt, hero, ...rest } = next;
+      const {
+        createdAt,
+        updatedAt,
+        hero,
+        paymentProviders: nextProviders,
+        enabledPaymentMethods: nextLegacy,
+        ...rest
+      } = next;
+
       await setDoc(ref, {
         ...rest,
         ...(hero ? { hero } : {}),
+        ...(nextProviders ? { paymentProviders: nextProviders } : {}),
+        ...(nextLegacy ? { enabledPaymentMethods: nextLegacy } : {}),
         createdAt,
         updatedAt,
       });

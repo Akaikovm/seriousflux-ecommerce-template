@@ -1,5 +1,10 @@
+import type {
+  CheckoutPaymentOption,
+  PaymentMethod,
+} from "@/features/payments/types";
+
 /**
- * Checkout domain types (RFC-013).
+ * Checkout domain types (RFC-013, RFC-015, RFC-016.5).
  */
 
 export type CheckoutShippingMethod = {
@@ -14,6 +19,11 @@ export type CheckoutSettingsProps = {
   locale: string;
   country: string;
   shippingEnabled: boolean;
+  /**
+   * Enabled + registered payment options from StoreSettings.
+   * Checkout must not assume any specific provider is present.
+   */
+  paymentOptions: CheckoutPaymentOption[];
 };
 
 export type CheckoutFormValues = {
@@ -26,4 +36,5 @@ export type CheckoutFormValues = {
   postalCode: string;
   country: string;
   shippingMethodId: string;
+  paymentMethod: PaymentMethod;
 };

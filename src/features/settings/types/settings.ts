@@ -1,5 +1,17 @@
 import type { Timestamp } from "firebase/firestore";
 
+import type {
+  EnabledPaymentMethods,
+  PaymentProvidersConfig,
+} from "./payment-providers";
+
+export type {
+  EnabledPaymentMethods,
+  PaymentProviderConfig,
+  PaymentProviderSettingsKey,
+  PaymentProvidersConfig,
+} from "./payment-providers";
+
 /**
  * Homepage hero configuration.
  *
@@ -96,6 +108,20 @@ export interface StoreSettings {
 
   /** When true, storefront should show maintenance and block commerce. */
   maintenanceMode: boolean;
+
+  /**
+   * Public payment-provider configuration (RFC-016.5).
+   *
+   * Controls which providers appear at checkout and their labels.
+   * Never stores credentials — secrets remain in server env vars.
+   * Admin UI for editing these values ships in a later RFC.
+   */
+  paymentProviders?: PaymentProvidersConfig;
+
+  /**
+   * @deprecated Prefer `paymentProviders`. Still accepted when reading older documents.
+   */
+  enabledPaymentMethods?: EnabledPaymentMethods;
 
   /**
    * Optional homepage hero overrides.

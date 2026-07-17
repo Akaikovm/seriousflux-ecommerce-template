@@ -61,8 +61,10 @@ const PAYMENT_STATUSES: ReadonlySet<string> = new Set([
 
 const PAYMENT_PROVIDERS: ReadonlySet<string> = new Set([
   "mercadopago",
+  "cash_on_delivery",
   "stripe",
   "paypal",
+  "bank_transfer",
 ]);
 
 function asOrderStatus(value: unknown): OrderStatus {
@@ -174,16 +176,37 @@ function mapPayment(raw: unknown): OrderPayment {
     currency: asString(data.currency, "ARS"),
   };
 
-  if (typeof data.externalId === "string" && data.externalId) {
-    payment.externalId = data.externalId;
-  }
-  if (typeof data.transactionId === "string" && data.transactionId) {
-    payment.transactionId = data.transactionId;
+  const preferenceId =
+    typeof data.preferenceId === "string" && data.preferenceId
+      ? data.preferenceId
+      : typeof data.externalId === "string" && data.externalId
+        ? data.externalId
+        : undefined;
+  if (preferenceId) {
+    payment.preferenceId = preferenceId;
+    payment.externalId = preferenceId;
   }
 
-  const paidAt = asOptionalTimestamp(data.paidAt);
-  if (paidAt) {
-    payment.paidAt = paidAt;
+  const paymentId =
+    typeof data.paymentId === "string" && data.paymentId
+      ? data.paymentId
+      : typeof data.transactionId === "string" && data.transactionId
+        ? data.transactionId
+        : undefined;
+  if (paymentId) {
+    payment.paymentId = paymentId;
+    payment.transactionId = paymentId;
+  }
+
+  if (typeof data.externalReference === "string" && data.externalReference) {
+    payment.externalReference = data.externalReference;
+  }
+
+  const approvedAt =
+    asOptionalTimestamp(data.approvedAt) ?? asOptionalTimestamp(data.paidAt);
+  if (approvedAt) {
+    payment.approvedAt = approvedAt;
+    payment.paidAt = approvedAt;
   }
 
   return payment;

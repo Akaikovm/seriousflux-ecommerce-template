@@ -24,6 +24,7 @@ export function CheckoutView({
   locale,
   country,
   shippingEnabled,
+  paymentOptions,
 }: CheckoutViewProps) {
   const hydrated = useCartHydrated();
   const items = useCartStore((state) => state.items);
@@ -60,6 +61,7 @@ export function CheckoutView({
           items={items}
           currency={summaryCurrency}
           defaultCountry={country}
+          paymentOptions={paymentOptions}
           onOrderCreated={clearCart}
         />
       </div>
