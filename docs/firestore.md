@@ -1,0 +1,560 @@
+# Firestore Data Model
+
+This document defines the Firestore collections for the SeriousFlux ecommerce starter kit.
+
+**RFC-001:** data model and TypeScript interfaces.  
+**RFC-002:** store configuration service — read-only access to `settings/general`.
+
+No authentication, product CRUD, admin UI, or checkout in RFC-002.
+
+---
+
+## Design principles
+
+1. **Client-configurable, not hardcoded** — store name, logo, colors, locale, contact and feature flags live in `settings/general` (with room for `shipping` / `payments` / `seo` later).
+2. **Simple product catalog first (RFC-007)** — products expose a single `image`, `price`, and `currency` with `featured` / `active` / `order`. Variants (sizes, colors, stock) are deferred.
+3. **Denormalized order snapshots** — line items copy product name, price, and image at purchase time so history stays correct after catalog edits (size/color snapshots reserved for a later variants RFC).
+4. **Flat top-level collections** — five root collections keep rules, indexes and mental model simple for a reusable starter kit.
+5. **Auth-aligned customers** — `customers/{uid}` mirrors Firebase Authentication `uid` (1:1); TypeScript type is `CustomerProfile`.
+
+---
+
+## Collection overview
+
+| Collection   | Purpose                                      | Typical doc id (v1)     |
+|--------------|----------------------------------------------|-------------------------|
+| `settings`   | Store configuration (multi-doc, scalable)    | `general`               |
+| `categories` | Catalog groupings (shirts, hoodies, shorts)  | Auto-id or slug-based   |
+| `products`   | Sellable apparel items                       | Auto-id                 |
+| `customers`  | Buyer profiles linked to Auth                | Firebase Auth `uid`     |
+| `orders`     | Purchases, payment and fulfillment           | Auto-id                 |
+
+```
+settings/general                ← v1 only; shipping / payments / seo later
+categories/{categoryId}
+products/{productId}
+customers/{customerId}          ← same as Auth uid
+orders/{orderId}
+```
+
+---
+
+## Relationships
+
+```
+settings/general (v1)
+    └── currency / locale / shippingEnabled used by storefront + checkout → orders
+
+categories (1) ──────────────< products (N)
+                                      │
+                                      │ productId (reference + snapshot)
+                                      ▼
+customers (1) ───────────────< orders (N)
+                                      │
+                                      └── items[] snapshot (name, image, size, color, price)
+```
+
+| From        | Field          | To                         | Cardinality |
+|-------------|----------------|----------------------------|-------------|
+| `products`  | `categoryId`   | `categories/{id}`          | N : 1       |
+| `orders`    | `customerId`   | `customers/{id}`           | N : 1       |
+| `orders`    | `items[].productId` | `products/{id}`       | N : 1 (soft) |
+| `orders`    | `currency`     | snapshot from `settings/general.currency` | copy at checkout |
+
+There are **no** Firestore subcollections in v1. Nested data that belongs to a document (addresses, order items, theme) is stored as fields / arrays on the parent document.
+
+---
+
+## 1. `settings`
+
+**Path:** `settings/{settingsId}`  
+**TypeScript:** `src/features/settings/types/settings.ts` → `StoreSettings` (maps to `settings/general`)  
+**Service (RFC-002):** `src/features/settings/services/store-settings.service.ts` → `StoreSettingsService`
+
+### Why store configuration lives in Firestore
+
+Serious Flux is a **reusable ecommerce starter**, not a one-off store. Every future client needs a different name, logo, colors, currency, contact channels and feature flags.
+
+If that identity lived in source code (env files, constants, theme CSS), each client would require a fork or a redeploy of custom code. Putting identity in Firestore means:
+
+- One codebase serves many stores.
+- Rebranding is a data change (`settings/general`), not a code change.
+- The storefront and future admin can both read the same source of truth.
+- Ops can flip `maintenanceMode` or `shippingEnabled` without shipping a release.
+
+### Why `settings/general` is a singleton document
+
+There is exactly one general identity per Firebase project / store deployment. Using a **fixed document id** (`general`) gives:
+
+- A stable path: `settings/general` — no query, no listing, one `getDoc`.
+- Predictable security rules (read/write this known doc).
+- No risk of duplicate “main settings” documents.
+
+The collection remains open for **additional** singleton (or focused) documents later — still one doc per concern, not one mega-document:
+
+```
+settings/
+    general     ← exists in v1 (RFC-002 reads this only)
+    shipping    ← future
+    payments    ← future
+    seo         ← future
+```
+
+| Document id  | Status | Responsibility |
+|--------------|--------|----------------|
+| `general`    | **v1** | Branding, locale, currency, contact, social, `shippingEnabled`, `maintenanceMode` |
+| `shipping`   | future | Rates, zones, methods |
+| `payments`   | future | Provider credentials metadata, methods, webhooks config |
+| `seo`        | future | Default titles, descriptions, social cards |
+
+### Why this enables client reuse
+
+For each new Serious Flux client, the agency changes Firestore `settings/general` (and later products/categories), not TypeScript. The same `StoreSettingsService` powers every deployment: read `settings/general`, fall back to defaults if unseeded, never leak Firebase errors to the UI layer.
+
+### Fields (`settings/general` — v1)
+
+| Field              | Type        | Required | Description |
+|--------------------|-------------|----------|-------------|
+| `storeName`        | `string`    | yes      | Public store name |
+| `tagline`          | `string`    | yes      | Short marketing line |
+| `description`      | `string`    | yes      | Longer about / store copy |
+| `logo`             | `string`    | yes      | Logo URL or Storage path |
+| `favicon`          | `string`    | yes      | Favicon URL or Storage path |
+| `primaryColor`     | `string`    | yes      | CSS hex brand color |
+| `secondaryColor`   | `string`    | yes      | CSS hex accent color |
+| `currency`         | `string`    | yes      | ISO 4217 (e.g. `ARS`) |
+| `locale`           | `string`    | yes      | BCP 47 (e.g. `es-AR`) |
+| `language`         | `string`    | yes      | UI language (e.g. `es`) |
+| `country`          | `string`    | yes      | ISO 3166-1 alpha-2 (e.g. `AR`) |
+| `email`            | `string`    | yes      | Public support email |
+| `phone`            | `string`    | yes      | Public contact phone |
+| `whatsapp`         | `string`    | yes      | WhatsApp number or link |
+| `instagram`        | `string`    | yes      | Instagram profile URL |
+| `facebook`         | `string`    | yes      | Facebook page URL |
+| `tiktok`           | `string`    | yes      | TikTok profile URL |
+| `youtube`          | `string`    | yes      | YouTube channel URL |
+| `address`          | `string`    | yes      | Public store address |
+| `shippingEnabled`  | `boolean`   | yes      | Whether shipping is offered |
+| `maintenanceMode`  | `boolean`   | yes      | Blocks commerce when true |
+| `hero`             | `object`    | no       | Optional homepage hero overrides (RFC-010) |
+| `createdAt`        | `Timestamp` | yes      | Created at |
+| `updatedAt`        | `Timestamp` | yes      | Last update |
+
+Optional nested `hero` fields: `title`, `subtitle`, `image`, `ctaText`, `ctaHref` (all strings). When omitted or partial, the storefront resolves from `storeName` / `tagline` / `description` via `resolveHeroContent`.
+
+### Service contract (RFC-002)
+
+`StoreSettingsService.getGeneralSettings()`:
+
+- Reads **only** `settings/general`.
+- Returns a typed `StoreSettings`.
+- If the document is missing, returns **sensible defaults** (store still boots).
+- On Firestore failure, throws `StoreSettingsError` — never raw Firebase errors.
+- Contains **no** React, hooks, context, providers, or UI.
+
+### Example (`settings/general`)
+
+```json
+{
+  "storeName": "Serious Flux",
+  "tagline": "Football kits built to last",
+  "description": "Premium football shirts, hoodies and shorts.",
+  "logo": "https://cdn.example.com/logo.svg",
+  "favicon": "https://cdn.example.com/favicon.ico",
+  "primaryColor": "#0A0A0A",
+  "secondaryColor": "#E10600",
+  "currency": "ARS",
+  "locale": "es-AR",
+  "language": "es",
+  "country": "AR",
+  "email": "hola@example.com",
+  "phone": "+54 11 5555-0000",
+  "whatsapp": "+5491155550000",
+  "instagram": "https://instagram.com/example",
+  "facebook": "",
+  "tiktok": "",
+  "youtube": "",
+  "address": "Buenos Aires, Argentina",
+  "shippingEnabled": true,
+  "maintenanceMode": false,
+  "hero": {
+    "title": "",
+    "subtitle": "",
+    "image": "https://cdn.example.com/hero.jpg",
+    "ctaText": "Shop now",
+    "ctaHref": "/#featured"
+  }
+}
+```
+
+---
+
+## 2. `categories`
+
+**Path:** `categories/{categoryId}`  
+**TypeScript:** `src/features/categories/types/category.ts` → `Category`  
+**Service (RFC-006):** `src/features/categories/services/category.service.ts` → `CategoryService`
+
+### Why this structure
+
+The store sells football shirts, hoodies and shorts. Those product lines are modeled as categories rather than hard-coded product types, so other clients can rename or replace them freely. Flat categories (no parent tree) are enough for v1 and avoid recursive queries.
+
+### Fields
+
+| Field         | Type        | Required | Description |
+|---------------|-------------|----------|-------------|
+| `id`          | `string`    | yes      | Document id |
+| `name`        | `string`    | yes      | Display name |
+| `slug`        | `string`    | yes      | Unique URL slug |
+| `description` | `string`    | no       | Category copy |
+| `image`       | `string`    | yes      | Category image URL |
+| `featured`    | `boolean`   | yes      | Homepage / highlight eligibility |
+| `order`       | `number`    | yes      | Ascending nav / grid order |
+| `active`      | `boolean`   | yes      | Storefront visibility |
+| `createdAt`   | `Timestamp` | yes      | Created at |
+| `updatedAt`   | `Timestamp` | yes      | Last update |
+
+### Service contract (RFC-006)
+
+`CategoryService`:
+
+- `getAll()` — `active == true`, ordered by `order` ascending
+- `getFeatured()` — `active == true` and `featured == true`, ordered by `order` ascending
+- Returns typed `Category[]`
+- On Firestore failure, throws `CategoryError` — never raw Firebase errors
+- Contains **no** React, hooks, context, providers, or UI
+
+### Initial seed (example)
+
+| name             | slug               | featured | order |
+|------------------|--------------------|----------|-------|
+| Football Shirts  | `football-shirts`  | true     | 1     |
+| Hoodies          | `hoodies`          | true     | 2     |
+| Shorts           | `shorts`           | true     | 3     |
+
+### Suggested indexes
+
+- `active` ASC + `order` ASC (storefront nav / `getAll`)
+- `active` ASC + `featured` ASC + `order` ASC (`getFeatured`)
+
+---
+
+## 3. `products`
+
+**Path:** `products/{productId}`  
+**TypeScript:** `src/features/products/types/product.ts` → `Product`  
+**Service (RFC-007):** `src/features/products/services/product.service.ts` → `ProductService`
+
+### Why this structure
+
+The first catalog version is intentionally **simple**: one image, one price, one currency, and visibility/sort flags (`active`, `featured`, `order`). Variants (sizes, colors, per-variant stock) are deferred so the storefront can ship featured products without inventing inventory complexity every client may not need.
+
+`categoryId` links to `categories/{id}` (e.g. `camisas`, `pantalones`).
+
+### Fields
+
+| Field         | Type      | Required | Description |
+|---------------|-----------|----------|-------------|
+| `id`          | `string`  | yes      | Document id |
+| `name`        | `string`  | yes      | Display name |
+| `slug`        | `string`  | yes      | Unique URL slug |
+| `description` | `string`  | yes      | Detail copy |
+| `image`       | `string`  | yes      | Primary product image URL |
+| `price`       | `number`  | yes      | Unit price |
+| `currency`    | `string`  | yes      | ISO 4217 (e.g. `ARS`) |
+| `categoryId`  | `string`  | yes      | FK → `categories/{id}` |
+| `featured`    | `boolean` | yes      | Homepage / highlight eligibility |
+| `active`      | `boolean` | yes      | Storefront visibility |
+| `order`       | `number`  | yes      | Ascending catalog / grid order |
+
+### Service contract (RFC-007)
+
+`ProductService`:
+
+- `getAll()` — `active == true`, ordered by `order` ascending
+- `getFeatured()` — `active == true` and `featured == true`, ordered by `order` ascending
+- `getByCategory(categoryId)` — `active == true` and matching `categoryId`, ordered by `order` ascending
+- `getBySlug(slug)` — find by slug; returns `null` if not found
+- Returns typed `Product` / `Product[]`
+- On Firestore failure, throws `ProductError` — never raw Firebase errors
+- Contains **no** React, hooks, context, providers, or UI
+
+### Initial seed (example)
+
+Use existing category document ids `camisas` and `pantalones`.
+
+Bootstrap locally with:
+
+```bash
+npm run seed:products
+```
+
+| name                 | slug                   | categoryId   | price  | currency | featured | active | order |
+|----------------------|------------------------|--------------|--------|----------|----------|--------|-------|
+| Camisa Oxford Blanca | `camisa-oxford-blanca` | `camisas`    | 45900  | `ARS`    | true     | true   | 1     |
+| Camisa Negra Premium | `camisa-negra-premium` | `camisas`    | 52900  | `ARS`    | true     | true   | 2     |
+| Pantalón Chino Beige | `pantalon-chino-beige` | `pantalones` | 48900  | `ARS`    | true     | true   | 3     |
+
+Example document (`products` — auto-id or slug-based id):
+
+```json
+{
+  "name": "Camisa Oxford Blanca",
+  "slug": "camisa-oxford-blanca",
+  "description": "Camisa oxford de algodón, corte clásico.",
+  "image": "https://cdn.example.com/products/camisa-oxford-blanca.jpg",
+  "price": 45900,
+  "currency": "ARS",
+  "categoryId": "camisas",
+  "featured": true,
+  "active": true,
+  "order": 1
+}
+```
+
+### Query strategy (RFC-007)
+
+`ProductService` uses a **single equality filter** per storefront read and applies `active` / `order` in memory. That keeps the starter kit bootable without waiting on composite indexes.
+
+### Suggested indexes (when catalog grows)
+
+- `active` ASC + `order` ASC (`getAll` with server-side sort)
+- `active` ASC + `featured` ASC + `order` ASC (`getFeatured`)
+- `active` ASC + `categoryId` ASC + `order` ASC (`getByCategory`)
+- `slug` ASC (unique lookup / `getBySlug`)
+
+---
+
+## 4. `customers`
+
+**Path:** `customers/{customerId}`  
+**TypeScript:** `src/features/customers/types/customer.ts` → `CustomerProfile`
+
+### Why this structure
+
+Named `customers` (not `users`) to match the commercial domain. The TypeScript interface is `CustomerProfile` so the profile document is distinct from generic “customer” UI language; the Firestore collection name remains `customers`. Document id equals Firebase Auth `uid` so profile load is a direct `getDoc` after login. Addresses are embedded arrays — enough for a small number of saved addresses without a subcollection.
+
+### Fields
+
+| Field         | Type                 | Required | Description |
+|---------------|----------------------|----------|-------------|
+| `id`          | `string`             | yes      | Same as Auth `uid` |
+| `email`       | `string`             | yes      | Account email |
+| `displayName` | `string`             | yes      | Public name |
+| `phone`       | `string`             | no       | Contact phone |
+| `photoUrl`    | `string`             | no       | Avatar URL / Storage path |
+| `role`        | `CustomerRole`       | yes      | `customer` \| `admin` |
+| `addresses`   | `CustomerAddress[]`  | yes      | Saved addresses (may be `[]`) |
+| `createdAt`   | `Timestamp`          | yes      | Created at |
+| `updatedAt`   | `Timestamp`          | yes      | Last update |
+
+### Nested: `CustomerAddress`
+
+| Field        | Type      | Required | Description |
+|--------------|-----------|----------|-------------|
+| `id`         | `string`  | yes      | Local address id |
+| `fullName`   | `string`  | yes      | Recipient |
+| `line1`      | `string`  | yes      | Street line 1 |
+| `line2`      | `string`  | no       | Street line 2 |
+| `city`       | `string`  | yes      | City |
+| `state`      | `string`  | yes      | State / province |
+| `postalCode` | `string`  | yes      | Postal code |
+| `country`    | `string`  | yes      | ISO country code |
+| `phone`      | `string`  | no       | Delivery phone |
+| `isDefault`  | `boolean` | yes      | Default checkout address |
+
+---
+
+## 5. `orders`
+
+**Path:** `orders/{orderId}`  
+**TypeScript:** `src/features/orders/types/order.ts` → `Order`
+
+### Why this structure
+
+Orders own payment + fulfillment state and keep **immutable line-item snapshots**. Size and color chosen at checkout are stored on each item; stock deduction still targets the parent product’s `stock` field.
+
+Payment is abstracted via `OrderPayment.provider` so Mercado Pago can ship first and Stripe/PayPal can plug in later without reshaping the order document.
+
+### Fields
+
+| Field             | Type                   | Required | Description |
+|-------------------|------------------------|----------|-------------|
+| `id`              | `string`               | yes      | Document id (internal — prefer `orderNumber` for customer UX) |
+| `orderNumber`     | `string`               | yes      | Human-friendly reference (e.g. `SF-20260717-A3K9`) |
+| `customerId`      | `string`               | no       | FK → `customers/{id}` (omit for guest checkout) |
+| `customerEmail`   | `string`               | yes      | Email snapshot |
+| `customerName`    | `string`               | yes      | Name snapshot |
+| `customerPhone`   | `string`               | yes      | Phone snapshot from checkout |
+| `status`          | `OrderStatus`          | yes      | Fulfillment lifecycle |
+| `items`           | `OrderItem[]`          | yes      | Purchased lines (snapshots) |
+| `shippingAddress` | `OrderShippingAddress` | yes      | Delivery address snapshot |
+| `shippingMethod`  | `OrderShippingMethod`  | yes      | Method snapshot (`id`, `label`, `cost`) |
+| `payment`         | `OrderPayment`         | yes      | Provider payment metadata |
+| `totals`          | `OrderTotals`          | yes      | Money breakdown |
+| `currency`        | `string`               | yes      | ISO 4217 snapshot |
+| `notes`           | `string`               | no       | Internal admin notes (not customer-facing) |
+| `createdAt`       | `Timestamp`            | yes      | Created at |
+| `updatedAt`       | `Timestamp`            | yes      | Last update |
+
+### `OrderStatus`
+
+Canonical write path (RFC-014):
+
+`pending_payment` → `paid` → `processing` → `shipped` → `completed`
+
+Also: `cancelled` (from `pending_payment` or `paid` only).
+
+Legacy read-only aliases (never write again):
+
+- `pending` — treat as `pending_payment`
+- `delivered` — treat as `completed`
+- `refunded` — legacy order-level refund; prefer `payment.status: "refunded"`
+
+Checkout (RFC-013) creates orders as `pending_payment` with `payment.status: "pending"`.
+
+When `payment.status` becomes `paid` (Admin or future webhooks), order `status` is set to `paid` if still awaiting payment.
+
+### Nested: `OrderItem`
+
+Each line item is a full purchase snapshot so order history stays correct after catalog edits. `productId` is kept for stock deduction and soft links; display fields must not rely on live product reads.
+
+| Field            | Type           | Required | Description |
+|------------------|----------------|----------|-------------|
+| `productId`      | `string`       | yes      | Soft FK → `products/{id}` (do not remove) |
+| `productName`    | `string`       | yes      | Name snapshot |
+| `image`          | `string`       | yes      | Image snapshot |
+| `quantity`       | `number`       | yes      | Units purchased |
+| `unitPrice`      | `number`       | yes      | Price snapshot |
+| `selectedSize`   | `ProductSize`  | no       | Selected size (optional until variants) |
+| `selectedColor`  | `ProductColor` | no       | Selected color (optional until variants) |
+| `sku`            | `string`       | no       | SKU snapshot |
+
+### Nested: `OrderShippingMethod`
+
+| Field   | Type     | Required | Description |
+|---------|----------|----------|-------------|
+| `id`    | `string` | yes      | Stable method id (e.g. `standard`) |
+| `label` | `string` | yes      | Customer-facing label snapshot |
+| `cost`  | `number` | yes      | Shipping cost snapshot (also in `totals.shipping`) |
+
+### Nested: `OrderPayment`
+
+| Field           | Type                 | Required | Description |
+|-----------------|----------------------|----------|-------------|
+| `provider`      | `PaymentProviderId`  | yes      | Active provider |
+| `status`        | `OrderPaymentStatus` | yes      | Payment lifecycle |
+| `externalId`    | `string`             | no       | Checkout / preference id |
+| `transactionId` | `string`             | no       | Captured payment id |
+| `amount`        | `number`             | yes      | Charged amount |
+| `currency`      | `string`             | yes      | ISO 4217 |
+| `paidAt`        | `Timestamp`          | no       | Capture time |
+
+### Nested: `OrderTotals`
+
+| Field      | Type     | Required | Description |
+|------------|----------|----------|-------------|
+| `subtotal` | `number` | yes      | Sum of line items |
+| `shipping` | `number` | yes      | Shipping cost |
+| `discount` | `number` | yes      | Discount amount |
+| `tax`      | `number` | yes      | Tax amount |
+| `total`    | `number` | yes      | Grand total |
+
+### Suggested indexes
+
+- `customerId` ASC + `createdAt` DESC (customer order history)
+- `status` ASC + `createdAt` DESC (admin queues)
+- `payment.status` ASC + `createdAt` DESC (payment ops)
+
+---
+
+## TypeScript feature layout
+
+Interfaces and domain services live next to their feature (Clean Architecture / feature folders):
+
+```
+src/features/
+  settings/
+    types/
+      settings.ts
+      index.ts
+    services/
+      store-settings.service.ts
+      index.ts
+  categories/
+    types/
+    services/
+    components/
+  products/
+    types/
+    services/
+    components/
+  customers/types/
+    customer.ts
+    index.ts
+  orders/types/
+    order.ts
+    index.ts
+```
+
+Import examples:
+
+```ts
+import type { Product } from "@/features/products/types";
+import type { Order } from "@/features/orders/types";
+import type { CustomerProfile } from "@/features/customers/types";
+import type { StoreSettings } from "@/features/settings/types";
+import type { Category } from "@/features/categories/types";
+import { StoreSettingsService } from "@/features/settings/services";
+import { CategoryService } from "@/features/categories/services";
+import { ProductService } from "@/features/products/services";
+```
+
+---
+
+## What was intentionally deferred
+
+These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope for RFC-001**:
+
+| Concern              | Why deferred |
+|----------------------|--------------|
+| Coupons              | Needs its own validation + redemption rules |
+| Reviews              | Needs moderation + product aggregation |
+| Inventory / stock    | Deferred until a dedicated inventory RFC |
+| Variants (size/color)| Explicitly deferred in RFC-007 |
+| Cart persistence     | Cart remains client state (Zustand) until a later RFC |
+| Nested order events  | Status history can be added as subcollection later |
+
+---
+
+## Future scalability
+
+| Evolution                         | How this model extends |
+|-----------------------------------|------------------------|
+| Stripe / PayPal                   | New `PaymentProviderId` + provider fields on `OrderPayment` |
+| Settings split                    | Add `settings/shipping`, `settings/payments`, `settings/seo` docs |
+| Per-variant stock                 | Add `variants[]` or `inventory` collection in a later RFC |
+| Nested categories                 | Add optional `parentId` on `Category` |
+| Guest checkout                    | Make `customerId` optional; keep email snapshots |
+| Multi-currency                    | Prices map or `prices: Record<currency, number>`; `settings/general` gains `supportedCurrencies` |
+| Coupons / discounts               | New `coupons` collection; reference from `orders.totals.discount` |
+| Order audit trail                 | `orders/{id}/events` subcollection |
+| Custom claims for admin           | Move `role` enforcement to Auth claims; keep `role` as denormalized UI hint |
+| Payment provider in settings      | Add on `settings/payments` (or `general`) when checkout RFC lands |
+
+---
+
+## Non-goals of RFC-001 / RFC-002
+
+- Seed scripts for local bootstrap: `npm run seed:products` (`scripts/seed-products.ts`)
+- No Firestore Security Rules (later RFC)
+- No composite index JSON commit (create when queries exist)
+- No settings write / admin CRUD (RFC-002 is read-only)
+- No React hooks, context, providers, or UI
+- No authentication, products CRUD, or checkout
+
+---
+
+## Approval gate
+
+RFC-002 (store configuration service) ends here. **Do not start RFC-003 until this is approved.**

@@ -1,0 +1,42 @@
+/**
+ * Storefront layout rhythm — structural only.
+ * Brand colors come from StoreSettings via CSS variables on <html>.
+ */
+
+:root {
+  --storefront-section-py: 3rem;
+  --storefront-section-py-lg: 5rem;
+  --storefront-navbar-height: 4rem;
+  --storefront-hero-min-h: min(72vh, 40rem);
+  --storefront-content-max: 80rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --storefront-section-py: 4rem;
+    --storefront-section-py-lg: 6rem;
+    --storefront-navbar-height: 4.5rem;
+    --storefront-hero-min-h: min(78vh, 44rem);
+  }
+}
+
+.storefront-section {
+  padding-block: var(--storefront-section-py);
+}
+
+.storefront-section-lg {
+  padding-block: var(--storefront-section-py-lg);
+}
+
+.storefront-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--storefront-content-max);
+  padding-inline: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .storefront-container {
+    padding-inline: 1.5rem;
+  }
+}
