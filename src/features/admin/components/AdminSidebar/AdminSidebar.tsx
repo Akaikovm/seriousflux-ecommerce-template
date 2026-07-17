@@ -103,6 +103,7 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className="admin-nav-link"
                 data-active={active ? "true" : "false"}
                 aria-current={active ? "page" : undefined}
