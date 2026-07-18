@@ -59,4 +59,9 @@ export type AuthenticatedSession = {
   status: UserStatus;
   /** Same as `user.uid` — `customers/{customerId}`. */
   customerId: string;
+  /**
+   * True when `customers/{uid}` was created during this auth call
+   * (used for welcome email — RFC-019).
+   */
+  isNewCustomer?: boolean;
 };

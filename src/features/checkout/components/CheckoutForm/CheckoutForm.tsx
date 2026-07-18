@@ -15,6 +15,7 @@ import {
 } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutFormValues } from "@/features/checkout/types";
 import { OrderError } from "@/features/orders/services";
+import { requestNotification } from "@/features/notifications";
 import { PaymentMethodSelector } from "@/features/payments/components/PaymentMethodSelector";
 import {
   PaymentError,
@@ -198,7 +199,7 @@ export function CheckoutForm({
     setLoading(true);
 
     try {
-      const { redirectUrl } = await new PaymentService().checkout({
+      const { order, redirectUrl } = await new PaymentService().checkout({
         paymentMethod: parsed.data.paymentMethod,
         orderInput: {
           ...(customerId ? { customerId } : {}),
@@ -223,6 +224,9 @@ export function CheckoutForm({
           currency,
         },
       });
+
+      // Fire-and-forget — never blocks or rolls back the order (RFC-019).
+      requestNotification({ event: "order.created", orderId: order.id });
 
       onOrderCreated();
       toast.success("Order placed successfully.");

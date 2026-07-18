@@ -126,16 +126,21 @@ export class IdentityBootstrapService {
    * Ensures `customers/{uid}` exists with `role: "customer"`.
    * Does not upgrade or overwrite an existing role (idempotent create).
    */
-  async ensureCustomer(user: AuthUser): Promise<IdentityDocument> {
+  async ensureCustomer(
+    user: AuthUser,
+  ): Promise<{ identity: IdentityDocument; created: boolean }> {
     try {
       const ref = doc(this.db, CUSTOMERS_COLLECTION, user.uid);
       const snapshot = await getDoc(ref);
 
       if (snapshot.exists()) {
-        return mapIdentityDocument(
-          snapshot.id,
-          snapshot.data() as Record<string, unknown>,
-        );
+        return {
+          identity: mapIdentityDocument(
+            snapshot.id,
+            snapshot.data() as Record<string, unknown>,
+          ),
+          created: false,
+        };
       }
 
       const now = Timestamp.now();
@@ -153,8 +158,11 @@ export class IdentityBootstrapService {
       await setDoc(ref, payload);
 
       return {
-        id: user.uid,
-        ...payload,
+        identity: {
+          id: user.uid,
+          ...payload,
+        },
+        created: true,
       };
     } catch (error) {
       throw toIdentityError(error);

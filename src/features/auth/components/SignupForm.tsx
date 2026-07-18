@@ -8,6 +8,7 @@ import { GoogleAuthButton } from "@/features/auth/components/GoogleAuthButton";
 import { buildLoginHref } from "@/features/auth/lib/safe-redirect";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
+import { requestNotification } from "@/features/notifications";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
@@ -41,6 +42,11 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
         email: email.trim(),
         password,
         displayName: displayName.trim(),
+      });
+      requestNotification({
+        event: "account.welcome",
+        email: email.trim(),
+        displayName: displayName.trim() || undefined,
       });
       router.replace(redirectTo);
     } catch (err) {

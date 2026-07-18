@@ -1,5 +1,7 @@
 export type {
   EnabledPaymentMethods,
+  NotificationProviderSettingsId,
+  NotificationsSettings,
   PaymentProviderConfig,
   PaymentProviderSettingsKey,
   PaymentProvidersConfig,

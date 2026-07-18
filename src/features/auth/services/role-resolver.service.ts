@@ -49,7 +49,7 @@ export class RoleResolver {
       }
 
       const bootstrapped = await this.identity.ensureCustomer(user);
-      return toSession(user, bootstrapped);
+      return toSession(user, bootstrapped.identity);
     }
 
     return toSession(user, existing);

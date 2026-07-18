@@ -3,9 +3,12 @@
  * Safe to pass from Server Components to Client Components.
  */
 
+import type { NotificationsFormValues } from "@/features/admin/settings/NotificationsSettingsFields";
+import { DEFAULT_NOTIFICATIONS_SETTINGS } from "@/features/notifications/lib/default-notifications-settings";
 import { resolvePaymentProvidersConfig } from "@/features/payments/lib/resolve-enabled-payment-methods";
 import type {
   EnabledPaymentMethods,
+  NotificationsSettings,
   PaymentProvidersConfig,
 } from "@/features/settings/types";
 
@@ -40,11 +43,51 @@ export type StoreSettingsFormData = {
   maintenanceMode: boolean;
   shippingEnabled: boolean;
   paymentProviders: PaymentProvidersConfig;
+  /** Business-facing notification fields only (RFC-019.1). */
+  notifications: NotificationsFormValues;
   hero: StoreHeroFormData;
 };
 
 /**
- * Maps store settings onto serializable form props (full StoreSettings shape).
+ * Maps full domain notifications → admin form (hides provider / infra fields).
+ */
+export function toNotificationsFormValues(
+  notifications?: NotificationsSettings | null,
+): NotificationsFormValues {
+  const merged = {
+    ...DEFAULT_NOTIFICATIONS_SETTINGS,
+    ...notifications,
+  };
+  return {
+    senderName: merged.senderName,
+    senderEmail: merged.senderEmail,
+    enableCustomerEmails: merged.enableCustomerEmails,
+    enableAdminEmails: merged.enableAdminEmails,
+    enableWelcomeEmail: merged.enableWelcomeEmail,
+  };
+}
+
+/**
+ * Maps admin form → persisted NotificationsSettings (RFC-019.1).
+ * Always stores Resend as the active provider — Admin never selects vendors.
+ */
+export function toNotificationsSettings(
+  form: NotificationsFormValues,
+): NotificationsSettings {
+  return {
+    provider: "resend",
+    senderName: form.senderName,
+    senderEmail: form.senderEmail,
+    replyTo: "",
+    adminEmail: "",
+    enableCustomerEmails: form.enableCustomerEmails,
+    enableAdminEmails: form.enableAdminEmails,
+    enableWelcomeEmail: form.enableWelcomeEmail,
+  };
+}
+
+/**
+ * Maps store settings onto serializable form props.
  */
 export function toStoreSettingsFormData(settings: {
   storeName: string;
@@ -70,6 +113,7 @@ export function toStoreSettingsFormData(settings: {
   shippingEnabled: boolean;
   paymentProviders?: PaymentProvidersConfig;
   enabledPaymentMethods?: EnabledPaymentMethods;
+  notifications?: NotificationsSettings;
   hero?: Partial<StoreHeroFormData> | null;
 }): StoreSettingsFormData {
   return {
@@ -95,6 +139,7 @@ export function toStoreSettingsFormData(settings: {
     maintenanceMode: settings.maintenanceMode,
     shippingEnabled: settings.shippingEnabled,
     paymentProviders: resolvePaymentProvidersConfig(settings),
+    notifications: toNotificationsFormValues(settings.notifications),
     hero: {
       title: settings.hero?.title ?? "",
       subtitle: settings.hero?.subtitle ?? "",

@@ -1,9 +1,15 @@
 import type { Timestamp } from "firebase/firestore";
 
+import type { NotificationsSettings } from "./notifications";
 import type {
   EnabledPaymentMethods,
   PaymentProvidersConfig,
 } from "./payment-providers";
+
+export type {
+  NotificationProviderSettingsId,
+  NotificationsSettings,
+} from "./notifications";
 
 export type {
   EnabledPaymentMethods,
@@ -117,6 +123,14 @@ export interface StoreSettings {
    * Edited from Admin → Store Settings (Payment methods).
    */
   paymentProviders?: PaymentProvidersConfig;
+
+  /**
+   * Public transactional email configuration (RFC-019).
+   *
+   * Controls provider slot, sender identity, and enable flags.
+   * Never stores API keys — secrets remain in server env vars (e.g. RESEND_API_KEY).
+   */
+  notifications?: NotificationsSettings;
 
   /**
    * @deprecated Prefer `paymentProviders`. Still accepted when reading older documents.

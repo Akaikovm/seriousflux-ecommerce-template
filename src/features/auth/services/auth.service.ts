@@ -133,7 +133,10 @@ export class AuthService {
    *
    * @throws {AuthError} on Firebase Auth or bootstrap failures.
    */
-  async signUp(credentials: SignUpCredentials): Promise<AuthUser> {
+  async signUp(credentials: SignUpCredentials): Promise<{
+    user: AuthUser;
+    isNewCustomer: boolean;
+  }> {
     try {
       const displayName = credentials.displayName.trim();
       const result = await createUserWithEmailAndPassword(
@@ -153,8 +156,11 @@ export class AuthService {
       });
 
       return {
-        ...user,
-        displayName: displayName || user.displayName,
+        user: {
+          ...user,
+          displayName: displayName || user.displayName,
+        },
+        isNewCustomer: true,
       };
     } catch (error) {
       throw toAuthError(error);
@@ -185,14 +191,17 @@ export class AuthService {
    *
    * @throws {AuthError} on Firebase Auth or bootstrap failures.
    */
-  async signInWithGoogle(): Promise<AuthUser> {
+  async signInWithGoogle(): Promise<{
+    user: AuthUser;
+    isNewCustomer: boolean;
+  }> {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(this.auth, provider);
       const user = mapAuthUser(result.user);
-      await this.identity.ensureCustomer(user);
-      return user;
+      const { created } = await this.identity.ensureCustomer(user);
+      return { user, isNewCustomer: created };
     } catch (error) {
       throw toAuthError(error);
     }

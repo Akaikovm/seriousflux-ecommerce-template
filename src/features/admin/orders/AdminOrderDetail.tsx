@@ -18,6 +18,7 @@ import type {
   OrderPaymentStatus,
   OrderWritableStatus,
 } from "@/features/orders/types";
+import { requestNotification } from "@/features/notifications";
 import { formatPrice } from "@/lib/format-price";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
@@ -100,10 +101,22 @@ export function AdminOrderDetail({
 
     setSavingStatus(true);
     try {
+      const previousStatus = normalizeOrderStatus(order.status);
       await new OrderService().updateStatus(
         order.id,
         fulfillmentStatus as OrderWritableStatus,
       );
+      if (
+        fulfillmentStatus === "shipped" &&
+        previousStatus !== "shipped"
+      ) {
+        requestNotification({ event: "order.shipped", orderId: order.id });
+      } else if (
+        fulfillmentStatus === "cancelled" &&
+        previousStatus !== "cancelled"
+      ) {
+        requestNotification({ event: "order.cancelled", orderId: order.id });
+      }
       toast.success("Fulfillment status updated.");
       router.refresh();
     } catch (err) {
@@ -124,7 +137,19 @@ export function AdminOrderDetail({
 
     setSavingPayment(true);
     try {
+      const previousPayment = order.payment.status;
       await new OrderService().updatePaymentStatus(order.id, paymentStatus);
+      if (paymentStatus === "paid" && previousPayment !== "paid") {
+        requestNotification({
+          event: "payment.approved",
+          orderId: order.id,
+        });
+      } else if (paymentStatus === "failed" && previousPayment !== "failed") {
+        requestNotification({
+          event: "payment.failed",
+          orderId: order.id,
+        });
+      }
       toast.success("Payment status updated.");
       router.refresh();
     } catch (err) {

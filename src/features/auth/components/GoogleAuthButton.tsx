@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
 import { sanitizeRedirectTo } from "@/features/auth/lib/safe-redirect";
+import { requestNotification } from "@/features/notifications";
 import { Button } from "@/shared/ui/Button";
 
 type GoogleAuthButtonProps = {
@@ -46,7 +47,15 @@ export function GoogleAuthButton({
   async function handleClick() {
     setLoading(true);
     try {
-      await signInWithGoogle();
+      const session = await signInWithGoogle();
+      if (session.isNewCustomer && session.user.email) {
+        requestNotification({
+          event: "account.welcome",
+          email: session.user.email,
+          displayName: session.user.displayName ?? undefined,
+          customerId: session.customerId,
+        });
+      }
       onSuccess?.();
       if (navigate) {
         router.replace(sanitizeRedirectTo(redirectTo, "/account"));

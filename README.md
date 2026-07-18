@@ -30,7 +30,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Categories CRUD
 - Products CRUD (image optional)
 - Orders list + detail (payment / fulfillment / notes)
-- Store settings editor (brand, locale, contact, social, hero, feature flags, payment providers)
+- Store settings editor (brand, locale, contact, social, hero, feature flags, payment providers, notifications)
 - Image uploads via Firebase Storage (`MediaService`)
 
 ### Payments
@@ -39,10 +39,20 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - **Cash on Delivery** — offline method; payment stays pending until admin confirms
 - Stripe / PayPal / bank transfer — reserved in settings & env; not registered at checkout yet
 
+### Notifications (transactional email)
+- The template **officially supports Resend** for outbound email
+- Architecture is still provider-based (`NotificationProvider`) so SendGrid / SES / etc. can be added later **without** changing Checkout, Orders, or Account
+- Server-only dispatch via `POST /api/notifications/dispatch` (never from `OrderService`)
+- Events: order created / payment approved|failed / shipped / cancelled / welcome / admin alerts
+- Admin → Store Settings → Notifications: **sender name, sender email, and enable toggles only** (no provider picker)
+- Fire-and-forget: email failure never rolls back orders or auth
+- Architecture: [`docs/architecture/ADR-019-notification-system.md`](docs/architecture/ADR-019-notification-system.md)
+
 ### Architecture highlights
 - Clean separation: UI → features → services → Firebase
 - Identity (`auth`) vs Account (`account`) vs Orders — separate ownership
 - Domain services own Firestore/Storage (no Firebase imports in UI)
+- **External integrations (Payments, Notifications, future Inventory/Analytics) run through server API routes** — not from client components or domain persistence services
 - Typed models + Zod validation on admin/checkout forms
 - Settings ∩ registered providers decide which payment methods appear at checkout
 - Storefront design tokens + CSS variables from Settings (rebrand without forking UI)
@@ -63,6 +73,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 | Database | Cloud Firestore |
 | Storage | Firebase Storage |
 | Payments | Mercado Pago (first provider) |
+| Email | Resend (officially supported; provider-agnostic architecture) |
 | Client state | Zustand |
 | Validation | Zod |
 | Hosting (target) | Firebase App Hosting |
@@ -98,6 +109,8 @@ cp .env.example .env.local
 Fill in your Firebase web config from the Firebase Console → Project settings → Your apps.
 
 For Mercado Pago (optional locally; required for live redirect + auto-paid sync), also set `MERCADOPAGO_*` and `NEXT_PUBLIC_APP_URL`. See [`.env.example`](.env.example) and [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md).
+
+For transactional email, set `RESEND_API_KEY`, then in **Admin → Settings → Notifications** set sender name/email and enable the toggles you need. The sender address must be verified in Resend. Admins do not choose email providers — Resend is the supported integration.
 
 ### 3. Firebase setup (minimum)
 

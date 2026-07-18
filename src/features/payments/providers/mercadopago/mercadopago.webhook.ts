@@ -4,6 +4,7 @@ import {
 } from "mercadopago";
 
 import { OrderError, OrderService } from "@/features/orders/services";
+import { dispatchNotificationSafely } from "@/features/notifications/lib/dispatch-notification";
 import { PaymentError } from "@/features/payments/services/payment-error";
 import { getMercadoPagoConfig } from "./mercadopago.config";
 import { toMercadoPagoWebhookError } from "./mercadopago.errors";
@@ -142,6 +143,9 @@ export async function processMercadoPagoWebhook(input: {
     }
 
     const orderService = input.orderService ?? new OrderService();
+    const previous = await orderService.getById(orderId);
+    const previousPaymentStatus = previous?.payment.status;
+
     const updated = await orderService.updatePayment(orderId, {
       status: verified.orderPaymentStatus,
       paymentId: verified.paymentId,
@@ -150,6 +154,21 @@ export async function processMercadoPagoWebhook(input: {
       approvedAt: verified.approvedAt ?? undefined,
       provider: "mercadopago",
     });
+
+    // External email send only after successful persistence (RFC-019).
+    if (previousPaymentStatus !== updated.payment.status) {
+      if (updated.payment.status === "paid") {
+        await dispatchNotificationSafely({
+          type: "payment.approved",
+          orderId: updated.id,
+        });
+      } else if (updated.payment.status === "failed") {
+        await dispatchNotificationSafely({
+          type: "payment.failed",
+          orderId: updated.id,
+        });
+      }
+    }
 
     return {
       handled: true,

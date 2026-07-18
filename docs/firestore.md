@@ -137,10 +137,24 @@ For each new Serious Flux client, the agency changes Firestore `settings/general
 | `shippingEnabled`  | `boolean`   | yes      | Whether shipping is offered |
 | `maintenanceMode`  | `boolean`   | yes      | Blocks commerce when true |
 | `hero`             | `object`    | no       | Optional homepage hero overrides (RFC-010) |
+| `notifications`    | `object`    | no       | Public transactional email config (RFC-019) |
 | `createdAt`        | `Timestamp` | yes      | Created at |
 | `updatedAt`        | `Timestamp` | yes      | Last update |
 
 Optional nested `hero` fields: `title`, `subtitle`, `image`, `ctaText`, `ctaHref` (all strings). When omitted or partial, the storefront resolves from `storeName` / `tagline` / `description` via `resolveHeroContent`.
+
+Optional nested `notifications` fields (RFC-019 / RFC-019.1):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider` | `string` | Always `"resend"` from Admin UI; other slots reserved for developers |
+| `senderEmail` / `senderName` | `string` | From header (verify in Resend) — **Admin-editable** |
+| `replyTo` / `adminEmail` | `string` | Optional; empty falls back to store `email` — **not shown in Admin** |
+| `enableCustomerEmails` | `boolean` | Customer transactional mail — **Admin-editable** |
+| `enableAdminEmails` | `boolean` | Admin new-order / payment alerts — **Admin-editable** |
+| `enableWelcomeEmail` | `boolean` | Welcome mail after signup — **Admin-editable** |
+
+Secrets (`RESEND_API_KEY`) stay in server env — never on this document. Admin never configures infrastructure or picks vendors.
 
 ### Service contract (RFC-002)
 

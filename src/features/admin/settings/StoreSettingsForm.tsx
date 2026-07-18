@@ -5,12 +5,18 @@ import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import {
+  NotificationsSettingsFields,
+  type NotificationsFieldErrors,
+  type NotificationsFormValues,
+} from "@/features/admin/settings/NotificationsSettingsFields";
+import {
   PaymentProvidersSettingsFields,
   type PaymentProviderFieldErrors,
 } from "@/features/admin/settings/PaymentProvidersSettingsFields";
-import type {
-  StoreHeroFormData,
-  StoreSettingsFormData,
+import {
+  toNotificationsSettings,
+  type StoreHeroFormData,
+  type StoreSettingsFormData,
 } from "@/features/admin/settings/store-settings-form-data";
 import { ImageUpload } from "@/features/media/components/ImageUpload";
 import {
@@ -57,6 +63,14 @@ const paymentProvidersSchema = z.object({
   bankTransfer: paymentProviderConfigSchema,
 });
 
+const notificationsSchema = z.object({
+  senderEmail: z.string().trim(),
+  senderName: z.string().trim(),
+  enableCustomerEmails: z.boolean(),
+  enableAdminEmails: z.boolean(),
+  enableWelcomeEmail: z.boolean(),
+});
+
 const storeSettingsFormSchema = z.object({
   storeName: z.string().trim().min(1, "Store name is required."),
   tagline: z.string().trim(),
@@ -88,6 +102,7 @@ const storeSettingsFormSchema = z.object({
   maintenanceMode: z.boolean(),
   shippingEnabled: z.boolean(),
   paymentProviders: paymentProvidersSchema,
+  notifications: notificationsSchema,
   hero: heroFormSchema,
 });
 
@@ -95,12 +110,16 @@ type StoreSettingsFormValues = z.infer<typeof storeSettingsFormSchema>;
 
 type FieldErrors = Partial<
   Record<
-    Exclude<keyof StoreSettingsFormValues, "hero" | "paymentProviders">,
+    Exclude<
+      keyof StoreSettingsFormValues,
+      "hero" | "paymentProviders" | "notifications"
+    >,
     string
   >
 > & {
   hero?: Partial<Record<keyof StoreHeroFormData, string>>;
   paymentProviders?: PaymentProviderFieldErrors;
+  notifications?: NotificationsFieldErrors;
 };
 
 type StoreSettingsFormProps = {
@@ -120,6 +139,7 @@ function toInitialValues(
       paypal: { ...settings.paymentProviders.paypal },
       bankTransfer: { ...settings.paymentProviders.bankTransfer },
     },
+    notifications: { ...settings.notifications },
   };
 }
 
@@ -150,7 +170,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   function setField<
     K extends Exclude<
       keyof StoreSettingsFormValues,
-      "hero" | "paymentProviders"
+      "hero" | "paymentProviders" | "notifications"
     >,
   >(key: K, value: StoreSettingsFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -176,6 +196,12 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   function setPaymentProviders(next: PaymentProvidersConfig) {
     setValues((current) => ({ ...current, paymentProviders: next }));
     setFieldErrors((current) => ({ ...current, paymentProviders: undefined }));
+    setSaved(false);
+  }
+
+  function setNotifications(next: NotificationsFormValues) {
+    setValues((current) => ({ ...current, notifications: next }));
+    setFieldErrors((current) => ({ ...current, notifications: undefined }));
     setSaved(false);
   }
 
@@ -218,20 +244,34 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
           continue;
         }
         if (
+          root === "notifications" &&
+          typeof issue.path[1] === "string"
+        ) {
+          const fieldKey = issue.path[1] as keyof NotificationsFormValues;
+          if (!nextErrors.notifications?.[fieldKey]) {
+            nextErrors.notifications = {
+              ...nextErrors.notifications,
+              [fieldKey]: issue.message,
+            };
+          }
+          continue;
+        }
+        if (
           typeof root === "string" &&
           root !== "hero" &&
           root !== "paymentProviders" &&
+          root !== "notifications" &&
           !nextErrors[
             root as Exclude<
               keyof StoreSettingsFormValues,
-              "hero" | "paymentProviders"
+              "hero" | "paymentProviders" | "notifications"
             >
           ]
         ) {
           nextErrors[
             root as Exclude<
               keyof StoreSettingsFormValues,
-              "hero" | "paymentProviders"
+              "hero" | "paymentProviders" | "notifications"
             >
           ] = issue.message;
         }
@@ -243,7 +283,11 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
     setLoading(true);
 
     try {
-      await new StoreSettingsService().updateGeneralSettings(parsed.data);
+      const { notifications, ...rest } = parsed.data;
+      await new StoreSettingsService().updateGeneralSettings({
+        ...rest,
+        notifications: toNotificationsSettings(notifications),
+      });
       toast.success("Store settings saved.");
       setSaved(true);
       router.refresh();
@@ -266,8 +310,8 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
       <div>
         <h2 className="text-lg font-semibold text-foreground">Settings</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Brand identity, locale, contact, social, hero, payments, and feature
-          flags.
+          Brand identity, locale, contact, social, hero, payments,
+          notifications, and feature flags.
         </p>
       </div>
 
@@ -588,6 +632,15 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
             errors={fieldErrors.paymentProviders}
             disabled={loading}
             onChange={setPaymentProviders}
+          />
+
+          <SectionHeading>Notifications</SectionHeading>
+
+          <NotificationsSettingsFields
+            value={values.notifications}
+            errors={fieldErrors.notifications}
+            disabled={loading}
+            onChange={setNotifications}
           />
 
           <SectionHeading>Feature flags</SectionHeading>

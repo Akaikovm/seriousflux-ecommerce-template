@@ -111,19 +111,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signUp = useCallback(
     async (credentials: SignUpCredentials): Promise<AuthenticatedSession> => {
-      const authUser = await authService.signUp(credentials);
+      const { user: authUser, isNewCustomer } =
+        await authService.signUp(credentials);
       const session = await roleResolver.resolve(authUser);
-      applySession(session);
-      return session;
+      const next = { ...session, isNewCustomer };
+      applySession(next);
+      return next;
     },
     [applySession, authService, roleResolver],
   );
 
   const signInWithGoogle = useCallback(async (): Promise<AuthenticatedSession> => {
-    const authUser = await authService.signInWithGoogle();
+    const { user: authUser, isNewCustomer } =
+      await authService.signInWithGoogle();
     const session = await roleResolver.resolve(authUser);
-    applySession(session);
-    return session;
+    const next = { ...session, isNewCustomer };
+    applySession(next);
+    return next;
   }, [applySession, authService, roleResolver]);
 
   const signOut = useCallback(async () => {

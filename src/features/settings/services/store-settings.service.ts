@@ -10,6 +10,10 @@ import {
 
 import { getFirestoreDb } from "@/firebase/firestore";
 import {
+  DEFAULT_NOTIFICATIONS_SETTINGS,
+  mapNotificationsSettings,
+} from "@/features/notifications/lib/default-notifications-settings";
+import {
   DEFAULT_PAYMENT_PROVIDERS,
   mapPaymentProvidersConfig,
   paymentProvidersFromLegacyFlags,
@@ -18,6 +22,7 @@ import {
 } from "@/features/payments/lib/resolve-enabled-payment-methods";
 import type {
   EnabledPaymentMethods,
+  NotificationsSettings,
   PaymentProvidersConfig,
   StoreSettings,
   StoreSettingsUpdateInput,
@@ -83,6 +88,7 @@ export function getDefaultStoreSettings(
     maintenanceMode: false,
     paymentProviders,
     enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
+    notifications: { ...DEFAULT_NOTIFICATIONS_SETTINGS },
     createdAt: now,
     updatedAt: now,
   };
@@ -182,6 +188,11 @@ export function mapStoreSettings(
   const { paymentProviders, enabledPaymentMethods } =
     resolveMappedPaymentProviders(data);
 
+  const notifications: NotificationsSettings = mapNotificationsSettings(
+    data.notifications,
+    defaults.notifications ?? DEFAULT_NOTIFICATIONS_SETTINGS,
+  );
+
   return {
     storeName: asString(data.storeName, defaults.storeName),
     tagline: asString(data.tagline, defaults.tagline),
@@ -206,6 +217,7 @@ export function mapStoreSettings(
     maintenanceMode: asBoolean(data.maintenanceMode, defaults.maintenanceMode),
     paymentProviders,
     enabledPaymentMethods,
+    notifications,
     hero,
     createdAt: asTimestamp(data.createdAt, defaults.createdAt),
     updatedAt: asTimestamp(data.updatedAt, defaults.updatedAt),
@@ -335,12 +347,18 @@ export class StoreSettingsService {
         current,
       );
 
+      const notifications: NotificationsSettings =
+        input.notifications !== undefined
+          ? mapNotificationsSettings(input.notifications)
+          : (current.notifications ?? { ...DEFAULT_NOTIFICATIONS_SETTINGS });
+
       const next: StoreSettings = {
         ...current,
         ...input,
         hero: input.hero !== undefined ? input.hero : current.hero,
         paymentProviders,
         enabledPaymentMethods,
+        notifications,
         createdAt: current.createdAt,
         updatedAt: now,
       };
@@ -351,6 +369,7 @@ export class StoreSettingsService {
         hero,
         paymentProviders: nextProviders,
         enabledPaymentMethods: nextLegacy,
+        notifications: nextNotifications,
         ...rest
       } = next;
 
@@ -359,6 +378,7 @@ export class StoreSettingsService {
         ...(hero ? { hero } : {}),
         ...(nextProviders ? { paymentProviders: nextProviders } : {}),
         ...(nextLegacy ? { enabledPaymentMethods: nextLegacy } : {}),
+        ...(nextNotifications ? { notifications: nextNotifications } : {}),
         createdAt,
         updatedAt,
       });
