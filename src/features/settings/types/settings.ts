@@ -114,7 +114,7 @@ export interface StoreSettings {
    *
    * Controls which providers appear at checkout and their labels.
    * Never stores credentials — secrets remain in server env vars.
-   * Admin UI for editing these values ships in a later RFC.
+   * Edited from Admin → Store Settings (Payment methods).
    */
   paymentProviders?: PaymentProvidersConfig;
 

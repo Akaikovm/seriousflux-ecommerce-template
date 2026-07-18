@@ -1,4 +1,5 @@
 export { AdminSettingsView } from "./AdminSettingsView";
+export { PaymentProvidersSettingsFields } from "./PaymentProvidersSettingsFields";
 export { StoreSettingsForm } from "./StoreSettingsForm";
 export {
   toStoreSettingsFormData,

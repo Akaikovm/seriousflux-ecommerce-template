@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
+import {
+  PaymentProvidersSettingsFields,
+  type PaymentProviderFieldErrors,
+} from "@/features/admin/settings/PaymentProvidersSettingsFields";
 import type {
   StoreHeroFormData,
   StoreSettingsFormData,
@@ -13,6 +17,11 @@ import {
   StoreSettingsError,
   StoreSettingsService,
 } from "@/features/settings/services";
+import type {
+  PaymentProviderConfig,
+  PaymentProviderSettingsKey,
+  PaymentProvidersConfig,
+} from "@/features/settings/types";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
@@ -31,6 +40,21 @@ const heroFormSchema = z.object({
   image: z.string(),
   ctaText: z.string().trim(),
   ctaHref: z.string().trim(),
+});
+
+const paymentProviderConfigSchema = z.object({
+  enabled: z.boolean(),
+  displayName: z.string().trim().min(1, "Display name is required."),
+  description: z.string().trim(),
+  sortOrder: z.number().int("Sort order must be a whole number."),
+});
+
+const paymentProvidersSchema = z.object({
+  mercadopago: paymentProviderConfigSchema,
+  cashOnDelivery: paymentProviderConfigSchema,
+  stripe: paymentProviderConfigSchema,
+  paypal: paymentProviderConfigSchema,
+  bankTransfer: paymentProviderConfigSchema,
 });
 
 const storeSettingsFormSchema = z.object({
@@ -63,15 +87,20 @@ const storeSettingsFormSchema = z.object({
   address: z.string().trim(),
   maintenanceMode: z.boolean(),
   shippingEnabled: z.boolean(),
+  paymentProviders: paymentProvidersSchema,
   hero: heroFormSchema,
 });
 
 type StoreSettingsFormValues = z.infer<typeof storeSettingsFormSchema>;
 
 type FieldErrors = Partial<
-  Record<Exclude<keyof StoreSettingsFormValues, "hero">, string>
+  Record<
+    Exclude<keyof StoreSettingsFormValues, "hero" | "paymentProviders">,
+    string
+  >
 > & {
   hero?: Partial<Record<keyof StoreHeroFormData, string>>;
+  paymentProviders?: PaymentProviderFieldErrors;
 };
 
 type StoreSettingsFormProps = {
@@ -81,7 +110,17 @@ type StoreSettingsFormProps = {
 function toInitialValues(
   settings: StoreSettingsFormData,
 ): StoreSettingsFormValues {
-  return { ...settings, hero: { ...settings.hero } };
+  return {
+    ...settings,
+    hero: { ...settings.hero },
+    paymentProviders: {
+      mercadopago: { ...settings.paymentProviders.mercadopago },
+      cashOnDelivery: { ...settings.paymentProviders.cashOnDelivery },
+      stripe: { ...settings.paymentProviders.stripe },
+      paypal: { ...settings.paymentProviders.paypal },
+      bankTransfer: { ...settings.paymentProviders.bankTransfer },
+    },
+  };
 }
 
 function SectionHeading({ children }: { children: string }) {
@@ -108,10 +147,12 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  function setField<K extends Exclude<keyof StoreSettingsFormValues, "hero">>(
-    key: K,
-    value: StoreSettingsFormValues[K],
-  ) {
+  function setField<
+    K extends Exclude<
+      keyof StoreSettingsFormValues,
+      "hero" | "paymentProviders"
+    >,
+  >(key: K, value: StoreSettingsFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) => ({ ...current, [key]: undefined }));
     setSaved(false);
@@ -129,6 +170,12 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
       ...current,
       hero: { ...current.hero, [key]: undefined },
     }));
+    setSaved(false);
+  }
+
+  function setPaymentProviders(next: PaymentProvidersConfig) {
+    setValues((current) => ({ ...current, paymentProviders: next }));
+    setFieldErrors((current) => ({ ...current, paymentProviders: undefined }));
     setSaved(false);
   }
 
@@ -153,12 +200,40 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
           continue;
         }
         if (
+          root === "paymentProviders" &&
+          typeof issue.path[1] === "string" &&
+          typeof issue.path[2] === "string"
+        ) {
+          const providerKey = issue.path[1] as PaymentProviderSettingsKey;
+          const fieldKey = issue.path[2] as keyof PaymentProviderConfig;
+          if (!nextErrors.paymentProviders?.[providerKey]?.[fieldKey]) {
+            nextErrors.paymentProviders = {
+              ...nextErrors.paymentProviders,
+              [providerKey]: {
+                ...nextErrors.paymentProviders?.[providerKey],
+                [fieldKey]: issue.message,
+              },
+            };
+          }
+          continue;
+        }
+        if (
           typeof root === "string" &&
           root !== "hero" &&
-          !nextErrors[root as Exclude<keyof StoreSettingsFormValues, "hero">]
+          root !== "paymentProviders" &&
+          !nextErrors[
+            root as Exclude<
+              keyof StoreSettingsFormValues,
+              "hero" | "paymentProviders"
+            >
+          ]
         ) {
-          nextErrors[root as Exclude<keyof StoreSettingsFormValues, "hero">] =
-            issue.message;
+          nextErrors[
+            root as Exclude<
+              keyof StoreSettingsFormValues,
+              "hero" | "paymentProviders"
+            >
+          ] = issue.message;
         }
       }
       setFieldErrors(nextErrors);
@@ -191,7 +266,8 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
       <div>
         <h2 className="text-lg font-semibold text-foreground">Settings</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Brand identity, locale, contact, social, hero, and feature flags.
+          Brand identity, locale, contact, social, hero, payments, and feature
+          flags.
         </p>
       </div>
 
@@ -504,6 +580,15 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
               onChange={(event) => setHeroField("ctaHref", event.target.value)}
             />
           </div>
+
+          <SectionHeading>Payment methods</SectionHeading>
+
+          <PaymentProvidersSettingsFields
+            value={values.paymentProviders}
+            errors={fieldErrors.paymentProviders}
+            disabled={loading}
+            onChange={setPaymentProviders}
+          />
 
           <SectionHeading>Feature flags</SectionHeading>
 

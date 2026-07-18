@@ -3,6 +3,12 @@
  * Safe to pass from Server Components to Client Components.
  */
 
+import { resolvePaymentProvidersConfig } from "@/features/payments/lib/resolve-enabled-payment-methods";
+import type {
+  EnabledPaymentMethods,
+  PaymentProvidersConfig,
+} from "@/features/settings/types";
+
 export type StoreHeroFormData = {
   title: string;
   subtitle: string;
@@ -33,6 +39,7 @@ export type StoreSettingsFormData = {
   address: string;
   maintenanceMode: boolean;
   shippingEnabled: boolean;
+  paymentProviders: PaymentProvidersConfig;
   hero: StoreHeroFormData;
 };
 
@@ -61,6 +68,8 @@ export function toStoreSettingsFormData(settings: {
   address: string;
   maintenanceMode: boolean;
   shippingEnabled: boolean;
+  paymentProviders?: PaymentProvidersConfig;
+  enabledPaymentMethods?: EnabledPaymentMethods;
   hero?: Partial<StoreHeroFormData> | null;
 }): StoreSettingsFormData {
   return {
@@ -85,6 +94,7 @@ export function toStoreSettingsFormData(settings: {
     address: settings.address,
     maintenanceMode: settings.maintenanceMode,
     shippingEnabled: settings.shippingEnabled,
+    paymentProviders: resolvePaymentProvidersConfig(settings),
     hero: {
       title: settings.hero?.title ?? "",
       subtitle: settings.hero?.subtitle ?? "",
