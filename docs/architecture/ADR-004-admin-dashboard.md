@@ -35,6 +35,8 @@ Admin components never import Firebase.
 - Any authenticated Firebase user may access admin in RFC-011.
 - Role-based access (custom claims / `CustomerRole`) is deferred.
 
+> **Superseded by [ADR-017](./ADR-017-identity-foundation.md):** Admin now requires Firestore `role: "admin"` and `status: "active"` via `RequireRole`. Authentication alone is not enough. Custom claims remain deferred.
+
 ### Service mutations
 
 Added write methods without changing existing Firestore contracts:

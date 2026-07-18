@@ -4,11 +4,13 @@ import { Menu, User, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useCurrentUser } from "@/features/auth/hooks";
 import { CartLink } from "@/features/cart/components/CartLink";
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
 import { cn } from "@/lib/utils";
 import { radius, spacing, transition, zIndex } from "@/shared/design/tokens";
+import { LoadingState } from "@/shared/ui/LoadingState";
 
 type NavbarProps = {
   storeName: string;
@@ -17,12 +19,16 @@ type NavbarProps = {
 };
 
 /**
- * Storefront navbar — brand lockup, nav, cart, account placeholder.
+ * Storefront navbar — brand lockup, nav, cart, Login / Account (RFC-018).
  *
- * Client island for mobile menu only. No data fetching. No Firebase.
+ * Client island for mobile menu + auth-aware account link. No Firebase.
  */
 export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, loading } = useCurrentUser();
+
+  const accountHref = isAuthenticated ? "/account" : "/login";
+  const accountLabel = isAuthenticated ? "Account" : "Login";
 
   return (
     <header
@@ -77,19 +83,20 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <span
-            className="hidden items-center justify-center text-muted-foreground sm:inline-flex"
-            style={{
-              width: spacing["2xl"],
-              height: spacing["2xl"],
-              borderRadius: radius.md,
-            }}
-            title="Account coming soon"
-            aria-label="Account (coming soon)"
-            role="img"
-          >
-            <User className="size-5" aria-hidden />
-          </span>
+          {loading ? (
+            <span className="hidden sm:inline-flex" aria-hidden>
+              <LoadingState width="4rem" height="1.25rem" />
+            </span>
+          ) : (
+            <Link
+              href={accountHref}
+              className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex sm:items-center sm:gap-1.5"
+              style={{ transitionDuration: transition.fast }}
+            >
+              <User className="size-4" aria-hidden />
+              {accountLabel}
+            </Link>
+          )}
           <CartLink />
         </div>
       </div>
@@ -116,7 +123,15 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
               {link.label}
             </Link>
           ))}
-          <p className="py-2 text-sm text-muted-foreground">Account coming soon</p>
+          {!loading ? (
+            <Link
+              href={accountHref}
+              className="storefront-heading py-2.5 text-xl text-foreground"
+              onClick={() => setOpen(false)}
+            >
+              {accountLabel}
+            </Link>
+          ) : null}
         </nav>
       </div>
     </header>

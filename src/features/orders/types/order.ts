@@ -196,7 +196,7 @@ export interface OrderTotals {
  * Timestamps, document id, and `orderNumber` are owned by OrderService.
  */
 export type OrderCreateInput = {
-  /** Guest checkout omits / leaves empty until storefront Auth exists. */
+  /** Guest checkout omits; authenticated checkout sets Auth uid (RFC-017). */
   customerId?: string;
 
   customerEmail: string;
@@ -236,7 +236,7 @@ export interface Order {
 
   /**
    * Reference to `customers/{customerId}`.
-   * Optional for guest checkout; set when storefront Auth exists.
+   * Optional for guest checkout; set to Auth uid when the buyer is signed in.
    */
   customerId?: string;
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { AppProviders } from "@/app/providers";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { buildStoreMetadata } from "@/features/settings/lib/store-metadata";
 
@@ -39,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Application root layout.
  *
- * Provides html/body, fonts, and global CSS only.
+ * Provides html/body, fonts, global CSS, and a single AuthProvider (RFC-017).
  * Storefront chrome lives in `(storefront)/layout.tsx`.
  * Admin chrome lives in `admin/(dashboard)/layout.tsx`.
  */
@@ -55,7 +56,9 @@ export default async function RootLayout({
       lang={settings.language || "en"}
       className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

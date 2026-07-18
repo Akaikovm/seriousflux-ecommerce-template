@@ -15,12 +15,15 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Shopping cart (Zustand + localStorage) with add/remove toasts
 - Checkout that creates orders in Firestore and redirects to the selected payment method
 - Order confirmation page (branded, Settings-driven)
+- Customer accounts: `/login`, `/signup`, `/forgot-password`, Google Sign-In
+- Customer Account area: `/account` (dashboard, profile, orders)
+- Guest checkout remains fully supported; optional sign-in at checkout; signed-in orders attach `customerId`
 - Branding driven by `settings/general` (name, logo, favicon, colors, locale, contact, social, hero)
 - Maintenance mode gate from store settings
 - Shared storefront chrome: brand lockup, page headers, breadcrumbs, summary panels
 
 ### Admin (`/admin`)
-- Firebase Authentication login (any signed-in user is treated as admin for now)
+- Firebase Authentication + Firestore role gate (`role: admin`, `status: active`)
 - Dashboard
 - Categories CRUD
 - Products CRUD (image optional)
@@ -36,6 +39,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 
 ### Architecture highlights
 - Clean separation: UI → features → services → Firebase
+- Identity (`auth`) vs Account (`account`) vs Orders — separate ownership
 - Domain services own Firestore/Storage (no Firebase imports in UI)
 - Typed models + Zod validation on admin/checkout forms
 - Settings ∩ registered providers decide which payment methods appear at checkout
@@ -68,7 +72,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Node.js 20+
 - npm
 - A Firebase project with:
-  - Authentication (Email/Password enabled)
+  - Authentication (**Email/Password** and **Google** enabled)
   - Cloud Firestore
   - Storage
   - Web app config (API key, etc.)
@@ -95,9 +99,27 @@ For Mercado Pago (optional locally; required for live redirect + auto-paid sync)
 
 ### 3. Firebase setup (minimum)
 
-1. **Authentication** — enable Email/Password. Create an admin user in the Console.
-2. **Firestore** — create the database. For local development you may start with open rules; lock them down before production.
-3. **Storage** — enable Storage. Rules must allow authenticated admins to write under `media/` (or temporarily allow authenticated writes in development).
+1. **Authentication** — enable Email/Password and Google.
+2. **Create the first admin manually** (never through the app signup):
+   - Create a user in Firebase Console → Authentication.
+   - Copy the user's `uid`.
+   - Create Firestore document `customers/{uid}` with at least:
+
+     ```json
+     {
+       "email": "admin@example.com",
+       "displayName": "Admin",
+       "photoURL": null,
+       "role": "admin",
+       "status": "active",
+       "addresses": [],
+       "createdAt": "<timestamp>",
+       "updatedAt": "<timestamp>"
+     }
+     ```
+
+3. **Firestore** — create the database. For local development you may start with open rules; lock them down before production.
+4. **Storage** — enable Storage. Rules must allow authenticated admins to write under `media/` (or temporarily allow authenticated writes in development).
 
 Collections used by the kit:
 
@@ -107,7 +129,7 @@ Collections used by the kit:
 | `categories` | Catalog groupings |
 | `products` | Sellable items |
 | `orders` | Checkout purchases |
-| `customers` | Buyer profiles (Auth uid) — reserved / partial |
+| `customers` | Identity + buyer profile (`role`, `status`) — Auth uid |
 
 See [`docs/firestore.md`](docs/firestore.md) for the full data model.
 
@@ -129,6 +151,9 @@ npm run dev
 | URL | Purpose |
 |-----|---------|
 | [http://localhost:3000](http://localhost:3000) | Storefront |
+| [http://localhost:3000/login](http://localhost:3000/login) | Customer sign in (email + Google) |
+| [http://localhost:3000/signup](http://localhost:3000/signup) | Customer sign up (email + Google) |
+| [http://localhost:3000/account](http://localhost:3000/account) | Customer Account (requires auth) |
 | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) | Admin login |
 
 ---
@@ -162,7 +187,11 @@ Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime siz
 
 ### Smoke-test checklist after deploy
 - `/` loads with store name from Firestore
-- `/admin/login` works with your Auth user
+- `/admin/login` works only for users with `customers/{uid}.role === "admin"` and `status === "active"`
+- `/login` and `/signup` create customer accounts (`role: customer`) via email or Google
+- `/account` shows dashboard, profile, and own orders (ownership-checked)
+- Guest checkout still works; optional Google / Sign in at checkout; signed-in checkout sets `orders.customerId`
+- Navbar shows **Login** (guest) or **Account** (authenticated)
 - Catalog / cart / checkout still talk to the same Firebase project
 - Image upload only works if Storage rules allow your admin user
 - Mercado Pago (if enabled): successful pay → Admin order shows **Paid** without manual update
@@ -202,11 +231,12 @@ src/
   components/              # App-level composition (e.g. layout shells)
   features/
     admin/                 # Admin UI (tables, forms, nav)
-    auth/                  # Auth service, provider, RequireAuth
+    auth/                  # Identity: AuthService, RoleResolver, Google, guards, hooks
+    account/               # Customer Account UI + AccountService (profile)
     cart/                  # Cart store + UI
     categories/            # Category domain + storefront cards
-    checkout/              # Checkout form + shipping helpers
-    customers/             # Customer domain (types only for now)
+    checkout/              # Checkout form + optional auth prompt
+    customers/             # Customer domain types (CustomerProfile)
     home/                  # Homepage section shells
     media/                 # MediaService + ImageUpload
     orders/                # Order domain + service
@@ -267,18 +297,23 @@ For a new store, prefer changing data — not code:
 - Image upload pipeline (UI → MediaService → Storage)
 - Store branding / favicon / maintenance mode from Firestore
 - Elevated storefront design system (tokens, headings, shared page chrome)
+- Identity foundation (email/password + Google, roles in Firestore, shared AuthProvider)
+- Customer Account (`/account` — dashboard, profile, own orders)
 - Deploy path via Firebase App Hosting
 
 **Deferred / not production-ready yet**
 - Stripe / PayPal providers (settings + env slots only)
 - `capturePayment` / `refund` on the payment interface (stubs)
 - Production-hardened Firestore & Storage security rules committed in-repo
-- Admin roles / custom claims (any Auth user can access `/admin`)
+- Custom claims / Next.js middleware session cookies (client role gate today)
+- Admin user management UI (first admin is seeded manually)
+- Wishlist / Addresses / Notifications
+- Apple / Facebook OAuth (Google is supported)
 - Per-client custom font families from Settings (kit default fonts today)
 - Product variants, inventory, coupons, reviews
-- Customer accounts on the storefront (guest checkout only)
 - Real shipping methods (single free “Standard” stub today)
 - Category filters / sort (listing UI is presentational today)
+- Guest order claiming (orders without `customerId` stay unlinked)
 
 ---
 

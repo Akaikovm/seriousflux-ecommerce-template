@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import type { CartItem } from "@/features/cart/types";
+import { useCurrentUser } from "@/features/auth/hooks";
 import { checkoutFormSchema } from "@/features/checkout/lib/checkout-form-schema";
 import { mapCartItemsToOrderItems } from "@/features/checkout/lib/map-cart-to-order-items";
 import {
@@ -59,9 +60,10 @@ function toInitialValues(
 }
 
 /**
- * Controlled checkout form (RFC-013, RFC-015, RFC-016.5).
+ * Controlled checkout form (RFC-013, RFC-015, RFC-016.5, RFC-017).
  * Order + payment orchestration goes through PaymentService only.
  * Payment methods are configuration-driven — no hardcoded provider assumptions.
+ * When authenticated, attaches `customerId` from Identity (never Firebase Auth).
  */
 export function CheckoutForm({
   items,
@@ -72,6 +74,7 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const router = useRouter();
   const toast = useToast();
+  const { customerId } = useCurrentUser();
   const shippingMethods = getAvailableShippingMethods();
   const enabledMethodIds = paymentOptions.map((option) => option.id);
   // First enabled option by sortOrder; PAYMENT_METHODS[0] only seeds empty state (submit blocked).
@@ -146,6 +149,7 @@ export function CheckoutForm({
       const { redirectUrl } = await new PaymentService().checkout({
         paymentMethod: parsed.data.paymentMethod,
         orderInput: {
+          ...(customerId ? { customerId } : {}),
           customerEmail: parsed.data.email,
           customerName: parsed.data.fullName,
           customerPhone: parsed.data.phone,

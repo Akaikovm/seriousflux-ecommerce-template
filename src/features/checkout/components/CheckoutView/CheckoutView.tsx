@@ -5,6 +5,7 @@ import {
   useCartStore,
 } from "@/features/cart/store";
 import { useCartHydrated } from "@/features/cart/hooks/use-cart-hydrated";
+import { CheckoutAuthPrompt } from "@/features/checkout/components/CheckoutAuthPrompt";
 import { CheckoutEmpty } from "@/features/checkout/components/CheckoutEmpty";
 import { CheckoutForm } from "@/features/checkout/components/CheckoutForm";
 import { CheckoutSummary } from "@/features/checkout/components/CheckoutSummary";
@@ -72,6 +73,7 @@ export function CheckoutView({
             </ol>
           }
         />
+        <CheckoutAuthPrompt />
         <CheckoutForm
           items={items}
           currency={summaryCurrency}

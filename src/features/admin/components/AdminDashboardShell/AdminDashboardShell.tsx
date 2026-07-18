@@ -3,20 +3,22 @@
 import type { ReactNode } from "react";
 
 import { AdminLayout } from "@/features/admin/components/AdminLayout";
-import { RequireAuth } from "@/features/auth/components";
+import { RequireRole } from "@/features/auth/guards";
 import { ToastProvider } from "@/shared/ui/Toast";
 
 import "@/features/admin/styles/admin.css";
+
 type AdminDashboardShellProps = {
   children: ReactNode;
   storeName: string;
 };
 
 /**
- * Client wrapper: auth gate + admin shell (RFC-011).
+ * Client wrapper: role gate + admin shell (RFC-017).
  *
- * Shell (sidebar/header) renders immediately; RequireAuth only gates page
+ * Shell (sidebar/header) renders immediately; RequireRole only gates page
  * content so auth resolution does not blank the whole chrome.
+ * Requires role=admin and status=active — authentication alone is not enough.
  */
 export function AdminDashboardShell({
   children,
@@ -25,7 +27,9 @@ export function AdminDashboardShell({
   return (
     <ToastProvider>
       <AdminLayout storeName={storeName}>
-        <RequireAuth>{children}</RequireAuth>
+        <RequireRole roles={["admin"]} redirectTo="/admin/login">
+          {children}
+        </RequireRole>
       </AdminLayout>
     </ToastProvider>
   );

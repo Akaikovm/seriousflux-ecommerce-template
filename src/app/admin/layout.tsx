@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { AuthProvider } from "@/features/auth/providers";
-
 export const metadata: Metadata = {
   title: {
     default: "Admin",
@@ -15,9 +13,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Admin root layout (RFC-011).
+ * Admin root layout (RFC-017).
  *
- * Provides AuthProvider for all admin routes including login.
+ * AuthProvider is mounted once at the application root — do not nest another.
  * Protected dashboard chrome lives in `(dashboard)/layout.tsx`.
  */
 export default function AdminRootLayout({
@@ -25,5 +23,5 @@ export default function AdminRootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return children;
 }

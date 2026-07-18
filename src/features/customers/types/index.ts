@@ -1,1 +1,5 @@
-export type { CustomerRole, CustomerAddress, CustomerProfile } from "./customer";
+export type {
+  CustomerRole,
+  CustomerAddress,
+  CustomerProfile,
+} from "./customer";

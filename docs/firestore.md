@@ -328,26 +328,50 @@ Example document (`products` — auto-id or slug-based id):
 ## 4. `customers`
 
 **Path:** `customers/{customerId}`  
-**TypeScript:** `src/features/customers/types/customer.ts` → `CustomerProfile`
+**TypeScript:** `src/features/customers/types/customer.ts` → `CustomerProfile`  
+**Identity services (RFC-017):** `IdentityBootstrapService`, `RoleResolver` in `src/features/auth/services/`  
+**Account profile (RFC-018):** `AccountService` in `src/features/account/services/` — updates `displayName`, `photoURL`, `phone` only
 
 ### Why this structure
 
-Named `customers` (not `users`) to match the commercial domain. The TypeScript interface is `CustomerProfile` so the profile document is distinct from generic “customer” UI language; the Firestore collection name remains `customers`. Document id equals Firebase Auth `uid` so profile load is a direct `getDoc` after login. Addresses are embedded arrays — enough for a small number of saved addresses without a subcollection.
+Named `customers` (not `users`) to match the commercial domain. The TypeScript interface is `CustomerProfile` so the profile document is distinct from generic “customer” UI language; the Firestore collection name remains `customers`. Document id equals Firebase Auth `uid` so profile load is a direct `getDoc` after login.
+
+**RFC-017** treats this document as the **identity source of truth** for `role` and `status`. Signup (email/password or Google) always bootstraps `role: "customer"` / `status: "active"`. Admin users are **never** created by the application — seed them manually in Firestore. Addresses remain an empty array until a future Address book RFC.
+
+**RFC-018** Account owns customer-facing profile edits (`displayName`, `photoURL`, `phone`). Firestore is canonical; Firebase Auth `displayName` / `photoURL` sync is best-effort after a successful Firestore write.
 
 ### Fields
 
 | Field         | Type                 | Required | Description |
 |---------------|----------------------|----------|-------------|
-| `id`          | `string`             | yes      | Same as Auth `uid` |
-| `email`       | `string`             | yes      | Account email |
-| `displayName` | `string`             | yes      | Public name |
-| `phone`       | `string`             | no       | Contact phone |
-| `photoUrl`    | `string`             | no       | Avatar URL / Storage path |
-| `role`        | `CustomerRole`       | yes      | `customer` \| `admin` |
-| `addresses`   | `CustomerAddress[]`  | yes      | Saved addresses (may be `[]`) |
+| `id`          | `string`             | yes      | Same as Auth `uid` (document id; may be omitted in stored payload) |
+| `email`       | `string`             | yes      | Account email (read-only in Account UI) |
+| `displayName` | `string`             | yes      | Public name (editable in Account) |
+| `phone`       | `string`             | no       | Contact phone (Firestore only; editable in Account) |
+| `photoURL`    | `string` \| `null`   | no       | Avatar URL (editable as URL in Account; no upload in RFC-018) |
+| `role`        | `PersistedRole`      | yes      | `customer` \| `staff` \| `admin` (never editable in Account) |
+| `status`      | `UserStatus`         | yes      | `active` \| `inactive` (never editable in Account) |
+| `addresses`   | `CustomerAddress[]`  | yes      | Saved addresses (always `[]` until Address book) |
 | `createdAt`   | `Timestamp`          | yes      | Created at |
 | `updatedAt`   | `Timestamp`          | yes      | Last update |
 
+### Identity bootstrap (RFC-017 / RFC-018)
+
+On first authentication (email/password signup, Google sign-in, or first resolve when the document is missing), Identity writes:
+
+```
+role: "customer"
+status: "active"
+email / displayName / photoURL from Auth (Google or email)
+addresses: []
+createdAt / updatedAt
+```
+
+Missing document resolution:
+
+- **Storefront / default** — bootstrap as `customer` automatically.
+- **Admin privileges** — fail closed: bootstrapped customers cannot pass `RequireRole(["admin"])`.
+- **Never** auto-create `admin` or `staff`.
 ### Nested: `CustomerAddress`
 
 | Field        | Type      | Required | Description |
@@ -393,7 +417,7 @@ Payment is abstracted via `OrderPayment.provider` so Mercado Pago can ship first
 | `payment`         | `OrderPayment`         | yes      | Provider payment metadata |
 | `totals`          | `OrderTotals`          | yes      | Money breakdown |
 | `currency`        | `string`               | yes      | ISO 4217 snapshot |
-| `notes`           | `string`               | no       | Internal admin notes (not customer-facing) |
+| `notes`           | `string`               | no       | Internal admin notes — **never** shown on customer Account (RFC-018) |
 | `createdAt`       | `Timestamp`            | yes      | Created at |
 | `updatedAt`       | `Timestamp`            | yes      | Last update |
 
@@ -462,10 +486,18 @@ Each line item is a full purchase snapshot so order history stays correct after 
 
 ### Suggested indexes
 
-- `customerId` ASC + `createdAt` DESC (customer order history)
+- `customerId` ASC + `createdAt` DESC (optional optimization for customer order history; RFC-018 sorts client-side after equality query)
 - `status` ASC + `createdAt` DESC (admin queues)
 - `payment.status` ASC + `createdAt` DESC (payment ops)
 
+### Customer order reads (RFC-018)
+
+| Method | Behavior |
+|--------|----------|
+| `OrderService.listByCustomerId(customerId)` | `where customerId ==` + client sort newest first |
+| `OrderService.getForCustomer(orderId, customerId)` | `getById` + ownership check; mismatch → not found |
+
+Account UI never lists all orders and never shows admin notes.
 ---
 
 ## TypeScript feature layout
@@ -535,11 +567,14 @@ These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope fo
 | Settings split                    | Add `settings/shipping`, `settings/payments`, `settings/seo` docs |
 | Per-variant stock                 | Add `variants[]` or `inventory` collection in a later RFC |
 | Nested categories                 | Add optional `parentId` on `Category` |
-| Guest checkout                    | Make `customerId` optional; keep email snapshots |
+| Guest checkout                    | Done (RFC-013) — `customerId` optional; email snapshots |
+| Authenticated checkout            | Done (RFC-017 / RFC-018) — optional Google/email at checkout; sets `customerId` |
+| Customer Account / My Orders      | Done (RFC-018) — `features/account` + ownership-checked reads |
+| Google Authentication             | Done (RFC-018) — same bootstrap as email/password |
 | Multi-currency                    | Prices map or `prices: Record<currency, number>`; `settings/general` gains `supportedCurrencies` |
 | Coupons / discounts               | New `coupons` collection; reference from `orders.totals.discount` |
 | Order audit trail                 | `orders/{id}/events` subcollection |
-| Custom claims for admin           | Move `role` enforcement to Auth claims; keep `role` as denormalized UI hint |
+| Custom claims for admin           | Deferred — Firestore `role` is source of truth (RFC-017); Claims later for Security Rules |
 | Payment provider in settings      | Add on `settings/payments` (or `general`) when checkout RFC lands |
 
 ---

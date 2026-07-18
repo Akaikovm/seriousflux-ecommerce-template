@@ -1,1 +1,12 @@
-export type { AuthUser, AuthUserRole, SignInCredentials } from "./auth";
+export type {
+  AppRole,
+  AuthProfileUpdateInput,
+  AuthUser,
+  AuthUserRole,
+  AuthenticatedSession,
+  PersistedRole,
+  ResetPasswordInput,
+  SignInCredentials,
+  SignUpCredentials,
+  UserStatus,
+} from "./auth";

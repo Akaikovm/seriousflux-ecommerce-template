@@ -11,21 +11,34 @@ import { Input } from "@/shared/ui/Input";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
 /**
- * Email/password sign-in form for the admin area (RFC-011).
+ * Admin sign-in form (RFC-017).
+ *
+ * Requires resolved session with role=admin and status=active.
+ * Authentication alone is not enough.
  */
 export function AdminLoginForm() {
-  const { user, loading: authLoading, signIn } = useAuth();
+  const {
+    user,
+    role,
+    status,
+    loading: authLoading,
+    signIn,
+    signOut,
+  } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const isAuthorizedAdmin =
+    user !== null && role === "admin" && status === "active";
+
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && isAuthorizedAdmin) {
       router.replace("/admin");
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, isAuthorizedAdmin, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +46,14 @@ export function AdminLoginForm() {
     setLoading(true);
 
     try {
-      await signIn({ email: email.trim(), password });
+      const session = await signIn({ email: email.trim(), password });
+
+      if (session.role !== "admin" || session.status !== "active") {
+        await signOut();
+        setError("This account is not authorized for admin access.");
+        return;
+      }
+
       router.replace("/admin");
     } catch (err) {
       if (err instanceof AuthError) {
@@ -46,7 +66,7 @@ export function AdminLoginForm() {
     }
   }
 
-  if (authLoading || user) {
+  if (authLoading || isAuthorizedAdmin) {
     return (
       <div className="flex w-full max-w-md justify-center py-12">
         <LoadingState width="12rem" height="2.5rem" />
@@ -60,7 +80,7 @@ export function AdminLoginForm() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold text-foreground">Admin sign in</h1>
           <p className="text-sm text-muted-foreground">
-            Sign in with your store account to manage products, categories, and
+            Sign in with an admin account to manage products, categories, and
             settings.
           </p>
         </div>

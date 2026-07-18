@@ -4,8 +4,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   Timestamp,
   updateDoc,
+  where,
   type DocumentData,
   type Firestore,
   type FirestoreError,
@@ -110,6 +112,14 @@ function toOrderError(error: unknown): OrderError {
   ) {
     return new OrderError(
       "Orders are temporarily unavailable. Please try again.",
+      "unavailable",
+      { cause: error },
+    );
+  }
+
+  if (firebaseCode === "failed-precondition") {
+    return new OrderError(
+      "Orders query failed a Firestore precondition (often a missing index). Check the browser console for details.",
       "unavailable",
       { cause: error },
     );
@@ -360,6 +370,60 @@ export class OrderService {
       }
 
       return mapOrder(snapshot);
+    } catch (error) {
+      throw toOrderError(error);
+    }
+  }
+
+  /**
+   * Orders for a customer, newest first (RFC-018 Account).
+   *
+   * Uses equality filter only + client sort so the kit works without a
+   * composite index. Add `customerId` ASC + `createdAt` DESC later for scale.
+   *
+   * @throws {OrderError} on Firestore failures (never raw Firebase errors).
+   */
+  async listByCustomerId(customerId: string): Promise<Order[]> {
+    try {
+      const trimmed = customerId.trim();
+      if (!trimmed) {
+        return [];
+      }
+
+      const q = query(
+        collection(this.db, ORDERS_COLLECTION),
+        where("customerId", "==", trimmed),
+      );
+      const snapshot = await getDocs(q);
+      return sortByCreatedAtDesc(snapshot.docs.map(mapOrder));
+    } catch (error) {
+      throw toOrderError(error);
+    }
+  }
+
+  /**
+   * Customer-scoped order read with ownership verification (RFC-018).
+   * Returns `null` when missing or when `order.customerId !== customerId`
+   * (same response either way — no existence leak).
+   *
+   * @throws {OrderError} on Firestore failures (never raw Firebase errors).
+   */
+  async getForCustomer(
+    orderId: string,
+    customerId: string,
+  ): Promise<Order | null> {
+    try {
+      const order = await this.getById(orderId);
+      if (!order) {
+        return null;
+      }
+
+      const ownerId = customerId.trim();
+      if (!ownerId || !order.customerId || order.customerId !== ownerId) {
+        return null;
+      }
+
+      return order;
     } catch (error) {
       throw toOrderError(error);
     }

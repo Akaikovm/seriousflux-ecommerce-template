@@ -1,13 +1,16 @@
 import type { Timestamp } from "firebase/firestore";
 
+import type { PersistedRole, UserStatus } from "@/features/auth/types";
+
 /**
- * Customer role within the storefront.
- * Admin access is modeled here for v1; can move to custom claims later.
+ * Customer role persisted on `customers/{uid}`.
+ * Re-exported from Identity (`PersistedRole`) — Firestore is source of truth (RFC-017).
  */
-export type CustomerRole = "customer" | "admin";
+export type CustomerRole = PersistedRole;
 
 /**
  * Shipping / billing address owned by a customer.
+ * Address book UI is out of scope for RFC-017.
  */
 export interface CustomerAddress {
   /** Local address id (UUID or short id) for selecting a saved address. */
@@ -39,7 +42,7 @@ export interface CustomerAddress {
 }
 
 /**
- * Customer profile document.
+ * Customer / identity document.
  *
  * Collection: `customers` (Firestore collection name is unchanged).
  *
@@ -48,6 +51,10 @@ export interface CustomerAddress {
  *
  * Document id should match the Firebase Authentication `uid` so auth and
  * profile data stay 1:1 without an extra lookup field.
+ *
+ * RFC-017 bootstraps identity fields (email, displayName, photoURL, role,
+ * status). RFC-018 Account owns profile product reads/updates (displayName,
+ * photoURL, phone) via AccountService — never from UI directly.
  */
 export interface CustomerProfile {
   /** Firestore document id — same as Firebase Auth uid. */
@@ -60,12 +67,18 @@ export interface CustomerProfile {
 
   phone?: string;
 
-  /** Optional avatar URL or Storage path. */
-  photoUrl?: string;
+  /** Optional avatar URL or Storage path (Firebase Auth naming). */
+  photoURL?: string | null;
 
   role: CustomerRole;
 
-  /** Saved addresses for checkout. */
+  /** Account lifecycle — inactive admin/staff cannot access Admin. */
+  status: UserStatus;
+
+  /**
+   * Saved addresses for checkout.
+   * Always `[]` until Address book is implemented.
+   */
   addresses: CustomerAddress[];
 
   createdAt: Timestamp;
