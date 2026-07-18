@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { ProductForm } from "@/features/admin/products";
 import {
@@ -39,23 +38,13 @@ export default async function AdminCreateProductPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href="/admin/products"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back to products
-        </Link>
-      </div>
-      <ProductForm
-        mode="create"
-        categories={categories.map((category) => ({
-          id: category.id,
-          name: category.name,
-        }))}
-        defaultCurrency={settings.currency}
-      />
-    </div>
+    <ProductForm
+      mode="create"
+      categories={categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      }))}
+      defaultCurrency={settings.currency}
+    />
   );
 }

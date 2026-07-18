@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/features/admin/products";
@@ -71,24 +70,14 @@ export default async function AdminEditProductPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href="/admin/products"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back to products
-        </Link>
-      </div>
-      <ProductForm
-        mode="edit"
-        product={productResult}
-        categories={categories.map((category) => ({
-          id: category.id,
-          name: category.name,
-        }))}
-        defaultCurrency={settings.currency}
-      />
-    </div>
+    <ProductForm
+      mode="edit"
+      product={productResult}
+      categories={categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      }))}
+      defaultCurrency={settings.currency}
+    />
   );
 }

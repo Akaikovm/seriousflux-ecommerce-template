@@ -7,7 +7,10 @@ import { AdminHeader } from "@/features/admin/components/AdminHeader";
 import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
 import { ADMIN_NAV_ITEMS } from "@/features/admin/config/nav";
 
+import "@/features/admin/styles/tokens.css";
 import "@/features/admin/styles/admin.css";
+import "@/features/admin/styles/admin-ui.css";
+import "@/features/admin/styles/settings.css";
 
 type AdminLayoutProps = {
   storeName: string;

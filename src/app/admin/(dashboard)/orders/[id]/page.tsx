@@ -51,9 +51,12 @@ export default async function AdminOrderDetailPage({
     notFound();
   }
 
+  const view = toAdminOrderView(order);
+
   return (
     <AdminOrderDetail
-      order={toAdminOrderView(order)}
+      key={`${view.id}-${view.updatedAt}`}
+      order={view}
       locale={settings.locale}
       currency={settings.currency}
     />

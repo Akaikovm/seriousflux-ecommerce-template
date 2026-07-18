@@ -19,9 +19,7 @@ type DataTableProps<T> = {
 };
 
 /**
- * Reusable typed admin data table (RFC-011).
- *
- * Supports loading / empty states and a footer slot for future pagination.
+ * Reusable typed admin data table (RFC-011 / ADR-021).
  */
 export function DataTable<T>({
   columns,
@@ -36,7 +34,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (loading) {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <div className={cn("admin-table admin-table__loading", className)}>
         <LoadingState height="2.5rem" />
         <LoadingState height="2.5rem" />
         <LoadingState height="2.5rem" />
@@ -46,7 +44,7 @@ export function DataTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card">
+      <div className={cn("admin-table admin-table__empty", className)}>
         <EmptyState
           title={emptyTitle}
           description={emptyDescription}
@@ -57,25 +55,13 @@ export function DataTable<T>({
   }
 
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-lg border border-border bg-card",
-        className,
-      )}
-    >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[36rem] border-collapse text-left text-sm sm:min-w-[40rem]">
-          <thead className="border-b border-border bg-muted/40">
+    <div className={cn("admin-table", className)}>
+      <div className="admin-table__scroll">
+        <table>
+          <thead>
             <tr>
               {columns.map((column) => (
-                <th
-                  key={column.id}
-                  scope="col"
-                  className={cn(
-                    "px-2.5 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-3 sm:py-2.5",
-                    column.className,
-                  )}
-                >
+                <th key={column.id} scope="col" className={column.className}>
                   {column.header}
                 </th>
               ))}
@@ -83,18 +69,9 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr
-                key={getRowId(row)}
-                className="border-b border-border transition-colors last:border-b-0 hover:bg-muted/35"
-              >
+              <tr key={getRowId(row)}>
                 {columns.map((column) => (
-                  <td
-                    key={column.id}
-                    className={cn(
-                      "px-2.5 py-2 align-middle sm:px-3 sm:py-2.5",
-                      column.className,
-                    )}
-                  >
+                  <td key={column.id} className={column.className}>
                     {column.cell(row)}
                   </td>
                 ))}
@@ -103,11 +80,7 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
-      {footer ? (
-        <div className="border-t border-border px-3 py-2.5 text-sm text-muted-foreground sm:px-4 sm:py-3">
-          {footer}
-        </div>
-      ) : null}
+      {footer ? <div className="admin-table__footer">{footer}</div> : null}
     </div>
   );
 }

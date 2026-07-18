@@ -1,31 +1,27 @@
 /**
- * Neutral admin surface tokens (RFC-011).
- *
- * Kept separate from storefront brand CSS so client branding does not
- * bleed into the management console.
+ * Admin shell chrome (ADR-004 / ADR-021).
+ * Tokens: tokens.css. Primitives: admin-ui.css.
  */
 
 .admin-shell {
-  --admin-sidebar-width: 16rem;
-  --admin-header-height: 3.5rem;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 500px at 0% -10%, oklch(0.96 0.01 250 / 0.7), transparent 55%),
-    oklch(0.975 0.004 260);
-  color: oklch(0.2 0 0);
+    radial-gradient(1200px 500px at 0% -10%, var(--admin-bg-glow), transparent 55%),
+    var(--admin-bg);
+  color: var(--admin-fg);
 }
 
 .admin-sidebar {
   width: var(--admin-sidebar-width);
   background: oklch(0.995 0 0 / 0.92);
-  border-right: 1px solid oklch(0.9 0.005 260);
+  border-right: 1px solid var(--admin-border);
   backdrop-filter: blur(10px);
 }
 
 .admin-header {
   height: var(--admin-header-height);
   background: oklch(0.995 0 0 / 0.85);
-  border-bottom: 1px solid oklch(0.9 0.005 260);
+  border-bottom: 1px solid var(--admin-border);
   backdrop-filter: blur(10px);
 }
 
@@ -35,26 +31,26 @@
   gap: 0.75rem;
   border-radius: 0.625rem;
   padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--admin-text-body);
   font-weight: 500;
   color: oklch(0.42 0.01 260);
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease;
+    background-color var(--admin-duration) ease,
+    color var(--admin-duration) ease,
+    transform var(--admin-duration) ease,
+    box-shadow var(--admin-duration) ease;
 }
 
 .admin-nav-link:hover {
-  background: oklch(0.96 0.008 260);
-  color: oklch(0.2 0 0);
+  background: var(--admin-accent-soft);
+  color: var(--admin-fg);
 }
 
 .admin-nav-link[data-active="true"] {
   background: oklch(0.94 0.012 260);
-  color: oklch(0.14 0 0);
-  box-shadow: inset 3px 0 0 oklch(0.25 0.02 260);
+  color: var(--admin-fg);
+  box-shadow: inset 3px 0 0 var(--admin-accent);
 }
 
 .admin-nav-link[data-disabled="true"] {
@@ -76,35 +72,9 @@
 }
 
 .admin-main {
-  animation: admin-main-enter 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: admin-main-enter 280ms var(--admin-ease);
   max-width: 100%;
   overflow-x: clip;
-}
-
-/* Compact action chips inside tables */
-.admin-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.admin-actions .admin-action-btn {
-  min-height: 2.25rem;
-  padding-inline: 0.75rem;
-  font-size: 0.8125rem;
-}
-
-.admin-page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.admin-page-header__cta {
-  flex-shrink: 0;
 }
 
 @media (max-width: 639px) {
@@ -114,32 +84,6 @@
 
   .admin-main {
     padding: 1rem;
-  }
-
-  .admin-page-header {
-    align-items: stretch;
-  }
-
-  .admin-page-header__cta {
-    width: 100%;
-  }
-
-  .admin-page-header__cta > * {
-    width: 100%;
-  }
-
-  .admin-actions {
-    justify-content: stretch;
-    flex-direction: column;
-  }
-
-  .admin-actions .admin-action-btn,
-  .admin-actions a {
-    width: 100%;
-  }
-
-  .admin-actions a > * {
-    width: 100%;
   }
 }
 
@@ -156,7 +100,7 @@
 
 /* Toast motion */
 .admin-toast-enter {
-  animation: admin-toast-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: admin-toast-in var(--admin-duration-md) var(--admin-ease);
 }
 
 .admin-toast-exit {
@@ -206,7 +150,7 @@
 }
 
 .admin-dialog-panel {
-  animation: admin-dialog-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: admin-dialog-in 220ms var(--admin-ease);
 }
 
 @keyframes admin-backdrop-in {
@@ -246,7 +190,7 @@
     inset: 0 auto 0 0;
     z-index: 40;
     transform: translateX(-100%);
-    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 220ms var(--admin-ease);
   }
 
   .admin-sidebar[data-open="true"] {
@@ -260,4 +204,17 @@
     background: oklch(0 0 0 / 40%);
     animation: admin-backdrop-in 180ms ease;
   }
+}
+
+/* Login shell (outside dashboard) */
+.admin-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--admin-space-4);
+  background:
+    radial-gradient(900px 420px at 50% -20%, var(--admin-bg-glow), transparent 55%),
+    var(--admin-bg);
+  color: var(--admin-fg);
 }

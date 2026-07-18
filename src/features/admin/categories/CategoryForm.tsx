@@ -6,13 +6,18 @@ import { z } from "zod";
 
 import type { CategoryFormData } from "@/features/admin/categories/category-form-data";
 import {
+  AdminBackLink,
+  AdminFormLayout,
+  AdminPage,
+  AdminPageHeader,
+  AdminSaveBar,
+} from "@/features/admin/ui";
+import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
 import { ImageUpload } from "@/features/media/components/ImageUpload";
 import { slugify } from "@/lib/slugify";
-import { Button } from "@/shared/ui/Button";
-import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -56,8 +61,7 @@ function toInitialValues(category?: CategoryFormData): CategoryFormValues {
 }
 
 /**
- * Controlled create/edit form for categories (RFC-012).
- * Persists through CategoryService only. Images upload via MediaService.
+ * Controlled create/edit form for categories (ADR-021).
  */
 export function CategoryForm({ mode, category }: CategoryFormProps) {
   const router = useRouter();
@@ -65,10 +69,15 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
   const [values, setValues] = useState<CategoryFormValues>(() =>
     toInitialValues(category),
   );
+  const [snapshot, setSnapshot] = useState<CategoryFormValues>(() =>
+    toInitialValues(category),
+  );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isDirty = JSON.stringify(values) !== JSON.stringify(snapshot);
 
   function setField<K extends keyof CategoryFormValues>(
     key: K,
@@ -78,9 +87,16 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
     setFieldErrors((current) => ({ ...current, [key]: undefined }));
   }
 
+  function handleDiscard() {
+    setValues({ ...snapshot });
+    setFieldErrors({});
+    setFormError(null);
+    setSlugTouched(mode === "edit");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) {
+    if (loading || (mode === "edit" && !isDirty)) {
       return;
     }
 
@@ -115,12 +131,14 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
       if (mode === "create") {
         await new CategoryService().create(input);
         toast.success("Category created.");
+        router.push("/admin/categories");
       } else if (category) {
         await new CategoryService().update(category.id, input);
         toast.success("Category updated.");
+        setSnapshot({ ...parsed.data });
+        setValues({ ...parsed.data });
       }
 
-      router.push("/admin/categories");
       router.refresh();
     } catch (err) {
       if (err instanceof CategoryError) {
@@ -137,113 +155,110 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
   }
 
   return (
-    <Card padding="lg" className="w-full max-w-2xl">
-      <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleSubmit} noValidate>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">
-            {mode === "create" ? "Create category" : "Edit category"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Catalog categories power storefront navigation and product grouping.
-          </p>
-        </div>
+    <AdminPage narrow>
+      <AdminBackLink href="/admin/categories">Back to categories</AdminBackLink>
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title={mode === "create" ? "Create category" : "Edit category"}
+        description="Catalog categories power storefront navigation and product grouping."
+      />
 
+      <form onSubmit={handleSubmit} noValidate>
         {formError ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="mb-4 text-sm text-destructive">
             {formError}
           </p>
         ) : null}
 
-        <Input
-          name="name"
-          label="Name"
-          value={values.name}
-          error={fieldErrors.name}
-          disabled={loading}
-          onChange={(event) => {
-            const name = event.target.value;
-            setField("name", name);
-            if (!slugTouched) {
-              setField("slug", slugify(name));
-            }
-          }}
-        />
-
-        <Input
-          name="slug"
-          label="Slug"
-          value={values.slug}
-          error={fieldErrors.slug}
-          helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
-          disabled={loading}
-          onChange={(event) => {
-            setSlugTouched(true);
-            setField("slug", event.target.value);
-          }}
-        />
-
-        <Textarea
-          name="description"
-          label="Description"
-          value={values.description}
-          error={fieldErrors.description}
-          disabled={loading}
-          onChange={(event) => setField("description", event.target.value)}
-        />
-
-        <ImageUpload
-          label="Image"
-          folder="categories"
-          value={values.image}
-          error={fieldErrors.image}
-          disabled={loading}
-          onChange={(url) => setField("image", url)}
-        />
-
-        <Input
-          name="order"
-          label="Order"
-          type="number"
-          min={0}
-          step={1}
-          value={String(values.order)}
-          error={fieldErrors.order}
-          disabled={loading}
-          onChange={(event) =>
-            setField("order", Number(event.target.value || 0))
+        <AdminFormLayout
+          footer={
+            <AdminSaveBar
+              dirty={isDirty}
+              loading={loading}
+              onDiscard={handleDiscard}
+              saveLabel={
+                mode === "create" ? "Create category" : "Save changes"
+              }
+            />
           }
-        />
-
-        <Switch
-          name="featured"
-          label="Featured"
-          checked={values.featured}
-          disabled={loading}
-          onChange={(event) => setField("featured", event.target.checked)}
-        />
-
-        <Switch
-          name="active"
-          label="Active"
-          checked={values.active}
-          disabled={loading}
-          onChange={(event) => setField("active", event.target.checked)}
-        />
-
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Button type="submit" loading={loading}>
-            {mode === "create" ? "Create category" : "Save changes"}
-          </Button>
-          <Button
-            type="button"
+        >
+          <Input
+            name="name"
+            label="Name"
+            value={values.name}
+            error={fieldErrors.name}
             disabled={loading}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            onClick={() => router.push("/admin/categories")}
-          >
-            Cancel
-          </Button>
-        </div>
+            onChange={(event) => {
+              const name = event.target.value;
+              setField("name", name);
+              if (!slugTouched) {
+                setField("slug", slugify(name));
+              }
+            }}
+          />
+
+          <Input
+            name="slug"
+            label="Slug"
+            value={values.slug}
+            error={fieldErrors.slug}
+            helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
+            disabled={loading}
+            onChange={(event) => {
+              setSlugTouched(true);
+              setField("slug", event.target.value);
+            }}
+          />
+
+          <Textarea
+            name="description"
+            label="Description"
+            value={values.description}
+            error={fieldErrors.description}
+            disabled={loading}
+            onChange={(event) => setField("description", event.target.value)}
+          />
+
+          <ImageUpload
+            label="Image"
+            folder="categories"
+            value={values.image}
+            error={fieldErrors.image}
+            disabled={loading}
+            onChange={(url) => setField("image", url)}
+          />
+
+          <Input
+            name="order"
+            label="Order"
+            type="number"
+            min={0}
+            step={1}
+            value={String(values.order)}
+            error={fieldErrors.order}
+            disabled={loading}
+            onChange={(event) =>
+              setField("order", Number(event.target.value || 0))
+            }
+          />
+
+          <Switch
+            name="featured"
+            label="Featured"
+            checked={values.featured}
+            disabled={loading}
+            onChange={(event) => setField("featured", event.target.checked)}
+          />
+
+          <Switch
+            name="active"
+            label="Active"
+            checked={values.active}
+            disabled={loading}
+            onChange={(event) => setField("active", event.target.checked)}
+          />
+        </AdminFormLayout>
       </form>
-    </Card>
+    </AdminPage>
   );
 }

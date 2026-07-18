@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CategoryForm } from "@/features/admin/categories/CategoryForm";
@@ -44,16 +43,6 @@ export default async function AdminEditCategoryPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href="/admin/categories"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back to categories
-        </Link>
-      </div>
-      <CategoryForm mode="edit" category={toCategoryFormData(category)} />
-    </div>
+    <CategoryForm mode="edit" category={toCategoryFormData(category)} />
   );
 }

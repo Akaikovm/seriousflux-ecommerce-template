@@ -8,6 +8,11 @@ import type { CategoryFormData } from "@/features/admin/categories/category-form
 import { DataTable } from "@/features/admin/components/DataTable";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminPage,
+  AdminPageHeader,
+  AdminRowActions,
+} from "@/features/admin/ui";
+import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
@@ -140,10 +145,10 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
       header: "Actions",
       className: "text-right",
       cell: (category) => (
-        <div className="admin-actions">
+        <AdminRowActions>
           <Button
             type="button"
-            className="admin-action-btn bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            className="admin-action-btn admin-btn-ghost"
             loading={togglingId === category.id}
             onClick={() => void handleToggleActive(category)}
           >
@@ -153,10 +158,7 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
             href={`/admin/categories/${category.id}/edit`}
             className="inline-flex"
           >
-            <Button
-              type="button"
-              className="admin-action-btn bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            >
+            <Button type="button" className="admin-action-btn admin-btn-ghost">
               Edit
             </Button>
           </Link>
@@ -167,31 +169,25 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
           >
             Delete
           </Button>
-        </div>
+        </AdminRowActions>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="admin-page-header">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Categories</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create, edit, and organize catalog categories.
-          </p>
-        </div>
-        <div className="admin-page-header__cta">
-          <Link
-            href="/admin/categories/new"
-            className="block w-full sm:inline-flex sm:w-auto"
-          >
-            <Button type="button" className="w-full sm:w-auto">
+    <AdminPage>
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title="Categories"
+        description="Create, edit, and organize catalog categories."
+        actions={
+          <Link href="/admin/categories/new" className="block sm:inline-flex">
+            <Button type="button" className="admin-btn-accent w-full sm:w-auto">
               Create category
             </Button>
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       <DataTable
         columns={columns}
@@ -201,7 +197,9 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
         emptyDescription="Create the first category to organize your catalog."
         emptyAction={
           <Link href="/admin/categories/new">
-            <Button type="button">Create category</Button>
+            <Button type="button" className="admin-btn-accent">
+              Create category
+            </Button>
           </Link>
         }
         footer={`${categories.length} categor${categories.length === 1 ? "y" : "ies"}`}
@@ -226,6 +224,6 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
         }}
         onConfirm={() => void handleDelete()}
       />
-    </div>
+    </AdminPage>
   );
 }

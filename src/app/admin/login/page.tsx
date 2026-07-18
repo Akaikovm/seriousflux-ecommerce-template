@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 
 import { AdminLoginForm } from "@/features/auth/components";
 
+import "@/features/admin/styles/tokens.css";
+import "@/features/admin/styles/admin.css";
+import "@/features/admin/styles/admin-ui.css";
+
 export const metadata: Metadata = {
   title: "Sign in",
 };
@@ -13,7 +17,7 @@ export const metadata: Metadata = {
  */
 export default function AdminLoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="admin-login">
       <AdminLoginForm />
     </div>
   );

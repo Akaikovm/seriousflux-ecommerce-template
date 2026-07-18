@@ -6,13 +6,18 @@ import { z } from "zod";
 
 import { ImageUpload } from "@/features/media/components/ImageUpload";
 import {
+  AdminBackLink,
+  AdminFormLayout,
+  AdminPage,
+  AdminPageHeader,
+  AdminSaveBar,
+} from "@/features/admin/ui";
+import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
 import { slugify } from "@/lib/slugify";
-import { Button } from "@/shared/ui/Button";
-import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { Switch } from "@/shared/ui/Switch";
@@ -87,10 +92,15 @@ export function ProductForm({
   const [values, setValues] = useState<ProductFormValues>(() =>
     toInitialValues(product, defaultCurrency),
   );
+  const [snapshot, setSnapshot] = useState<ProductFormValues>(() =>
+    toInitialValues(product, defaultCurrency),
+  );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isDirty = JSON.stringify(values) !== JSON.stringify(snapshot);
 
   function setField<K extends keyof ProductFormValues>(
     key: K,
@@ -100,9 +110,16 @@ export function ProductForm({
     setFieldErrors((current) => ({ ...current, [key]: undefined }));
   }
 
+  function handleDiscard() {
+    setValues({ ...snapshot });
+    setFieldErrors({});
+    setFormError(null);
+    setSlugTouched(mode === "edit");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) {
+    if (loading || (mode === "edit" && !isDirty)) {
       return;
     }
 
@@ -140,12 +157,14 @@ export function ProductForm({
       if (mode === "create") {
         await new ProductService().create(input);
         toast.success("Product created.");
+        router.push("/admin/products");
       } else if (product) {
         await new ProductService().update(product.id, input);
         toast.success("Product updated.");
+        setSnapshot({ ...parsed.data });
+        setValues({ ...parsed.data });
       }
 
-      router.push("/admin/products");
       router.refresh();
     } catch (err) {
       if (err instanceof ProductError) {
@@ -162,152 +181,147 @@ export function ProductForm({
   }
 
   return (
-    <Card padding="lg" className="w-full max-w-2xl">
-      <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleSubmit} noValidate>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">
-            {mode === "create" ? "Create product" : "Edit product"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Catalog products appear on the storefront when active.
-          </p>
-        </div>
+    <AdminPage narrow>
+      <AdminBackLink href="/admin/products">Back to products</AdminBackLink>
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title={mode === "create" ? "Create product" : "Edit product"}
+        description="Catalog products appear on the storefront when active."
+      />
 
+      <form onSubmit={handleSubmit} noValidate>
         {formError ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="mb-4 text-sm text-destructive">
             {formError}
           </p>
         ) : null}
 
-        <Input
-          name="name"
-          label="Name"
-          value={values.name}
-          error={fieldErrors.name}
-          disabled={loading}
-          onChange={(event) => {
-            const name = event.target.value;
-            setField("name", name);
-            if (!slugTouched) {
-              setField("slug", slugify(name));
-            }
-          }}
-        />
-
-        <Input
-          name="slug"
-          label="Slug"
-          value={values.slug}
-          error={fieldErrors.slug}
-          helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
-          disabled={loading}
-          onChange={(event) => {
-            setSlugTouched(true);
-            setField("slug", event.target.value);
-          }}
-        />
-
-        <Textarea
-          name="description"
-          label="Description"
-          value={values.description}
-          error={fieldErrors.description}
-          disabled={loading}
-          onChange={(event) => setField("description", event.target.value)}
-        />
-
-        <ImageUpload
-          label="Image"
-          folder="products"
-          value={values.image}
-          error={fieldErrors.image}
-          helperText="Optional. You can add or update the image later."
-          disabled={loading}
-          onChange={(url) => setField("image", url)}
-        />
-
-        <div className="grid gap-5 sm:grid-cols-2">
+        <AdminFormLayout
+          footer={
+            <AdminSaveBar
+              dirty={isDirty}
+              loading={loading}
+              onDiscard={handleDiscard}
+              saveLabel={mode === "create" ? "Create product" : "Save changes"}
+            />
+          }
+        >
           <Input
-            name="price"
-            label="Price"
+            name="name"
+            label="Name"
+            value={values.name}
+            error={fieldErrors.name}
+            disabled={loading}
+            onChange={(event) => {
+              const name = event.target.value;
+              setField("name", name);
+              if (!slugTouched) {
+                setField("slug", slugify(name));
+              }
+            }}
+          />
+
+          <Input
+            name="slug"
+            label="Slug"
+            value={values.slug}
+            error={fieldErrors.slug}
+            helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
+            disabled={loading}
+            onChange={(event) => {
+              setSlugTouched(true);
+              setField("slug", event.target.value);
+            }}
+          />
+
+          <Textarea
+            name="description"
+            label="Description"
+            value={values.description}
+            error={fieldErrors.description}
+            disabled={loading}
+            onChange={(event) => setField("description", event.target.value)}
+          />
+
+          <ImageUpload
+            label="Image"
+            folder="products"
+            value={values.image}
+            error={fieldErrors.image}
+            helperText="Optional. You can add or update the image later."
+            disabled={loading}
+            onChange={(url) => setField("image", url)}
+          />
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Input
+              name="price"
+              label="Price"
+              type="number"
+              min={0}
+              step="0.01"
+              value={String(values.price)}
+              error={fieldErrors.price}
+              disabled={loading}
+              onChange={(event) =>
+                setField("price", Number(event.target.value || 0))
+              }
+            />
+            <Input
+              name="currency"
+              label="Currency"
+              value={values.currency}
+              error={fieldErrors.currency}
+              disabled={loading}
+              onChange={(event) => setField("currency", event.target.value)}
+            />
+          </div>
+
+          <Select
+            name="categoryId"
+            label="Category"
+            value={values.categoryId}
+            error={fieldErrors.categoryId}
+            disabled={loading || categories.length === 0}
+            placeholder="Select a category"
+            options={categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            }))}
+            onChange={(event) => setField("categoryId", event.target.value)}
+          />
+
+          <Input
+            name="order"
+            label="Order"
             type="number"
             min={0}
-            step="0.01"
-            value={String(values.price)}
-            error={fieldErrors.price}
+            step={1}
+            value={String(values.order)}
+            error={fieldErrors.order}
             disabled={loading}
             onChange={(event) =>
-              setField("price", Number(event.target.value || 0))
+              setField("order", Number(event.target.value || 0))
             }
           />
-          <Input
-            name="currency"
-            label="Currency"
-            value={values.currency}
-            error={fieldErrors.currency}
+
+          <Switch
+            name="featured"
+            label="Featured"
+            checked={values.featured}
             disabled={loading}
-            onChange={(event) => setField("currency", event.target.value)}
+            onChange={(event) => setField("featured", event.target.checked)}
           />
-        </div>
 
-        <Select
-          name="categoryId"
-          label="Category"
-          value={values.categoryId}
-          error={fieldErrors.categoryId}
-          disabled={loading || categories.length === 0}
-          placeholder="Select a category"
-          options={categories.map((category) => ({
-            value: category.id,
-            label: category.name,
-          }))}
-          onChange={(event) => setField("categoryId", event.target.value)}
-        />
-
-        <Input
-          name="order"
-          label="Order"
-          type="number"
-          min={0}
-          step={1}
-          value={String(values.order)}
-          error={fieldErrors.order}
-          disabled={loading}
-          onChange={(event) =>
-            setField("order", Number(event.target.value || 0))
-          }
-        />
-
-        <Switch
-          name="featured"
-          label="Featured"
-          checked={values.featured}
-          disabled={loading}
-          onChange={(event) => setField("featured", event.target.checked)}
-        />
-
-        <Switch
-          name="active"
-          label="Active"
-          checked={values.active}
-          disabled={loading}
-          onChange={(event) => setField("active", event.target.checked)}
-        />
-
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Button type="submit" loading={loading}>
-            {mode === "create" ? "Create product" : "Save changes"}
-          </Button>
-          <Button
-            type="button"
+          <Switch
+            name="active"
+            label="Active"
+            checked={values.active}
             disabled={loading}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            onClick={() => router.push("/admin/products")}
-          >
-            Cancel
-          </Button>
-        </div>
+            onChange={(event) => setField("active", event.target.checked)}
+          />
+        </AdminFormLayout>
       </form>
-    </Card>
+    </AdminPage>
   );
 }

@@ -7,6 +7,11 @@ import { useState } from "react";
 import { DataTable } from "@/features/admin/components/DataTable";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminPage,
+  AdminPageHeader,
+  AdminRowActions,
+} from "@/features/admin/ui";
+import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
@@ -39,9 +44,7 @@ function formatPrice(
 }
 
 /**
- * Admin products list (RFC-012).
- * Actions navigate to form routes or call ProductService.
- * DataTable remains presentational.
+ * Admin products list (ADR-021).
  */
 export function AdminProductsTable({
   products,
@@ -149,10 +152,10 @@ export function AdminProductsTable({
       header: "Actions",
       className: "text-right",
       cell: (product) => (
-        <div className="admin-actions">
+        <AdminRowActions>
           <Button
             type="button"
-            className="admin-action-btn bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            className="admin-action-btn admin-btn-ghost"
             loading={togglingId === product.id}
             onClick={() => void handleToggleActive(product)}
           >
@@ -162,10 +165,7 @@ export function AdminProductsTable({
             href={`/admin/products/${product.id}/edit`}
             className="inline-flex"
           >
-            <Button
-              type="button"
-              className="admin-action-btn bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            >
+            <Button type="button" className="admin-action-btn admin-btn-ghost">
               Edit
             </Button>
           </Link>
@@ -176,28 +176,25 @@ export function AdminProductsTable({
           >
             Delete
           </Button>
-        </div>
+        </AdminRowActions>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="admin-page-header">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Products</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create, edit, and manage catalog products.
-          </p>
-        </div>
-        <div className="admin-page-header__cta">
-          <Link href="/admin/products/new" className="block w-full sm:inline-flex sm:w-auto">
-            <Button type="button" className="w-full sm:w-auto">
+    <AdminPage>
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title="Products"
+        description="Create, edit, and manage catalog products."
+        actions={
+          <Link href="/admin/products/new" className="block sm:inline-flex">
+            <Button type="button" className="admin-btn-accent w-full sm:w-auto">
               Create product
             </Button>
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       <DataTable
         columns={columns}
@@ -207,7 +204,9 @@ export function AdminProductsTable({
         emptyDescription="Create the first product for your catalog."
         emptyAction={
           <Link href="/admin/products/new">
-            <Button type="button">Create product</Button>
+            <Button type="button" className="admin-btn-accent">
+              Create product
+            </Button>
           </Link>
         }
         footer={`${products.length} product${products.length === 1 ? "" : "s"}`}
@@ -232,6 +231,6 @@ export function AdminProductsTable({
         }}
         onConfirm={() => void handleDelete()}
       />
-    </div>
+    </AdminPage>
   );
 }

@@ -26,11 +26,12 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 
 ### Admin (`/admin`)
 - Firebase Authentication + Firestore role gate (`role: admin`, `status: active`)
+- **Admin Design System** (`features/admin/ui`) — brand-neutral tokens, surfaces, headers, tables, forms, sticky SaveBar (independent from storefront branding)
 - Dashboard
 - Categories CRUD
 - Products CRUD (image optional)
 - Orders list + detail (payment / fulfillment / notes)
-- Store settings editor (brand, locale, contact, social, hero, feature flags, payment providers, notifications)
+- Modular Store Settings (General, Branding, Contact, Shipping, Payments, Notifications, Advanced) — one document, one save
 - Image uploads via Firebase Storage (`MediaService`)
 
 ### Payments
@@ -56,6 +57,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Typed models + Zod validation on admin/checkout forms
 - Settings ∩ registered providers decide which payment methods appear at checkout
 - Storefront design tokens + CSS variables from Settings (rebrand without forking UI)
+- Admin Design System under `features/admin/ui` (neutral console; do not put Admin layouts in `shared/ui`)
 - Full Mercado Pago guide: [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)
 
 ---
@@ -247,7 +249,7 @@ src/
     api/                   # Preference + Mercado Pago webhooks
   components/              # App-level composition (e.g. layout shells)
   features/
-    admin/                 # Admin UI (tables, forms, nav)
+    admin/                 # Admin UI + Admin Design System (`ui/`, styles, features)
     auth/                  # Identity: AuthService, RoleResolver, Google, guards, hooks
     account/               # Customer Account UI + AccountService (profile)
     cart/                  # Cart store + UI
@@ -256,6 +258,7 @@ src/
     customers/             # Customer domain types (CustomerProfile)
     home/                  # Homepage section shells
     media/                 # MediaService + ImageUpload
+    notifications/         # NotificationProvider + Resend + templates
     orders/                # Order domain + service
     payments/              # PaymentProvider registry + Mercado Pago / COD
     products/              # Product domain + storefront UI
@@ -298,7 +301,10 @@ For a new store, prefer changing data — not code:
 | [`docs/firestore.md`](docs/firestore.md) | Collections & fields |
 | [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md) | Mercado Pago Checkout Pro + webhooks |
 | [`docs/store-settings-loading.md`](docs/store-settings-loading.md) | How settings reach the UI |
-| [`docs/architecture/`](docs/architecture/) | Architecture Decision Records |
+| [`docs/architecture/ADR-019-notification-system.md`](docs/architecture/ADR-019-notification-system.md) | Transactional email |
+| [`docs/architecture/ADR-020-admin-settings-redesign.md`](docs/architecture/ADR-020-admin-settings-redesign.md) | Modular Admin Settings |
+| [`docs/architecture/ADR-021-admin-design-system.md`](docs/architecture/ADR-021-admin-design-system.md) | Admin Design System |
+| [`docs/architecture/`](docs/architecture/) | All Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
 
 ---
@@ -314,9 +320,11 @@ For a new store, prefer changing data — not code:
 - Image upload pipeline (UI → MediaService → Storage)
 - Store branding / favicon / maintenance mode from Firestore
 - Elevated storefront design system (tokens, headings, shared page chrome)
+- Admin Design System (modular Settings, shared Admin UI primitives, brand-neutral console)
 - Identity foundation (email/password + Google, roles in Firestore, shared AuthProvider)
 - Customer Account (`/account` — dashboard with avatar, profile, own orders)
 - Checkout UX: session prefill + loading while redirecting to confirmation
+- Transactional email via Resend (Notifications settings + dispatch API)
 - Deploy path via Firebase App Hosting
 
 **Deferred / not production-ready yet**

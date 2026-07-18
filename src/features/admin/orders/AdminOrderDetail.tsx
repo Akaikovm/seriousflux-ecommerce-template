@@ -1,11 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import { OrderTimeline } from "@/features/admin/orders/OrderTimeline";
+import {
+  AdminBreadcrumb,
+  AdminPage,
+  AdminPageHeader,
+  AdminSection,
+} from "@/features/admin/ui";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/features/orders/components/PaymentStatusBadge";
 import {
@@ -21,7 +26,6 @@ import type {
 import { requestNotification } from "@/features/notifications";
 import { formatPrice } from "@/lib/format-price";
 import { Button } from "@/shared/ui/Button";
-import { Card } from "@/shared/ui/Card";
 import { Select } from "@/shared/ui/Select";
 import { Textarea } from "@/shared/ui/Textarea";
 import { useToast } from "@/shared/ui/Toast";
@@ -85,12 +89,6 @@ export function AdminOrderDetail({
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
-
-  useEffect(() => {
-    setFulfillmentStatus(normalizeOrderStatus(order.status));
-    setPaymentStatus(order.payment.status);
-    setNotes(order.notes ?? "");
-  }, [order]);
 
   const moneyCurrency = order.currency || currency;
 
@@ -185,31 +183,21 @@ export function AdminOrderDetail({
   const address = order.shippingAddress;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="admin-page-header">
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">
-            <Link
-              href="/admin/orders"
-              className="underline-offset-2 hover:underline"
-            >
-              Orders
-            </Link>
-            <span aria-hidden className="mx-1.5">
-              /
-            </span>
-            {order.orderNumber}
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-foreground">
-            Order detail
-          </h2>
-        </div>
-      </div>
+    <AdminPage>
+      <AdminBreadcrumb
+        items={[
+          { label: "Orders", href: "/admin/orders" },
+          { label: order.orderNumber },
+        ]}
+      />
+      <AdminPageHeader
+        eyebrow="Commerce"
+        title="Order detail"
+        description="Review customer, payment, and fulfillment for this order."
+      />
 
-      {/* Order Summary */}
-      <Card padding="md">
-        <h3 className="text-sm font-semibold text-foreground">Order summary</h3>
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <AdminSection title="Order summary">
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <dt className="text-xs text-muted-foreground">Order number</dt>
             <dd className="mt-1 text-sm font-medium text-foreground">
@@ -247,17 +235,15 @@ export function AdminOrderDetail({
             </dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Firestore id:{" "}
           <span className="font-mono text-foreground">{order.id}</span>
         </p>
-      </Card>
+      </AdminSection>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Customer */}
-        <Card padding="md">
-          <h3 className="text-sm font-semibold text-foreground">Customer</h3>
-          <dl className="mt-4 flex flex-col gap-2 text-sm">
+        <AdminSection title="Customer">
+          <dl className="flex flex-col gap-2 text-sm">
             <div>
               <dt className="text-xs text-muted-foreground">Name</dt>
               <dd className="text-foreground">{order.customerName}</dd>
@@ -271,14 +257,10 @@ export function AdminOrderDetail({
               <dd className="text-foreground">{order.customerPhone || "—"}</dd>
             </div>
           </dl>
-        </Card>
+        </AdminSection>
 
-        {/* Shipping address */}
-        <Card padding="md">
-          <h3 className="text-sm font-semibold text-foreground">
-            Shipping address
-          </h3>
-          <address className="mt-4 text-sm not-italic text-foreground">
+        <AdminSection title="Shipping address">
+          <address className="text-sm not-italic text-foreground">
             <p>{address.fullName}</p>
             <p>{address.line1}</p>
             {address.line2 ? <p>{address.line2}</p> : null}
@@ -288,17 +270,15 @@ export function AdminOrderDetail({
             <p>{address.country}</p>
             {address.phone ? <p className="mt-2">{address.phone}</p> : null}
           </address>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Method: {order.shippingMethod.label} (
             {formatPrice(order.shippingMethod.cost, moneyCurrency, locale)})
           </p>
-        </Card>
+        </AdminSection>
       </div>
 
-      {/* Products */}
-      <Card padding="md">
-        <h3 className="text-sm font-semibold text-foreground">Products</h3>
-        <ul className="mt-4 divide-y divide-border">
+      <AdminSection title="Products">
+        <ul className="divide-y divide-border">
           {order.items.map((item) => (
             <li
               key={`${item.productId}-${item.sku ?? item.productName}`}
@@ -333,12 +313,10 @@ export function AdminOrderDetail({
             </li>
           ))}
         </ul>
-      </Card>
+      </AdminSection>
 
-      {/* Totals */}
-      <Card padding="md">
-        <h3 className="text-sm font-semibold text-foreground">Totals</h3>
-        <dl className="mt-4 flex flex-col gap-2 text-sm">
+      <AdminSection title="Totals">
+        <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Subtotal</dt>
             <dd>
@@ -370,18 +348,14 @@ export function AdminOrderDetail({
             <dd>{formatPrice(order.totals.total, moneyCurrency, locale)}</dd>
           </div>
         </dl>
-      </Card>
+      </AdminSection>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Payment information (reserved for Mercado Pago) */}
-        <Card padding="md">
-          <h3 className="text-sm font-semibold text-foreground">
-            Payment information
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Provider fields will be completed during Mercado Pago integration.
-          </p>
-          <dl className="mt-4 flex flex-col gap-2 text-sm">
+        <AdminSection
+          title="Payment information"
+          description="Provider fields completed during Mercado Pago integration."
+        >
+          <dl className="flex flex-col gap-2 text-sm">
             <div>
               <dt className="text-xs text-muted-foreground">Provider</dt>
               <dd className="text-foreground">
@@ -408,7 +382,7 @@ export function AdminOrderDetail({
             </div>
           </dl>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <Select
                 label="Update payment status"
@@ -422,24 +396,20 @@ export function AdminOrderDetail({
             </div>
             <Button
               type="button"
+              className="admin-btn-accent"
               loading={savingPayment}
               onClick={() => void handleUpdatePayment()}
             >
               Save payment
             </Button>
           </div>
-        </Card>
+        </AdminSection>
 
-        {/* Fulfillment status */}
-        <Card padding="md">
-          <h3 className="text-sm font-semibold text-foreground">
-            Fulfillment status
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Only allowed transitions are available. Cancellation is allowed from
-            pending payment and paid.
-          </p>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <AdminSection
+          title="Fulfillment status"
+          description="Only allowed transitions are available. Cancellation is allowed from pending payment and paid."
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <Select
                 label="Status"
@@ -455,30 +425,25 @@ export function AdminOrderDetail({
             </div>
             <Button
               type="button"
+              className="admin-btn-accent"
               loading={savingStatus}
               onClick={() => void handleUpdateStatus()}
             >
               Update status
             </Button>
           </div>
-        </Card>
+        </AdminSection>
       </div>
 
-      {/* Timeline */}
-      <Card padding="md">
-        <h3 className="text-sm font-semibold text-foreground">Order timeline</h3>
-        <div className="mt-4">
-          <OrderTimeline order={order} locale={locale} />
-        </div>
-      </Card>
+      <AdminSection title="Order timeline">
+        <OrderTimeline order={order} locale={locale} />
+      </AdminSection>
 
-      {/* Admin notes */}
-      <Card padding="md">
-        <h3 className="text-sm font-semibold text-foreground">Admin notes</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Internal only — not shown to customers on confirmation.
-        </p>
-        <div className="mt-4 flex flex-col gap-3">
+      <AdminSection
+        title="Admin notes"
+        description="Internal only — not shown to customers on confirmation."
+      >
+        <div className="flex flex-col gap-3">
           <Textarea
             label="Notes"
             name="admin-notes"
@@ -490,6 +455,7 @@ export function AdminOrderDetail({
           <div>
             <Button
               type="button"
+              className="admin-btn-accent"
               loading={savingNotes}
               onClick={() => void handleSaveNotes()}
             >
@@ -497,7 +463,7 @@ export function AdminOrderDetail({
             </Button>
           </div>
         </div>
-      </Card>
-    </div>
+      </AdminSection>
+    </AdminPage>
   );
 }

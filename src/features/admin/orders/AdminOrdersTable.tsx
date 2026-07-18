@@ -6,6 +6,12 @@ import { useMemo, useState } from "react";
 import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import { DataTable } from "@/features/admin/components/DataTable";
 import type { AdminDataTableColumn } from "@/features/admin/types";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminRowActions,
+  AdminTableToolbar,
+} from "@/features/admin/ui";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/features/orders/components/PaymentStatusBadge";
 import {
@@ -137,30 +143,26 @@ export function AdminOrdersTable({
       header: "Actions",
       className: "text-right",
       cell: (order) => (
-        <Link href={`/admin/orders/${order.id}`} className="inline-flex">
-          <Button
-            type="button"
-            className="admin-action-btn bg-secondary text-secondary-foreground hover:bg-secondary/80"
-          >
-            View
-          </Button>
-        </Link>
+        <AdminRowActions>
+          <Link href={`/admin/orders/${order.id}`} className="inline-flex">
+            <Button type="button" className="admin-action-btn admin-btn-ghost">
+              View
+            </Button>
+          </Link>
+        </AdminRowActions>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="admin-page-header">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Orders</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage checkout orders, payment state, and fulfillment.
-          </p>
-        </div>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        eyebrow="Commerce"
+        title="Orders"
+        description="Manage checkout orders, payment state, and fulfillment."
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_14rem]">
+      <AdminTableToolbar>
         <Input
           label="Search"
           name="order-search"
@@ -175,7 +177,7 @@ export function AdminOrdersTable({
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
         />
-      </div>
+      </AdminTableToolbar>
 
       <DataTable
         columns={columns}
@@ -189,6 +191,6 @@ export function AdminOrdersTable({
         }
         footer={`${filtered.length} order${filtered.length === 1 ? "" : "s"}`}
       />
-    </div>
+    </AdminPage>
   );
 }

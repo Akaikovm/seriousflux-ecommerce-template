@@ -5,8 +5,8 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
+import { AdminSurface } from "@/features/admin/ui/AdminSurface";
 import { Button } from "@/shared/ui/Button";
-import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
@@ -75,10 +75,12 @@ export function AdminLoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md" padding="lg">
+    <AdminSurface className="w-full max-w-md">
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold text-foreground">Admin sign in</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            Admin sign in
+          </h1>
           <p className="text-sm text-muted-foreground">
             Sign in with an admin account to manage products, categories, and
             settings.
@@ -106,10 +108,15 @@ export function AdminLoginForm() {
           error={error}
         />
 
-        <Button type="submit" loading={loading} fullWidth>
+        <Button
+          type="submit"
+          loading={loading}
+          fullWidth
+          className="admin-btn-accent"
+        >
           Sign in
         </Button>
       </form>
-    </Card>
+    </AdminSurface>
   );
 }
