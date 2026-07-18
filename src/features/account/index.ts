@@ -6,6 +6,7 @@ export {
   useCustomerOrders,
 } from "./hooks";
 export {
+  AccountAvatar,
   AccountDashboard,
   AccountLayoutShell,
   AccountOrderDetail,

@@ -16,8 +16,10 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Checkout that creates orders in Firestore and redirects to the selected payment method
 - Order confirmation page (branded, Settings-driven)
 - Customer accounts: `/login`, `/signup`, `/forgot-password`, Google Sign-In
-- Customer Account area: `/account` (dashboard, profile, orders)
+- Customer Account area: `/account` (dashboard with avatar, profile, orders)
 - Guest checkout remains fully supported; optional sign-in at checkout; signed-in orders attach `customerId`
+- Signed-in checkout prefills name, email, and phone (when saved on the profile)
+- Checkout shows a loading state while finalizing the order (no empty-cart flash before confirmation)
 - Branding driven by `settings/general` (name, logo, favicon, colors, locale, contact, social, hero)
 - Maintenance mode gate from store settings
 - Shared storefront chrome: brand lockup, page headers, breadcrumbs, summary panels
@@ -100,7 +102,8 @@ For Mercado Pago (optional locally; required for live redirect + auto-paid sync)
 ### 3. Firebase setup (minimum)
 
 1. **Authentication** — enable Email/Password and Google.
-2. **Create the first admin manually** (never through the app signup):
+2. For **production Google Sign-In**, add your App Hosting (or custom) domain under Firebase Console → Authentication → Settings → **Authorized domains** (`localhost` is already allowed).
+3. **Create the first admin manually** (never through the app signup):
    - Create a user in Firebase Console → Authentication.
    - Copy the user's `uid`.
    - Create Firestore document `customers/{uid}` with at least:
@@ -118,8 +121,8 @@ For Mercado Pago (optional locally; required for live redirect + auto-paid sync)
      }
      ```
 
-3. **Firestore** — create the database. For local development you may start with open rules; lock them down before production.
-4. **Storage** — enable Storage. Rules must allow authenticated admins to write under `media/` (or temporarily allow authenticated writes in development).
+4. **Firestore** — create the database. For local development you may start with open rules; lock them down before production.
+5. **Storage** — enable Storage. Rules must allow authenticated admins to write under `media/` (or temporarily allow authenticated writes in development).
 
 Collections used by the kit:
 
@@ -190,8 +193,9 @@ Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime siz
 - `/admin/login` works only for users with `customers/{uid}.role === "admin"` and `status === "active"`
 - `/login` and `/signup` create customer accounts (`role: customer`) via email or Google
 - `/account` shows dashboard, profile, and own orders (ownership-checked)
-- Guest checkout still works; optional Google / Sign in at checkout; signed-in checkout sets `orders.customerId`
+- Guest checkout still works; optional Google / Sign in at checkout; signed-in checkout sets `orders.customerId` and prefills customer fields
 - Navbar shows **Login** (guest) or **Account** (authenticated)
+- Google Sign-In works only if the live domain is in Firebase **Authorized domains**
 - Catalog / cart / checkout still talk to the same Firebase project
 - Image upload only works if Storage rules allow your admin user
 - Mercado Pago (if enabled): successful pay → Admin order shows **Paid** without manual update
@@ -298,7 +302,8 @@ For a new store, prefer changing data — not code:
 - Store branding / favicon / maintenance mode from Firestore
 - Elevated storefront design system (tokens, headings, shared page chrome)
 - Identity foundation (email/password + Google, roles in Firestore, shared AuthProvider)
-- Customer Account (`/account` — dashboard, profile, own orders)
+- Customer Account (`/account` — dashboard with avatar, profile, own orders)
+- Checkout UX: session prefill + loading while redirecting to confirmation
 - Deploy path via Firebase App Hosting
 
 **Deferred / not production-ready yet**

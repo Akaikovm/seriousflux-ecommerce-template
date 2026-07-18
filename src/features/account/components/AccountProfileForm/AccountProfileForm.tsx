@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AccountAvatar } from "@/features/account/components/AccountAvatar";
 import { useAccountProfile } from "@/features/account/hooks/useAccountProfile";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { Button } from "@/shared/ui/Button";
@@ -89,6 +90,18 @@ export function AccountProfileForm() {
 
       <Card padding="lg">
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+          <div className="flex items-center gap-4">
+            <AccountAvatar
+              photoURL={photoURL || profile.photoURL}
+              displayName={displayName || profile.displayName}
+              size="lg"
+            />
+            <p className="text-sm text-muted-foreground">
+              Preview of your profile photo. Paste an https image URL below, or
+              keep the one from Google.
+            </p>
+          </div>
+
           <Input
             label="Display name"
             name="displayName"

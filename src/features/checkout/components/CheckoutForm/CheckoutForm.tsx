@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
+import { AccountService } from "@/features/account/services";
 import type { CartItem } from "@/features/cart/types";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { checkoutFormSchema } from "@/features/checkout/lib/checkout-form-schema";
@@ -60,10 +61,10 @@ function toInitialValues(
 }
 
 /**
- * Controlled checkout form (RFC-013, RFC-015, RFC-016.5, RFC-017).
+ * Controlled checkout form (RFC-013, RFC-015, RFC-016.5, RFC-017, RFC-018).
  * Order + payment orchestration goes through PaymentService only.
  * Payment methods are configuration-driven — no hardcoded provider assumptions.
- * When authenticated, attaches `customerId` from Identity (never Firebase Auth).
+ * When authenticated, attaches `customerId` and prefills name / email / phone.
  */
 export function CheckoutForm({
   items,
@@ -74,7 +75,7 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const router = useRouter();
   const toast = useToast();
-  const { customerId } = useCurrentUser();
+  const { user, customerId, loading: authLoading } = useCurrentUser();
   const shippingMethods = getAvailableShippingMethods();
   const enabledMethodIds = paymentOptions.map((option) => option.id);
   // First enabled option by sortOrder; PAYMENT_METHODS[0] only seeds empty state (submit blocked).
@@ -86,6 +87,57 @@ export function CheckoutForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /**
+   * Prefill empty customer fields from the signed-in session / profile.
+   * Never overwrites values the shopper already typed.
+   */
+  useEffect(() => {
+    if (authLoading || !user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void Promise.resolve().then(async () => {
+      if (cancelled) {
+        return;
+      }
+
+      const sessionName = user.displayName?.trim() ?? "";
+      const sessionEmail = user.email?.trim() ?? "";
+
+      setValues((current) => ({
+        ...current,
+        fullName: current.fullName.trim() || sessionName,
+        email: current.email.trim() || sessionEmail,
+      }));
+
+      if (!customerId) {
+        return;
+      }
+
+      try {
+        const profile = await new AccountService().getProfile(customerId);
+        if (cancelled || !profile) {
+          return;
+        }
+
+        setValues((current) => ({
+          ...current,
+          fullName: current.fullName.trim() || profile.displayName.trim() || "",
+          email: current.email.trim() || profile.email.trim() || "",
+          phone: current.phone.trim() || profile.phone?.trim() || "",
+        }));
+      } catch {
+        // Prefill is best-effort — checkout still works with empty fields.
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user, customerId]);
 
   function setField<K extends keyof CheckoutFormValues>(
     key: K,
@@ -175,6 +227,8 @@ export function CheckoutForm({
       onOrderCreated();
       toast.success("Order placed successfully.");
       router.push(redirectUrl);
+      // Keep the submit button loading until navigation unmounts this page.
+      return;
     } catch (err) {
       if (err instanceof PaymentError || err instanceof OrderError) {
         setFormError(err.message);
@@ -184,7 +238,6 @@ export function CheckoutForm({
         setFormError(message);
         toast.error(message);
       }
-    } finally {
       setLoading(false);
     }
   }

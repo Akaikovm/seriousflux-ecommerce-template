@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   selectCartSubtotal,
   useCartStore,
@@ -32,6 +34,13 @@ export function CheckoutView({
   const items = useCartStore((state) => state.items);
   const subtotal = useCartStore(selectCartSubtotal);
   const clearCart = useCartStore((state) => state.clearCart);
+  /** True after a successful place-order — avoid flashing empty-cart before redirect. */
+  const [isCompleting, setIsCompleting] = useState(false);
+
+  function handleOrderCreated() {
+    setIsCompleting(true);
+    clearCart();
+  }
 
   if (!hydrated) {
     return (
@@ -39,6 +48,22 @@ export function CheckoutView({
         <LoadingState height="6rem" />
         <LoadingState height="10rem" />
         <LoadingState height="8rem" />
+      </div>
+    );
+  }
+
+  if (isCompleting) {
+    return (
+      <div
+        className="flex flex-col items-center gap-4 py-16 text-center"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <LoadingState width="12rem" height="2.75rem" />
+        <LoadingState width="100%" height="6rem" />
+        <p className="text-sm text-muted-foreground">
+          Finalizing your order…
+        </p>
       </div>
     );
   }
@@ -79,7 +104,7 @@ export function CheckoutView({
           currency={summaryCurrency}
           defaultCountry={country}
           paymentOptions={paymentOptions}
-          onOrderCreated={clearCart}
+          onOrderCreated={handleOrderCreated}
         />
       </div>
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { formatAccountDate } from "@/features/account/lib";
+import { AccountAvatar } from "@/features/account/components/AccountAvatar";
 import { useAccountProfile } from "@/features/account/hooks/useAccountProfile";
 import { useCustomerOrders } from "@/features/account/hooks/useCustomerOrders";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
@@ -54,13 +55,20 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
-          Welcome, {displayName}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Member since {formatAccountDate(profile.createdAt, locale)}
-        </p>
+      <header className="flex items-center gap-4">
+        <AccountAvatar
+          photoURL={profile.photoURL}
+          displayName={displayName}
+          size="lg"
+        />
+        <div className="flex min-w-0 flex-col gap-2">
+          <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
+            Welcome, {displayName}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Member since {formatAccountDate(profile.createdAt, locale)}
+          </p>
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
