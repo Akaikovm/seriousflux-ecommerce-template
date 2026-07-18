@@ -31,6 +31,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Categories CRUD
 - Products CRUD (image optional)
 - Orders list + detail (payment / fulfillment / notes)
+- Customers list + detail (role / status / profile; order history via `OrderService`)
 - Modular Store Settings (General, Branding, Contact, Shipping, Payments, Notifications, Advanced) — one document, one save
 - Image uploads via Firebase Storage (`MediaService`)
 
@@ -51,7 +52,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 
 ### Architecture highlights
 - Clean separation: UI → features → services → Firebase
-- Identity (`auth`) vs Account (`account`) vs Orders — separate ownership
+- Identity (`auth`) vs Account (`account`) vs Customer Admin (`customers` + `admin/customers`) vs Orders — separate ownership
 - Domain services own Firestore/Storage (no Firebase imports in UI)
 - **External integrations (Payments, Notifications, future Inventory/Analytics) run through server API routes** — not from client components or domain persistence services
 - Typed models + Zod validation on admin/checkout forms
@@ -173,6 +174,8 @@ npm run dev
 | [http://localhost:3000/signup](http://localhost:3000/signup) | Customer sign up (email + Google) |
 | [http://localhost:3000/account](http://localhost:3000/account) | Customer Account (requires auth) |
 | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) | Admin login |
+| [http://localhost:3000/admin/customers](http://localhost:3000/admin/customers) | Admin customers (requires admin) |
+| [http://localhost:3000/admin/orders](http://localhost:3000/admin/orders) | Admin orders (requires admin) |
 
 ---
 
@@ -206,6 +209,7 @@ Optional local config lives in [`apphosting.yaml`](apphosting.yaml) (runtime siz
 ### Smoke-test checklist after deploy
 - `/` loads with store name from Firestore
 - `/admin/login` works only for users with `customers/{uid}.role === "admin"` and `status === "active"`
+- `/admin/customers` lists customers; detail edits role/status/profile (Firestore only — no Auth sync); never deletes purchase history
 - `/login` and `/signup` create customer accounts (`role: customer`) via email or Google
 - `/account` shows dashboard, profile, and own orders (ownership-checked)
 - Guest checkout still works; optional Google / Sign in at checkout; signed-in checkout sets `orders.customerId` and prefills customer fields
@@ -255,7 +259,7 @@ src/
     cart/                  # Cart store + UI
     categories/            # Category domain + storefront cards
     checkout/              # Checkout form + optional auth prompt
-    customers/             # Customer domain types (CustomerProfile)
+    customers/             # CustomerProfile types + CustomerAdminService (Admin ops)
     home/                  # Homepage section shells
     media/                 # MediaService + ImageUpload
     notifications/         # NotificationProvider + Resend + templates
@@ -304,6 +308,7 @@ For a new store, prefer changing data — not code:
 | [`docs/architecture/ADR-019-notification-system.md`](docs/architecture/ADR-019-notification-system.md) | Transactional email |
 | [`docs/architecture/ADR-020-admin-settings-redesign.md`](docs/architecture/ADR-020-admin-settings-redesign.md) | Modular Admin Settings |
 | [`docs/architecture/ADR-021-admin-design-system.md`](docs/architecture/ADR-021-admin-design-system.md) | Admin Design System |
+| [`docs/architecture/ADR-022-customer-management.md`](docs/architecture/ADR-022-customer-management.md) | Admin Customer Management |
 | [`docs/architecture/`](docs/architecture/) | All Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
 
@@ -325,6 +330,7 @@ For a new store, prefer changing data — not code:
 - Customer Account (`/account` — dashboard with avatar, profile, own orders)
 - Checkout UX: session prefill + loading while redirecting to confirmation
 - Transactional email via Resend (Notifications settings + dispatch API)
+- Admin Customer Management (`/admin/customers` — role, status, profile, order history)
 - Deploy path via Firebase App Hosting
 
 **Deferred / not production-ready yet**
@@ -332,8 +338,8 @@ For a new store, prefer changing data — not code:
 - `capturePayment` / `refund` on the payment interface (stubs)
 - Production-hardened Firestore & Storage security rules committed in-repo
 - Custom claims / Next.js middleware session cookies (client role gate today)
-- Admin user management UI (first admin is seeded manually)
-- Wishlist / Addresses / Notifications
+- First admin still seeded manually in Firestore (app never auto-creates `admin`)
+- Wishlist / Addresses / customer Notifications center
 - Apple / Facebook OAuth (Google is supported)
 - Per-client custom font families from Settings (kit default fonts today)
 - Product variants, inventory, coupons, reviews

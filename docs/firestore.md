@@ -341,10 +341,11 @@ Example document (`products` — auto-id or slug-based id):
 
 ## 4. `customers`
 
-**Path:** `customers/{customerId}`  
-**TypeScript:** `src/features/customers/types/customer.ts` → `CustomerProfile`  
-**Identity services (RFC-017):** `IdentityBootstrapService`, `RoleResolver` in `src/features/auth/services/`  
+**Path:** `customers/{customerId}`
+**TypeScript:** `src/features/customers/types/customer.ts` → `CustomerProfile`
+**Identity services (RFC-017):** `IdentityBootstrapService`, `RoleResolver` in `src/features/auth/services/`
 **Account profile (RFC-018):** `AccountService` in `src/features/account/services/` — updates `displayName`, `photoURL`, `phone` only
+**Admin customer ops (RFC-022):** `CustomerAdminService` in `src/features/customers/services/` — list/update `displayName`, `photoURL`, `phone`, `role`, `status` (Firestore only; no Auth sync; never deletes)
 
 ### Why this structure
 
@@ -353,6 +354,8 @@ Named `customers` (not `users`) to match the commercial domain. The TypeScript i
 **RFC-017** treats this document as the **identity source of truth** for `role` and `status`. Signup (email/password or Google) always bootstraps `role: "customer"` / `status: "active"`. Admin users are **never** created by the application — seed them manually in Firestore. Addresses remain an empty array until a future Address book RFC.
 
 **RFC-018** Account owns customer-facing profile edits (`displayName`, `photoURL`, `phone`). Firestore is canonical; Firebase Auth `displayName` / `photoURL` sync is best-effort after a successful Firestore write.
+
+**RFC-022** Admin Customer Management owns privileged list + updates for `role` / `status` and the same profile fields. Soft-deactivation uses `status: "inactive"` only — customer documents and order history are never deleted. Admin edits do **not** sync Firebase Auth (would require Admin SDK for another uid).
 
 ### Fields
 
@@ -363,8 +366,8 @@ Named `customers` (not `users`) to match the commercial domain. The TypeScript i
 | `displayName` | `string`             | yes      | Public name (editable in Account) |
 | `phone`       | `string`             | no       | Contact phone (Firestore only; editable in Account) |
 | `photoURL`    | `string` \| `null`   | no       | Avatar URL (editable as URL in Account; no upload in RFC-018) |
-| `role`        | `PersistedRole`      | yes      | `customer` \| `staff` \| `admin` (never editable in Account) |
-| `status`      | `UserStatus`         | yes      | `active` \| `inactive` (never editable in Account) |
+| `role`        | `PersistedRole`      | yes      | `customer` \| `staff` \| `admin` (Account: read-only; Admin: editable via RFC-022) |
+| `status`      | `UserStatus`         | yes      | `active` \| `inactive` (Account: read-only; Admin: editable via RFC-022; never hard-delete) |
 | `addresses`   | `CustomerAddress[]`  | yes      | Saved addresses (always `[]` until Address book) |
 | `createdAt`   | `Timestamp`          | yes      | Created at |
 | `updatedAt`   | `Timestamp`          | yes      | Last update |
@@ -386,6 +389,20 @@ Missing document resolution:
 - **Storefront / default** — bootstrap as `customer` automatically.
 - **Admin privileges** — fail closed: bootstrapped customers cannot pass `RequireRole(["admin"])`.
 - **Never** auto-create `admin` or `staff`.
+
+### Admin customer management (RFC-022)
+
+| Method | Behavior |
+|--------|----------|
+| `CustomerAdminService.list` | Full `customers` read; filter/sort/page in memory (page size 25). No composite indexes. Matches mapped defaults when `status`/`role` are missing on the doc. |
+| `CustomerAdminService.getById` | `getDoc(customers/{id})` |
+| `CustomerAdminService.update` | Patch `displayName`, `phone`, `photoURL`, `role`, `status` only — **no Auth sync**; rejects removing the last active admin |
+| `CustomerAdminService.countActiveAdmins` | `where role==admin` + in-memory `status==active` |
+
+Routes: `/admin/customers`, `/admin/customers/[customerId]`. Order history reuses `OrderService.listByCustomerId`. Soft-delete = `status: inactive` only.
+
+Same bootable pattern as `ProductService`: avoid composite indexes so Admin works before Console index setup.
+
 ### Nested: `CustomerAddress`
 
 | Field        | Type      | Required | Description |

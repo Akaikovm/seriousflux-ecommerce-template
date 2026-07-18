@@ -8,6 +8,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Categories", href: "/admin/categories" },
   { label: "Products", href: "/admin/products" },
   { label: "Orders", href: "/admin/orders" },
+  { label: "Customers", href: "/admin/customers" },
   { label: "Settings", href: "/admin/settings" },
 ];
 

@@ -27,12 +27,24 @@ export {
 } from "./orders";
 export type { AdminOrderView } from "./orders";
 export {
+  AdminCustomersTable,
+  AdminCustomerDetail,
+  toAdminCustomerView,
+  summarizeCustomerOrders,
+} from "./customers";
+export type {
+  AdminCustomerView,
+  AdminCustomerOrderSummary,
+} from "./customers";
+export {
   AdminBackLink,
   AdminBreadcrumb,
   AdminEmptyState,
   AdminFormFooter,
   AdminFormLayout,
   AdminLoadingState,
+  AdminSpinner,
+  useAdminRouterTransition,
   AdminPage,
   AdminPageHeader,
   AdminRowActions,

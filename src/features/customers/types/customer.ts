@@ -55,6 +55,8 @@ export interface CustomerAddress {
  * RFC-017 bootstraps identity fields (email, displayName, photoURL, role,
  * status). RFC-018 Account owns profile product reads/updates (displayName,
  * photoURL, phone) via AccountService — never from UI directly.
+ * RFC-022 Admin Customer Management updates role/status and the same profile
+ * fields via CustomerAdminService (Firestore only; no Auth sync; never deletes).
  */
 export interface CustomerProfile {
   /** Firestore document id — same as Firebase Auth uid. */
