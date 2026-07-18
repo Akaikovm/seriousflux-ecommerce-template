@@ -44,11 +44,11 @@ export function ProductCard({
       href={`/products/${slug}`}
       data-slug={slug}
       data-product-name={name}
-      className={cn("group flex flex-col gap-3", className)}
+      className={cn("group flex flex-col gap-4", className)}
       aria-label={`${name}, ${formattedPrice}`}
     >
       <div
-        className="relative aspect-[3/4] overflow-hidden border border-border bg-muted/40"
+        className="relative aspect-3/4 overflow-hidden bg-muted/50"
         style={{ borderRadius: radius.lg }}
       >
         {hasImage ? (
@@ -56,22 +56,22 @@ export function ProductCard({
           <img
             src={image}
             alt=""
-            className="size-full object-cover transition-transform group-hover:scale-105"
-            style={{ transitionDuration: transition.slow }}
+            className="size-full object-cover transition-transform ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+            style={{ transitionDuration: transition.slower }}
           />
         ) : (
-          <div className="size-full bg-muted/60" aria-hidden />
+          <div className="size-full bg-muted/70" aria-hidden />
         )}
 
         {badge?.trim() ? (
-          <div className="absolute left-3 top-3 z-[1]">
+          <div className="absolute left-3 top-3 z-1">
             <Badge variant="primary">{badge.trim()}</Badge>
           </div>
         ) : null}
 
         {/* Future: wishlist / quick-view affordances (top-right). */}
         <div
-          className="pointer-events-none absolute right-3 top-3 z-[1] opacity-0 transition-opacity group-hover:opacity-100"
+          className="pointer-events-none absolute right-3 top-3 z-1 opacity-0 transition-opacity group-hover:opacity-100"
           style={{ transitionDuration: transition.normal }}
           aria-hidden
           data-product-card-actions
@@ -85,22 +85,17 @@ export function ProductCard({
         />
 
         <div
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
-          style={{
-            boxShadow: `inset 0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent)`,
-            transitionDuration: transition.normal,
-          }}
+          className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+          style={{ transitionDuration: transition.normal }}
           aria-hidden
         />
       </div>
 
-      <div className="space-y-1">
-        <h3 className="text-sm font-medium tracking-tight text-foreground transition-colors group-hover:text-foreground/80">
+      <div className="space-y-1.5">
+        <h3 className="text-sm font-medium tracking-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-[0.95rem]">
           {name}
         </h3>
-        <p className="text-sm font-semibold text-foreground">
-          {formattedPrice}
-        </p>
+        <p className="text-sm text-muted-foreground">{formattedPrice}</p>
       </div>
     </Link>
   );

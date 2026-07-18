@@ -1,7 +1,5 @@
-import Link from "next/link";
-
+import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
 import { EmptyState } from "@/shared/ui/EmptyState";
-import { radius, spacing, transition, typography } from "@/shared/design/tokens";
 
 /**
  * Empty / blocked checkout surfaces.
@@ -23,23 +21,9 @@ export function CheckoutEmpty({
           title="Shipping is currently unavailable"
           description="This store is not accepting shipments right now. Please check back later or contact the store for help."
           action={
-            <Link
-              href="/cart"
-              className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              style={{
-                gap: spacing.sm,
-                paddingBlock: spacing.sm,
-                paddingInline: spacing.lg,
-                borderRadius: radius.md,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                lineHeight: typography.lineHeight.tight,
-                transitionProperty: "color, background-color, opacity",
-                transitionDuration: transition.fast,
-              }}
-            >
+            <StorefrontPrimaryLink href="/cart">
               Back to cart
-            </Link>
+            </StorefrontPrimaryLink>
           }
         />
       </div>
@@ -52,23 +36,9 @@ export function CheckoutEmpty({
         title="Your cart is empty"
         description="Add products to your cart before checking out."
         action={
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{
-              gap: spacing.sm,
-              paddingBlock: spacing.sm,
-              paddingInline: spacing.lg,
-              borderRadius: radius.md,
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.medium,
-              lineHeight: typography.lineHeight.tight,
-              transitionProperty: "color, background-color, opacity",
-              transitionDuration: transition.fast,
-            }}
-          >
+          <StorefrontPrimaryLink href="/#featured">
             Continue shopping
-          </Link>
+          </StorefrontPrimaryLink>
         }
       />
     </div>

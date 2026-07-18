@@ -26,6 +26,8 @@ export type ProductInfoProps = {
   categoryName?: string;
   /** When set with categoryName, the label links to the category page. */
   categoryHref?: string;
+  shippingEnabled?: boolean;
+  storeName?: string;
   className?: string;
 };
 
@@ -40,6 +42,8 @@ export function ProductInfo({
   locale,
   categoryName,
   categoryHref,
+  shippingEnabled = false,
+  storeName = "",
   className,
 }: ProductInfoProps) {
   const formattedPrice = formatPrice(price, currency, locale);
@@ -55,37 +59,18 @@ export function ProductInfo({
           categoryHref ? (
             <Link
               href={categoryHref}
-              className="inline-block uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-              style={{
-                fontSize: typography.fontSize.xs,
-                fontWeight: typography.fontWeight.medium,
-                letterSpacing: "0.06em",
-              }}
+              className="inline-block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-brand-accent"
             >
               {categoryLabel}
             </Link>
           ) : (
-            <p
-              className="uppercase tracking-wide text-muted-foreground"
-              style={{
-                fontSize: typography.fontSize.xs,
-                fontWeight: typography.fontWeight.medium,
-                letterSpacing: "0.06em",
-              }}
-            >
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
               {categoryLabel}
             </p>
           )
         ) : null}
 
-        <h1
-          className="tracking-tight text-foreground text-balance"
-          style={{
-            fontSize: typography.fontSize["3xl"],
-            fontWeight: typography.fontWeight.semibold,
-            lineHeight: typography.lineHeight.tight,
-          }}
-        >
+        <h1 className="storefront-heading text-[clamp(1.75rem,4vw,2.75rem)] text-balance text-foreground">
           {name}
         </h1>
 
@@ -114,28 +99,30 @@ export function ProductInfo({
       </div>
 
       {/* Future: variant selectors (size / color / etc.) */}
-      <div
-        className="hidden"
-        aria-hidden
-        data-product-variants
-      />
+      <div className="hidden" aria-hidden data-product-variants />
 
-      <AddToCartButton
-        productId={productId}
-        name={name}
-        slug={slug}
-        image={image}
-        price={price}
-        currency={currency}
-        className="w-full sm:w-auto sm:min-w-[12rem]"
-      />
+      <div className="space-y-4 border-t border-border/70 pt-6">
+        <AddToCartButton
+          productId={productId}
+          name={name}
+          slug={slug}
+          image={image}
+          price={price}
+          currency={currency}
+          className="w-full sm:w-auto sm:min-w-[14rem]"
+        />
+
+        <p className="text-sm text-muted-foreground">
+          {shippingEnabled
+            ? "Shipping available at checkout."
+            : storeName.trim()
+              ? `${storeName} will confirm fulfillment after your order.`
+              : "Fulfillment details are confirmed after your order."}
+        </p>
+      </div>
 
       {/* Future: reviews summary */}
-      <div
-        className="hidden border-t border-border pt-6"
-        aria-hidden
-        data-product-reviews
-      />
+      <div className="hidden" aria-hidden data-product-reviews />
     </div>
   );
 }

@@ -3,8 +3,6 @@ import type { Metadata } from "next";
 import { CheckoutView } from "@/features/checkout/components/CheckoutView";
 import { resolveCheckoutPaymentOptions } from "@/features/payments/lib/resolve-enabled-payment-methods";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { Container } from "@/shared/components/Container";
-import { Section } from "@/shared/components/Section";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -23,8 +21,11 @@ export default async function CheckoutPage() {
   const paymentOptions = resolveCheckoutPaymentOptions(settings);
 
   return (
-    <Section aria-label="Checkout" className="py-10 sm:py-14">
-      <Container>
+    <section
+      className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
+      aria-label="Checkout"
+    >
+      <div className="storefront-container">
         <CheckoutView
           currency={settings.currency}
           locale={settings.locale}
@@ -32,7 +33,7 @@ export default async function CheckoutPage() {
           shippingEnabled={settings.shippingEnabled}
           paymentOptions={paymentOptions}
         />
-      </Container>
-    </Section>
+      </div>
+    </section>
   );
 }

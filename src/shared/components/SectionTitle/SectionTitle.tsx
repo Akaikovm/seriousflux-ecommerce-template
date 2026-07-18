@@ -21,15 +21,17 @@ export function SectionTitle({
   id,
 }: SectionTitleProps) {
   return (
-    <div className={cn("mb-8 space-y-2", className)}>
+    <div className={cn("mb-10 space-y-3 sm:mb-12", className)}>
       <h2
         id={id}
-        className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+        className="storefront-heading text-[clamp(1.75rem,4vw,2.75rem)] text-foreground"
       >
         {title}
       </h2>
       {subtitle ? (
-        <p className="max-w-2xl text-base text-muted-foreground">{subtitle}</p>
+        <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
+          {subtitle}
+        </p>
       ) : null}
     </div>
   );

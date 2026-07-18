@@ -10,6 +10,8 @@ import {
 } from "@/shared/design/tokens";
 
 type HeroProps = ResolvedHeroContent & {
+  /** Store identity — always a hero-level brand signal. */
+  storeName: string;
   className?: string;
 };
 
@@ -17,10 +19,12 @@ type HeroProps = ResolvedHeroContent & {
  * Configurable storefront hero.
  *
  * Content comes from StoreSettings via `resolveHeroContent`.
- * Full-bleed image when `image` is set; elegant text-led layout otherwise.
- * No Firebase. No hardcoded brand values.
+ * Full-bleed image when `image` is set; atmospheric text-led layout otherwise.
+ * Brand name is always prominent; marketing title only when it differs.
+ * No Firebase. No hardcoded brand colors.
  */
 export function Hero({
+  storeName,
   title,
   subtitle,
   image,
@@ -28,7 +32,87 @@ export function Hero({
   ctaHref,
   className,
 }: HeroProps) {
+  const brand = storeName.trim() || title.trim() || "Store";
+  const marketingTitle =
+    title.trim() && title.trim().toLowerCase() !== brand.toLowerCase()
+      ? title.trim()
+      : "";
   const hasImage = image.trim().length > 0;
+
+  const copy = (
+    <div className="max-w-3xl space-y-5 text-balance">
+      {marketingTitle ? (
+        <>
+          <p
+            className={cn(
+              "storefront-brand-mark storefront-rise text-[clamp(2.75rem,8vw,5.5rem)]",
+              hasImage ? "text-white" : "text-foreground",
+            )}
+          >
+            {brand}
+          </p>
+          <h1
+            className={cn(
+              "storefront-heading storefront-rise storefront-rise-delay-1 text-[clamp(1.35rem,3.5vw,2rem)] font-medium",
+              hasImage ? "text-white/90" : "text-foreground/85",
+            )}
+            style={{
+              lineHeight: typography.lineHeight.tight,
+              letterSpacing: typography.letterSpacing.tight,
+              fontWeight: typography.fontWeight.medium,
+            }}
+          >
+            {marketingTitle}
+          </h1>
+        </>
+      ) : (
+        <h1
+          className={cn(
+            "storefront-brand-mark storefront-rise text-[clamp(2.75rem,8vw,5.5rem)]",
+            hasImage ? "text-white" : "text-foreground",
+          )}
+        >
+          {brand}
+        </h1>
+      )}
+
+      {subtitle ? (
+        <p
+          className={cn(
+            "storefront-rise storefront-rise-delay-2 max-w-xl text-base sm:text-lg",
+            hasImage ? "text-white/80" : "text-muted-foreground",
+          )}
+          style={{ lineHeight: typography.lineHeight.relaxed }}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+
+      <div className="storefront-rise storefront-rise-delay-3" style={{ paddingTop: spacing.sm }}>
+        <Link
+          href={ctaHref}
+          className={cn(
+            "inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            hasImage
+              ? "bg-white text-foreground hover:bg-white/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90",
+          )}
+          style={{
+            gap: spacing.sm,
+            paddingBlock: spacing.md,
+            paddingInline: spacing["2xl"],
+            borderRadius: radius.md,
+            fontSize: typography.fontSize.sm,
+            fontWeight: typography.fontWeight.medium,
+            letterSpacing: typography.letterSpacing.wide,
+            transitionDuration: transition.normal,
+          }}
+        >
+          {ctaText}
+        </Link>
+      </div>
+    </div>
+  );
 
   if (hasImage) {
     return (
@@ -41,49 +125,14 @@ export function Hero({
         <img
           src={image}
           alt=""
-          className="absolute inset-0 size-full object-cover"
+          className="storefront-fade-in absolute inset-0 size-full object-cover"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"
+          className="absolute inset-0 bg-linear-to-t from-black/75 via-black/35 to-black/15"
           aria-hidden
         />
-        <div className="storefront-container relative flex min-h-[inherit] flex-col justify-end pb-12 pt-24 sm:pb-16 sm:pt-32">
-          <div className="max-w-2xl space-y-5 text-white">
-            <h1
-              className="font-semibold tracking-tight text-balance"
-              style={{
-                fontSize: typography.fontSize["5xl"],
-                lineHeight: typography.lineHeight.tight,
-                letterSpacing: typography.letterSpacing.tight,
-              }}
-            >
-              <span className="block text-[clamp(2.25rem,6vw,3.75rem)]">
-                {title}
-              </span>
-            </h1>
-            {subtitle ? (
-              <p className="max-w-xl text-base text-white/85 sm:text-lg">
-                {subtitle}
-              </p>
-            ) : null}
-            <div style={{ paddingTop: spacing.sm }}>
-              <Link
-                href={ctaHref}
-                className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                style={{
-                  gap: spacing.sm,
-                  paddingBlock: spacing.md,
-                  paddingInline: spacing.xl,
-                  borderRadius: radius.md,
-                  fontSize: typography.fontSize.sm,
-                  fontWeight: typography.fontWeight.medium,
-                  transitionDuration: transition.fast,
-                }}
-              >
-                {ctaText}
-              </Link>
-            </div>
-          </div>
+        <div className="storefront-container relative flex min-h-[inherit] flex-col justify-end pb-14 pt-28 sm:pb-20 sm:pt-36">
+          {copy}
         </div>
       </section>
     );
@@ -92,57 +141,25 @@ export function Hero({
   return (
     <section
       className={cn(
-        "storefront-section-lg relative w-full border-b border-border bg-muted/30",
+        "storefront-section-lg relative w-full overflow-hidden border-b border-border",
         className,
       )}
       style={{ minHeight: "var(--storefront-hero-min-h)" }}
       aria-label="Hero"
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-40"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage:
-            "radial-gradient(ellipse 80% 60% at 10% 20%, var(--brand-accent) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 90% 80%, var(--primary) 0%, transparent 50%)",
-          opacity: 0.08,
+          backgroundImage: `
+            radial-gradient(ellipse 70% 55% at 15% 30%, color-mix(in oklab, var(--brand-accent) 22%, transparent), transparent 60%),
+            radial-gradient(ellipse 55% 45% at 85% 70%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 55%),
+            linear-gradient(160deg, color-mix(in oklab, var(--muted) 80%, transparent) 0%, transparent 55%)
+          `,
         }}
         aria-hidden
       />
-      <div className="storefront-container relative flex min-h-[inherit] flex-col justify-center py-16 sm:py-24">
-        <div className="max-w-2xl space-y-6">
-          <h1
-            className="font-semibold tracking-tight text-foreground text-balance"
-            style={{
-              lineHeight: typography.lineHeight.tight,
-              letterSpacing: typography.letterSpacing.tight,
-            }}
-          >
-            <span className="block text-[clamp(2.5rem,7vw,3.75rem)]">
-              {title}
-            </span>
-          </h1>
-          {subtitle ? (
-            <p className="max-w-xl text-lg text-muted-foreground sm:text-xl">
-              {subtitle}
-            </p>
-          ) : null}
-          <div style={{ paddingTop: spacing.sm }}>
-            <Link
-              href={ctaHref}
-              className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              style={{
-                gap: spacing.sm,
-                paddingBlock: spacing.md,
-                paddingInline: spacing.xl,
-                borderRadius: radius.md,
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                transitionDuration: transition.fast,
-              }}
-            >
-              {ctaText}
-            </Link>
-          </div>
-        </div>
+      <div className="storefront-container relative flex min-h-[inherit] flex-col justify-center py-20 sm:py-28">
+        {copy}
       </div>
     </section>
   );

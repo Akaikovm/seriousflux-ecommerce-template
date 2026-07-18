@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 
 import { CheckoutConfirmation } from "@/features/checkout/components/CheckoutConfirmation";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { Container } from "@/shared/components/Container";
-import { Section } from "@/shared/components/Section";
 
 export const metadata: Metadata = {
   title: "Order confirmation",
@@ -30,14 +28,18 @@ export default async function CheckoutConfirmationPage({
   const orderNumber = params.ref?.trim() || null;
 
   return (
-    <Section aria-label="Order confirmation" className="py-10 sm:py-14">
-      <Container>
+    <section
+      className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
+      aria-label="Order confirmation"
+    >
+      <div className="storefront-container">
         <CheckoutConfirmation
           orderId={orderId}
           orderNumber={orderNumber}
           storeName={settings.storeName}
+          logo={settings.logo}
         />
-      </Container>
-    </Section>
+      </div>
+    </section>
   );
 }

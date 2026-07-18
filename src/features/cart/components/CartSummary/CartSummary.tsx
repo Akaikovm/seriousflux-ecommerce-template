@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { formatPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
+import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { StorefrontSummaryPanel } from "@/features/storefront/components/StorefrontSummaryPanel";
 import { Button } from "@/shared/ui/Button";
-import { radius, spacing, transition, typography } from "@/shared/design/tokens";
+import { transition } from "@/shared/design/tokens";
 
 /**
  * Cart totals block — presentational.
@@ -32,48 +34,37 @@ export function CartSummary({
   const canCheckout = itemCount > 0;
 
   return (
-    <aside
-      className={cn("border border-border bg-muted/20 p-6", className)}
-      style={{ borderRadius: radius.lg, gap: spacing.lg }}
-      aria-label="Order summary"
+    <StorefrontSummaryPanel
+      title="Summary"
+      className={cn("lg:sticky lg:top-[calc(var(--storefront-navbar-height)+1.5rem)]", className)}
+      aria-label="Cart summary"
     >
-      <div className="flex flex-col" style={{ gap: spacing.lg }}>
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
-            Summary
-          </h2>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal ({itemLabel})</span>
-            <span className="font-medium text-foreground">
-              {formattedSubtotal}
-            </span>
-          </div>
-        </div>
-
-        {canCheckout ? (
-          <Link
-            href="/checkout"
-            className="inline-flex w-full items-center justify-center bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{
-              gap: spacing.sm,
-              paddingBlock: spacing.sm,
-              paddingInline: spacing.lg,
-              borderRadius: radius.md,
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.medium,
-              lineHeight: typography.lineHeight.tight,
-              transitionProperty: "color, background-color, opacity",
-              transitionDuration: transition.fast,
-            }}
-          >
-            Checkout
-          </Link>
-        ) : (
-          <Button type="button" fullWidth disabled>
-            Checkout
-          </Button>
-        )}
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">Subtotal ({itemLabel})</span>
+        <span className="font-medium text-foreground">{formattedSubtotal}</span>
       </div>
-    </aside>
+
+      <p className="text-xs text-muted-foreground">
+        Shipping and payment are calculated at checkout.
+      </p>
+
+      {canCheckout ? (
+        <StorefrontPrimaryLink href="/checkout" fullWidth>
+          Checkout
+        </StorefrontPrimaryLink>
+      ) : (
+        <Button type="button" fullWidth disabled>
+          Checkout
+        </Button>
+      )}
+
+      <Link
+        href="/#featured"
+        className="text-center text-sm text-muted-foreground transition-colors hover:text-brand-accent"
+        style={{ transitionDuration: transition.fast }}
+      >
+        Continue shopping
+      </Link>
+    </StorefrontSummaryPanel>
   );
 }

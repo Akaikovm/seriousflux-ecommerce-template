@@ -124,6 +124,11 @@ export type ColorToken = keyof typeof colors;
 
 /** Typography scale — size, weight, and line-height primitives. */
 export const typography = {
+  fontFamily: {
+    sans: "var(--font-sans)",
+    heading: "var(--font-heading)",
+    mono: "var(--font-mono)",
+  },
   fontSize: {
     xs: "0.75rem",
     sm: "0.875rem",

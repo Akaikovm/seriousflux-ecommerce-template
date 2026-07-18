@@ -10,6 +10,7 @@ import { CheckoutForm } from "@/features/checkout/components/CheckoutForm";
 import { CheckoutSummary } from "@/features/checkout/components/CheckoutSummary";
 import { STANDARD_SHIPPING_METHOD } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutSettingsProps } from "@/features/checkout/types";
+import { StorefrontPageHeader } from "@/features/storefront/components/StorefrontPageHeader";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
 /**
@@ -52,11 +53,25 @@ export function CheckoutView({
   const summaryCurrency = items[0]?.currency || currency;
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-14">
       <div>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
-          Checkout
-        </h1>
+        <StorefrontPageHeader
+          title="Checkout"
+          subtitle="Enter your details to complete the order."
+          meta={
+            <ol className="flex flex-wrap gap-x-3 gap-y-1 text-xs uppercase tracking-[0.12em]">
+              <li className="text-muted-foreground">Cart</li>
+              <li aria-hidden className="text-border">
+                /
+              </li>
+              <li className="font-medium text-foreground">Checkout</li>
+              <li aria-hidden className="text-border">
+                /
+              </li>
+              <li className="text-muted-foreground">Confirmation</li>
+            </ol>
+          }
+        />
         <CheckoutForm
           items={items}
           currency={summaryCurrency}
@@ -72,7 +87,6 @@ export function CheckoutView({
         shippingCost={STANDARD_SHIPPING_METHOD.cost}
         currency={summaryCurrency}
         locale={locale}
-        className="lg:sticky lg:top-6"
       />
     </div>
   );

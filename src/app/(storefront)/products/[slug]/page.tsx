@@ -12,8 +12,7 @@ import {
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { Container } from "@/shared/components/Container";
-import { Section } from "@/shared/components/Section";
+import { StorefrontBreadcrumb } from "@/features/storefront/components/StorefrontBreadcrumb";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -113,17 +112,36 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const category = await getProductCategory(product.categoryId);
 
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    ...(category
+      ? [
+          {
+            label: category.name,
+            href: category.href,
+          },
+        ]
+      : [{ label: "Shop", href: "/#featured" }]),
+    { label: product.name },
+  ];
+
   return (
-    <Section aria-label={product.name}>
-      <Container>
+    <section
+      className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
+      aria-label={product.name}
+    >
+      <div className="storefront-container">
+        <StorefrontBreadcrumb items={breadcrumbItems} />
         <ProductDetail
           product={product}
           locale={settings.locale}
           currency={settings.currency}
           categoryName={category?.name}
           categoryHref={category?.href}
+          shippingEnabled={settings.shippingEnabled}
+          storeName={settings.storeName}
         />
-      </Container>
-    </Section>
+      </div>
+    </section>
   );
 }

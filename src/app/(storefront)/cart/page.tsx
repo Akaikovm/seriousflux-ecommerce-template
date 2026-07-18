@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 
 import { CartView } from "@/features/cart/components/CartView";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { Container } from "@/shared/components/Container";
-import { Section } from "@/shared/components/Section";
 
 export const metadata: Metadata = {
   title: "Cart",
@@ -20,10 +18,13 @@ export default async function CartPage() {
   const settings = await getStoreSettings();
 
   return (
-    <Section aria-label="Shopping cart" className="py-10 sm:py-14">
-      <Container>
+    <section
+      className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
+      aria-label="Shopping cart"
+    >
+      <div className="storefront-container">
         <CartView locale={settings.locale} currency={settings.currency} />
-      </Container>
-    </Section>
+      </div>
+    </section>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   selectCartItemCount,
   selectCartSubtotal,
@@ -9,8 +11,10 @@ import { useCartHydrated } from "@/features/cart/hooks/use-cart-hydrated";
 import { CartEmpty } from "@/features/cart/components/CartEmpty";
 import { CartItem } from "@/features/cart/components/CartItem";
 import { CartSummary } from "@/features/cart/components/CartSummary";
+import { StorefrontPageHeader } from "@/features/storefront/components/StorefrontPageHeader";
 import { LoadingState } from "@/shared/ui/LoadingState";
 import { useToast } from "@/shared/ui/Toast";
+import { transition } from "@/shared/design/tokens";
 
 /**
  * Client cart composition — wires Zustand store to presentational pieces.
@@ -58,14 +62,25 @@ export function CartView({ locale, currency }: CartViewProps) {
   }
 
   const summaryCurrency = items[0]?.currency || currency;
+  const itemLabel = itemCount === 1 ? "1 item" : `${itemCount} items`;
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-14">
       <div>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
-          Cart
-        </h1>
-        <ul className="list-none p-0">
+        <StorefrontPageHeader
+          title="Cart"
+          meta={<span>{itemLabel}</span>}
+          actions={
+            <Link
+              href="/#featured"
+              className="text-sm text-muted-foreground transition-colors hover:text-brand-accent"
+              style={{ transitionDuration: transition.fast }}
+            >
+              Continue shopping
+            </Link>
+          }
+        />
+        <ul className="list-none divide-y divide-border/70 border-y border-border/70 p-0">
           {items.map((item) => (
             <li key={item.productId}>
               <CartItem

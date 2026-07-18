@@ -197,10 +197,13 @@ export function CheckoutForm({
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-4" aria-labelledby="checkout-customer">
+      <section
+        className="flex flex-col gap-4"
+        aria-labelledby="checkout-customer"
+      >
         <h2
           id="checkout-customer"
-          className="text-base font-semibold tracking-tight text-foreground"
+          className="storefront-heading text-lg tracking-tight text-foreground"
         >
           Customer information
         </h2>
@@ -238,10 +241,13 @@ export function CheckoutForm({
         />
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="checkout-shipping">
+      <section
+        className="flex flex-col gap-4 border-t border-border/70 pt-8"
+        aria-labelledby="checkout-shipping"
+      >
         <h2
           id="checkout-shipping"
-          className="text-base font-semibold tracking-tight text-foreground"
+          className="storefront-heading text-lg tracking-tight text-foreground"
         >
           Shipping information
         </h2>
@@ -301,10 +307,13 @@ export function CheckoutForm({
         </div>
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="checkout-method">
+      <section
+        className="flex flex-col gap-4 border-t border-border/70 pt-8"
+        aria-labelledby="checkout-method"
+      >
         <h2
           id="checkout-method"
-          className="text-base font-semibold tracking-tight text-foreground"
+          className="storefront-heading text-lg tracking-tight text-foreground"
         >
           Shipping method
         </h2>
@@ -326,12 +335,12 @@ export function CheckoutForm({
       </section>
 
       <section
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-4 border-t border-border/70 pt-8"
         aria-labelledby="checkout-payment"
       >
         <h2
           id="checkout-payment"
-          className="text-base font-semibold tracking-tight text-foreground"
+          className="storefront-heading text-lg tracking-tight text-foreground"
         >
           Payment method
         </h2>

@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
 import { transition } from "@/shared/design/tokens";
 
 type FooterProps = {
   storeName: string;
+  logo?: string;
   description?: string;
   email: string;
   phone: string;
@@ -54,8 +56,9 @@ function whatsappHref(whatsapp: string): string {
 
 const DEFAULT_SHOP_LINKS: StorefrontNavLink[] = [
   { label: "Home", href: "/" },
-  { label: "Categories", href: "/#categories" },
+  { label: "Collections", href: "/#categories" },
   { label: "Featured", href: "/#featured" },
+  { label: "About", href: "/#about" },
 ];
 
 /**
@@ -64,6 +67,7 @@ const DEFAULT_SHOP_LINKS: StorefrontNavLink[] = [
  */
 export function Footer({
   storeName,
+  logo = "",
   description = "",
   email,
   phone,
@@ -84,12 +88,34 @@ export function Footer({
     .join(", ");
 
   return (
-    <footer className="w-full border-t border-border bg-muted/20">
-      <div className="storefront-container grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-        <div className="space-y-3 sm:col-span-2 lg:col-span-1">
-          <p className="text-base font-semibold tracking-tight text-foreground">
-            {storeName}
-          </p>
+    <footer className="relative w-full overflow-hidden border-t border-border/70">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(
+              180deg,
+              color-mix(in oklab, var(--muted) 45%, transparent) 0%,
+              transparent 40%
+            ),
+            radial-gradient(
+              ellipse 50% 40% at 100% 100%,
+              color-mix(in oklab, var(--brand-accent) 10%, transparent),
+              transparent 60%
+            )
+          `,
+        }}
+        aria-hidden
+      />
+
+      <div className="storefront-container relative grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+        <div className="space-y-4 sm:col-span-2 lg:col-span-1">
+          <BrandLockup
+            storeName={storeName}
+            logo={logo}
+            size="footer"
+            href="/"
+          />
           {description.trim() ? (
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
               {description.trim()}
@@ -103,14 +129,16 @@ export function Footer({
           ) : null}
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Shop</p>
-          <ul className="space-y-2">
+        <div className="space-y-4">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Shop
+          </p>
+          <ul className="space-y-2.5">
             {shopLinks.map((link) => (
               <li key={link.href + link.label}>
                 <Link
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-brand-accent"
+                  className="text-sm text-foreground/80 transition-colors hover:text-brand-accent"
                   style={{ transitionDuration: transition.fast }}
                 >
                   {link.label}
@@ -120,9 +148,11 @@ export function Footer({
           </ul>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Contact</p>
-          <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+        <div className="space-y-4">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Contact
+          </p>
+          <div className="flex flex-col gap-2.5 text-sm text-foreground/80">
             {email.trim() ? (
               <a
                 href={`mailto:${email.trim()}`}
@@ -153,22 +183,24 @@ export function Footer({
               </a>
             ) : null}
             {!email.trim() && !phone.trim() && !whatsapp.trim() ? (
-              <p>Contact details coming soon</p>
+              <p className="text-muted-foreground">Contact details coming soon</p>
             ) : null}
           </div>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Follow</p>
+        <div className="space-y-4">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Follow
+          </p>
           {socials.length > 0 ? (
-            <ul className="flex flex-wrap gap-x-4 gap-y-2">
+            <ul className="flex flex-wrap gap-x-5 gap-y-2">
               {socials.map((social) => (
                 <li key={social.label}>
                   <a
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground transition-colors hover:text-brand-accent"
+                    className="text-sm text-foreground/80 transition-colors hover:text-brand-accent"
                     style={{ transitionDuration: transition.fast }}
                   >
                     {social.label}
@@ -184,7 +216,7 @@ export function Footer({
         </div>
       </div>
 
-      <div className="storefront-container border-t border-border py-6">
+      <div className="storefront-container relative border-t border-border/60 py-7">
         <p className="text-sm text-muted-foreground">
           © {year} {storeName}
         </p>

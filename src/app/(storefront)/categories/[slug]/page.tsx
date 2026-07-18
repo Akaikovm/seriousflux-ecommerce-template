@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { CategoryLandingHeader } from "@/features/categories/components/CategoryLandingHeader";
 import {
   CategoryError,
   CategoryService,
@@ -13,9 +14,8 @@ import {
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { Container } from "@/shared/components/Container";
-import { Section } from "@/shared/components/Section";
-import { SectionTitle } from "@/shared/components/SectionTitle";
+import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { EmptyState } from "@/shared/ui/EmptyState";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -106,24 +106,36 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   ]);
 
   return (
-    <Section aria-labelledby="category-title">
-      <Container>
-        <SectionTitle
-          id="category-title"
-          title={category.name}
-          subtitle={
-            category.description?.trim() ||
-            `Products in ${category.name}.`
-          }
+    <section
+      className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
+      aria-label={category.name}
+    >
+      <div className="storefront-container">
+        <CategoryLandingHeader
+          name={category.name}
+          description={category.description ?? ""}
+          image={category.image}
+          productCount={products.length}
         />
-        <ProductGrid
-          products={products}
-          locale={settings.locale}
-          currency={settings.currency}
-          emptyTitle="No products in this category"
-          emptyDescription="Products assigned to this category will appear here once published."
-        />
-      </Container>
-    </Section>
+
+        {products.length === 0 ? (
+          <EmptyState
+            title="No products in this collection"
+            description="Products assigned to this category will appear here once published."
+            action={
+              <StorefrontPrimaryLink href="/#featured">
+                Browse featured
+              </StorefrontPrimaryLink>
+            }
+          />
+        ) : (
+          <ProductGrid
+            products={products}
+            locale={settings.locale}
+            currency={settings.currency}
+          />
+        )}
+      </div>
+    </section>
   );
 }

@@ -9,28 +9,38 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 ## What you get
 
 ### Storefront
-- Homepage with hero, featured categories, featured products
-- Category landing pages (`/categories/[slug]`) with filtered products
-- Product detail pages (`/products/[slug]`)
+- Homepage with hero, featured categories, featured products, brand story, and newsletter
+- Category landing pages (`/categories/[slug]`) with image header + product grid
+- Product detail pages (`/products/[slug]`) with breadcrumbs
 - Shopping cart (Zustand + localStorage) with add/remove toasts
-- Checkout that creates orders in Firestore
-- Order confirmation page
-- Branding driven by `settings/general` (name, colors, locale, contact, social, hero)
+- Checkout that creates orders in Firestore and redirects to the selected payment method
+- Order confirmation page (branded, Settings-driven)
+- Branding driven by `settings/general` (name, logo, favicon, colors, locale, contact, social, hero)
+- Maintenance mode gate from store settings
+- Shared storefront chrome: brand lockup, page headers, breadcrumbs, summary panels
 
 ### Admin (`/admin`)
-- Firebase Authentication login
+- Firebase Authentication login (any signed-in user is treated as admin for now)
 - Dashboard
 - Categories CRUD
 - Products CRUD (image optional)
 - Orders list + detail (payment / fulfillment / notes)
-- Store settings editor (brand, locale, contact, social, hero, feature flags)
+- Store settings editor (brand, locale, contact, social, hero, feature flags, payment providers)
 - Image uploads via Firebase Storage (`MediaService`)
+
+### Payments
+- Provider abstraction (`PaymentProvider`) so checkout never talks to a gateway directly
+- **Mercado Pago Checkout Pro** — preference API, redirect, webhook → order marked paid
+- **Cash on Delivery** — offline method; payment stays pending until admin confirms
+- Stripe / PayPal / bank transfer — reserved in settings & env; not registered at checkout yet
 
 ### Architecture highlights
 - Clean separation: UI → features → services → Firebase
 - Domain services own Firestore/Storage (no Firebase imports in UI)
 - Typed models + Zod validation on admin/checkout forms
-- Payment provider abstraction with live **Mercado Pago Checkout Pro** + webhooks (see [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)); Cash on Delivery offline; Stripe/PayPal reserved
+- Settings ∩ registered providers decide which payment methods appear at checkout
+- Storefront design tokens + CSS variables from Settings (rebrand without forking UI)
+- Full Mercado Pago guide: [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)
 
 ---
 
@@ -41,10 +51,12 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 |
+| Typography | Geist (body) + Plus Jakarta Sans (headings) |
 | UI | shadcn/ui + Lucide |
 | Auth | Firebase Authentication |
 | Database | Cloud Firestore |
 | Storage | Firebase Storage |
+| Payments | Mercado Pago (first provider) |
 | Client state | Zustand |
 | Validation | Zod |
 | Hosting (target) | Firebase App Hosting |
@@ -78,6 +90,8 @@ cp .env.example .env.local
 ```
 
 Fill in your Firebase web config from the Firebase Console → Project settings → Your apps.
+
+For Mercado Pago (optional locally; required for live redirect + auto-paid sync), also set `MERCADOPAGO_*` and `NEXT_PUBLIC_APP_URL`. See [`.env.example`](.env.example) and [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md).
 
 ### 3. Firebase setup (minimum)
 
@@ -184,6 +198,7 @@ src/
   app/
     (storefront)/          # Public store routes
     admin/                 # Admin dashboard + login
+    api/                   # Preference + Mercado Pago webhooks
   components/              # App-level composition (e.g. layout shells)
   features/
     admin/                 # Admin UI (tables, forms, nav)
@@ -191,23 +206,27 @@ src/
     cart/                  # Cart store + UI
     categories/            # Category domain + storefront cards
     checkout/              # Checkout form + shipping helpers
-    customers/             # Customer domain (foundation)
+    customers/             # Customer domain (types only for now)
     home/                  # Homepage section shells
     media/                 # MediaService + ImageUpload
     orders/                # Order domain + service
+    payments/              # PaymentProvider registry + Mercado Pago / COD
     products/              # Product domain + storefront UI
     settings/              # StoreSettings service + loaders
-    storefront/            # Hero, footer, navbar pieces
+    storefront/            # Shell: Hero, Navbar, Footer, BrandStory, shared chrome
   firebase/                # App / Auth / Firestore / Storage accessors
   lib/                     # Shared pure helpers (formatPrice, slugify, cn)
   shared/                  # Design tokens + UI primitives
 docs/
   architecture/            # ADRs
   firestore.md             # Data model
+  payments-mercadopago.md  # MP setup, webhooks, troubleshooting
 scripts/                   # Seed scripts
 ```
 
 **Rule of thumb:** pages compose features; features talk to services; only services talk to Firebase.
+
+**Favicon:** set via Admin → Settings (`favicon`, falls back to `logo`). Do not add a static `src/app/favicon.ico` — it overrides Settings metadata and shows the Next default.
 
 ---
 
@@ -220,7 +239,8 @@ For a new store, prefer changing data — not code:
 3. Currency / locale / country / language — Settings
 4. Contact + social links — Settings
 5. Categories + products — Admin catalog
-6. Domain + hosting env vars
+6. Payment methods — enable in Settings + set server env secrets (MP / future Stripe)
+7. Domain + hosting env vars (`NEXT_PUBLIC_APP_URL`, Firebase, payment credentials)
 
 ---
 
@@ -229,6 +249,7 @@ For a new store, prefer changing data — not code:
 | Doc | Topic |
 |-----|-------|
 | [`docs/firestore.md`](docs/firestore.md) | Collections & fields |
+| [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md) | Mercado Pago Checkout Pro + webhooks |
 | [`docs/store-settings-loading.md`](docs/store-settings-loading.md) | How settings reach the UI |
 | [`docs/architecture/`](docs/architecture/) | Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
@@ -240,16 +261,24 @@ For a new store, prefer changing data — not code:
 **Ready**
 - Catalog (categories + products)
 - Cart + checkout → Firestore orders
+- Mercado Pago Checkout Pro (redirect + webhook paid sync)
+- Cash on Delivery at checkout
 - Admin back office (CRUD + settings + orders)
 - Image upload pipeline (UI → MediaService → Storage)
-- Store branding from Firestore
+- Store branding / favicon / maintenance mode from Firestore
+- Elevated storefront design system (tokens, headings, shared page chrome)
+- Deploy path via Firebase App Hosting
 
-**Not live yet / deferred**
-- Real Mercado Pago / Stripe / PayPal capture (provider field exists; payment redirect flow TBD)
-- Production-hardened Firestore & Storage security rules in-repo
-- Product variants (size / color / stock)
-- Customer account area on the storefront
-- Coupons, reviews, inventory modules (modeled for later)
+**Deferred / not production-ready yet**
+- Stripe / PayPal providers (settings + env slots only)
+- `capturePayment` / `refund` on the payment interface (stubs)
+- Production-hardened Firestore & Storage security rules committed in-repo
+- Admin roles / custom claims (any Auth user can access `/admin`)
+- Per-client custom font families from Settings (kit default fonts today)
+- Product variants, inventory, coupons, reviews
+- Customer accounts on the storefront (guest checkout only)
+- Real shipping methods (single free “Standard” stub today)
+- Category filters / sort (listing UI is presentational today)
 
 ---
 

@@ -2,6 +2,7 @@ import {
   BrandValues,
   buildDefaultBrandValues,
 } from "@/features/storefront/components/BrandValues";
+import { BrandStory } from "@/features/storefront/components/BrandStory";
 import { Hero } from "@/features/storefront/components/Hero";
 import { Newsletter } from "@/features/storefront/components/Newsletter";
 import { resolveHeroContent } from "@/features/storefront/lib/resolve-hero-content";
@@ -74,12 +75,18 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero {...hero} />
+      <Hero {...hero} storeName={settings.storeName} />
       <FeaturedCategories categories={categories} />
       <FeaturedProducts
         products={products}
         locale={settings.locale}
         currency={settings.currency}
+      />
+      <BrandStory
+        storeName={settings.storeName}
+        logo={settings.logo}
+        tagline={settings.tagline}
+        description={settings.description}
       />
       <BrandValues
         subtitle={

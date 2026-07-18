@@ -18,25 +18,33 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-const DEFAULT_NAV_LINKS: StorefrontNavLink[] = [
+const BASE_NAV_LINKS: StorefrontNavLink[] = [
   { label: "Home", href: "/" },
-  { label: "Categories", href: "/#categories" },
+  { label: "Collections", href: "/#categories" },
   { label: "Shop", href: "/#featured" },
 ];
 
 export function AppLayout({ settings, children }: AppLayoutProps) {
+  const hasStory =
+    settings.description.trim().length > 0 || settings.tagline.trim().length > 0;
+
+  const navLinks: StorefrontNavLink[] = hasStory
+    ? [...BASE_NAV_LINKS, { label: "About", href: "/#about" }]
+    : BASE_NAV_LINKS;
+
   return (
-    <div className="flex min-h-full flex-1 flex-col">
+    <div className="storefront-shell flex min-h-full flex-1 flex-col">
       <Navbar
         storeName={settings.storeName}
         logo={settings.logo}
-        navLinks={DEFAULT_NAV_LINKS}
+        navLinks={navLinks}
       />
       <main className="flex w-full flex-1 flex-col">
         {settings.maintenanceMode ? (
           <MaintenanceScreen
             storeName={settings.storeName}
             tagline={settings.tagline}
+            logo={settings.logo}
           />
         ) : (
           children
@@ -44,6 +52,7 @@ export function AppLayout({ settings, children }: AppLayoutProps) {
       </main>
       <Footer
         storeName={settings.storeName}
+        logo={settings.logo}
         description={settings.description || settings.tagline}
         email={settings.email}
         phone={settings.phone}
@@ -55,7 +64,7 @@ export function AppLayout({ settings, children }: AppLayoutProps) {
         tiktok={settings.tiktok}
         youtube={settings.youtube}
         shippingEnabled={settings.shippingEnabled}
-        shopLinks={DEFAULT_NAV_LINKS}
+        shopLinks={navLinks}
       />
     </div>
   );

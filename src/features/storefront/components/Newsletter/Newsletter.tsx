@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Section } from "@/features/storefront/components/Section";
 import type { NewsletterCopy } from "@/features/storefront/types/storefront";
 import { cn } from "@/lib/utils";
-import { spacing, typography } from "@/shared/design/tokens";
+import { radius, spacing, typography } from "@/shared/design/tokens";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 
@@ -54,24 +54,44 @@ export function Newsletter({
 
   return (
     <Section
-      className={cn("bg-primary text-primary-foreground", className)}
+      className={cn("relative overflow-hidden", className)}
       aria-labelledby="newsletter-title"
     >
-      <div className="storefront-container">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(
+              135deg,
+              color-mix(in oklab, var(--primary) 92%, black) 0%,
+              color-mix(in oklab, var(--primary) 75%, var(--brand-accent)) 100%
+            )
+          `,
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse 60% 50% at 20% 20%, color-mix(in oklab, white 18%, transparent), transparent 55%),
+            radial-gradient(ellipse 50% 40% at 90% 80%, color-mix(in oklab, var(--brand-accent) 35%, transparent), transparent 50%)
+          `,
+        }}
+        aria-hidden
+      />
+
+      <div className="storefront-container relative text-primary-foreground">
         <div className="mx-auto flex max-w-xl flex-col items-center text-center">
           <h2
             id="newsletter-title"
-            className="font-semibold tracking-tight"
-            style={{
-              fontSize: typography.fontSize["2xl"],
-              lineHeight: typography.lineHeight.tight,
-            }}
+            className="storefront-heading text-[clamp(1.75rem,4vw,2.5rem)]"
           >
             {title}
           </h2>
           {subtitle ? (
             <p
-              className="mt-2 opacity-90"
+              className="mt-3 max-w-md opacity-90"
               style={{
                 fontSize: typography.fontSize.base,
                 lineHeight: typography.lineHeight.relaxed,
@@ -82,7 +102,7 @@ export function Newsletter({
           ) : null}
 
           <form
-            className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:items-start"
+            className="mt-9 flex w-full flex-col gap-3 sm:flex-row sm:items-start"
             onSubmit={handleSubmit}
             noValidate
           >
@@ -100,6 +120,8 @@ export function Newsletter({
                 }}
                 error={error ?? undefined}
                 aria-label="Email address"
+                className="border-transparent bg-white/95 shadow-none"
+                style={{ borderRadius: radius.md }}
               />
             </div>
             <Button
@@ -115,10 +137,7 @@ export function Newsletter({
           </form>
 
           {submitted ? (
-            <p
-              className="mt-4 text-sm opacity-90"
-              role="status"
-            >
+            <p className="mt-4 text-sm opacity-90" role="status">
               {successMessage}
             </p>
           ) : null}

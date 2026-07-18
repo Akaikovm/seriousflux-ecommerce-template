@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
-import { radius, transition, typography } from "@/shared/design/tokens";
+import { radius, transition } from "@/shared/design/tokens";
 
 /**
  * Presentational category tile.
@@ -35,27 +35,33 @@ export function CategoryCard({
         <img
           src={image}
           alt=""
-          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="absolute inset-0 size-full object-cover transition-transform ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
           style={{ transitionDuration: transition.slower }}
         />
       ) : (
-        <div className="absolute inset-0 bg-muted/60" aria-hidden />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(
+                145deg,
+                color-mix(in oklab, var(--muted) 90%, var(--primary)) 0%,
+                color-mix(in oklab, var(--primary) 25%, var(--muted)) 100%
+              )
+            `,
+          }}
+          aria-hidden
+        />
       )}
 
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent transition-opacity group-hover:from-black/75"
+        className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent transition-opacity group-hover:from-black/80"
         style={{ transitionDuration: transition.normal }}
         aria-hidden
       />
 
-      <div className="relative mt-auto flex w-full items-end p-4 sm:p-5">
-        <h3
-          className="font-semibold tracking-tight text-white drop-shadow-sm"
-          style={{
-            fontSize: typography.fontSize.lg,
-            lineHeight: typography.lineHeight.tight,
-          }}
-        >
+      <div className="relative mt-auto flex w-full items-end p-5 sm:p-6">
+        <h3 className="storefront-heading text-xl tracking-tight text-white sm:text-2xl">
           {title}
         </h3>
       </div>
@@ -63,7 +69,7 @@ export function CategoryCard({
   );
 
   const surfaceClass = cn(
-    "group relative flex aspect-[4/5] overflow-hidden border border-border bg-muted/40 sm:aspect-[4/3]",
+    "group relative flex aspect-3/4 overflow-hidden sm:aspect-4/5",
     className,
   );
 
@@ -73,7 +79,7 @@ export function CategoryCard({
         href={href}
         data-slug={slug}
         className={surfaceClass}
-        style={{ borderRadius: radius.lg }}
+        style={{ borderRadius: radius.xl }}
         aria-label={title}
       >
         {content}
@@ -85,7 +91,7 @@ export function CategoryCard({
     <article
       data-slug={slug}
       className={surfaceClass}
-      style={{ borderRadius: radius.lg }}
+      style={{ borderRadius: radius.xl }}
       aria-label={title}
     >
       {content}

@@ -42,7 +42,7 @@ export function CartItem({
   return (
     <article
       className={cn(
-        "flex gap-4 border-b border-border py-4 last:border-b-0",
+        "flex gap-4 py-5",
         className,
       )}
       data-product-id={item.productId}
@@ -50,7 +50,7 @@ export function CartItem({
     >
       <Link
         href={`/products/${item.slug}`}
-        className="relative aspect-square w-20 shrink-0 overflow-hidden border border-border bg-muted/40 sm:w-24"
+        className="relative aspect-square w-20 shrink-0 overflow-hidden bg-muted/50 sm:w-24"
         style={{ borderRadius: radius.md }}
         aria-label={item.name}
       >

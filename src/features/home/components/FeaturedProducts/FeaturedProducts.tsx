@@ -31,8 +31,8 @@ export function FeaturedProducts({
       <div className="storefront-container">
         <SectionTitle
           id="featured-products-title"
-          title="Featured products"
-          subtitle="Highlighted items curated for the storefront."
+          title="Featured"
+          subtitle="A selection of products worth starting with."
         />
         <ProductGrid
           products={products}

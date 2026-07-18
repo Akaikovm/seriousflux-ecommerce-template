@@ -1,17 +1,13 @@
-import Link from "next/link";
-
+import { BrandLockup } from "@/features/storefront/components/BrandLockup";
+import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
 import { EmptyState } from "@/shared/ui/EmptyState";
-import { radius, spacing, transition, typography } from "@/shared/design/tokens";
+import { radius } from "@/shared/design/tokens";
 
 /**
- * Simple post-checkout confirmation (RFC-013).
+ * Post-checkout confirmation (RFC-013).
  *
  * URL: `/checkout/confirmation?order=<orderId>&ref=<orderNumber>`
- * - `order` — Firestore document id (technical; for future payment returns)
- * - `ref` — human-friendly order number shown to the customer
- *
  * Never shows the raw Firestore document id in the UI.
- * Does not depend on Cart state.
  */
 
 export type CheckoutConfirmationProps = {
@@ -20,12 +16,14 @@ export type CheckoutConfirmationProps = {
   /** Human-friendly order number from `?ref=` when available. */
   orderNumber: string | null;
   storeName: string;
+  logo?: string;
 };
 
 export function CheckoutConfirmation({
   orderId,
   orderNumber,
   storeName,
+  logo = "",
 }: CheckoutConfirmationProps) {
   if (!orderId) {
     return (
@@ -33,67 +31,62 @@ export function CheckoutConfirmation({
         title="Order not found"
         description="We could not find a confirmation for this visit. If you just placed an order, check your email or return to the store."
         action={
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{
-              gap: spacing.sm,
-              paddingBlock: spacing.sm,
-              paddingInline: spacing.lg,
-              borderRadius: radius.md,
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.medium,
-              lineHeight: typography.lineHeight.tight,
-              transitionProperty: "color, background-color, opacity",
-              transitionDuration: transition.fast,
-            }}
-          >
-            Back to store
-          </Link>
+          <StorefrontPrimaryLink href="/">Back to store</StorefrontPrimaryLink>
         }
       />
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg text-center">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+    <div className="relative mx-auto max-w-lg overflow-hidden px-2 py-6 text-center sm:py-10">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 opacity-80"
+        style={{
+          backgroundImage: `
+            radial-gradient(
+              ellipse 70% 50% at 50% 0%,
+              color-mix(in oklab, var(--brand-accent) 16%, transparent),
+              transparent 65%
+            )
+          `,
+        }}
+        aria-hidden
+      />
+
+      <div className="storefront-rise mb-8 flex justify-center">
+        <BrandLockup storeName={storeName} logo={logo} size="nav" />
+      </div>
+
+      <h1 className="storefront-heading storefront-rise storefront-rise-delay-1 text-[clamp(1.75rem,4vw,2.5rem)] text-foreground text-balance">
         Thank you for your order
       </h1>
-      <p className="mt-3 text-sm text-muted-foreground">
-        {storeName} has received your order. Payment will be available in a
-        future update — your order is saved as pending payment.
+      <p className="storefront-rise storefront-rise-delay-2 mt-4 text-base text-muted-foreground">
+        {storeName} has received your order. We will follow up with next steps
+        for payment and fulfillment.
       </p>
 
       {orderNumber ? (
-        <p className="mt-6 text-sm text-foreground">
-          Order number:{" "}
-          <span className="font-semibold tracking-wide">{orderNumber}</span>
-        </p>
+        <div
+          className="storefront-rise storefront-rise-delay-3 mx-auto mt-8 border border-border/70 bg-background/80 px-6 py-5"
+          style={{ borderRadius: radius.xl }}
+        >
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Order number
+          </p>
+          <p className="storefront-heading mt-2 text-xl tracking-wide text-foreground">
+            {orderNumber}
+          </p>
+        </div>
       ) : (
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-8 text-sm text-muted-foreground">
           Keep an eye on your inbox for confirmation details.
         </p>
       )}
 
-      <div className="mt-8">
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          style={{
-            gap: spacing.sm,
-            paddingBlock: spacing.sm,
-            paddingInline: spacing.lg,
-            borderRadius: radius.md,
-            fontSize: typography.fontSize.sm,
-            fontWeight: typography.fontWeight.medium,
-            lineHeight: typography.lineHeight.tight,
-            transitionProperty: "color, background-color, opacity",
-            transitionDuration: transition.fast,
-          }}
-        >
+      <div className="mt-10">
+        <StorefrontPrimaryLink href="/#featured">
           Continue shopping
-        </Link>
+        </StorefrontPrimaryLink>
       </div>
     </div>
   );

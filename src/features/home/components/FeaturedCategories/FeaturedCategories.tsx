@@ -24,8 +24,8 @@ export function FeaturedCategories({ categories }: FeaturedCategoriesProps) {
       <div className="storefront-container">
         <SectionTitle
           id="featured-categories-title"
-          title="Categories"
-          subtitle="Browse collections curated for the storefront."
+          title="Collections"
+          subtitle="Explore the categories that define this store."
         />
         <CategoryGrid categories={categories} />
       </div>
