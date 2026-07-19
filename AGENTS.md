@@ -291,11 +291,16 @@ PRODUCTION GAPS (living backlog)
 
 Known weaknesses and deferred work live in:
 
+- `docs/architecture/SELL-READY.md` — **agency sell / install (Phase 1)**; optional later self-serve (Phase 2) only if easy + separate marketing site
 - `docs/architecture/GAP-REGISTER.md` (index + priority)
 - `docs/architecture/gaps/GAP-XXX-*.md` (briefs)
 
-These are **not** ADRs. When the user asks what is next, what to harden, or to fix gaps:
-1. Read the gap register first.
-2. Prefer P0 → P1 → P2 unless the user picks a specific GAP.
-3. Read the GAP brief before implementing; propose approach; mark `done` when shipped.
-4. Do not invent unrelated mega-features while P0 security GAPs are open unless the user explicitly prioritizes product work.
+These are **not** ADRs. When the user asks what is next, what to harden, sell-ready, or to fix gaps:
+1. If the question is about selling / first client / Shopify-like automation → read `SELL-READY.md` first.
+2. Then read the gap register.
+3. Prefer P0 → P1 → P2 unless the user picks a specific GAP.
+4. Read the GAP brief before implementing; propose approach; mark `done` when shipped.
+5. Do not invent unrelated mega-features while P0 security GAPs are open unless the user explicitly prioritizes product work.
+6. Do **not** build self-serve SaaS by default; Phase 2 is parked until explicitly evaluated.
+
+**Business model:** Phase 1 = agency installs the repo. Phase 2 (maybe) = automated provisioning + separate marketing site, only if not complicated.

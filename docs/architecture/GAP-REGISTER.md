@@ -5,11 +5,16 @@
 **Not ADRs.** ADRs record decisions already made. These are **GAP briefs** — open problems with priority, scope, and acceptance criteria. When a GAP is implemented, write or update an ADR and mark the GAP `done`.
 
 **How to use (humans + agents):**
-1. Open this register first when the user asks “what’s next?”, “harden production”, or “fix the gaps”.
-2. Pick the highest-priority GAP with status `open` (or the one the user names).
-3. Read `docs/architecture/gaps/GAP-XXX-….md` before coding.
-4. Propose approach → get approval if architectural → implement → mark status `done` here and in the brief.
-5. Do **not** invent new mega-features while P0/P1 security GAPs are open unless the user explicitly prioritizes product work.
+1. If the user asks about **selling**, **sell-ready**, or **first client install**, read [`SELL-READY.md`](./SELL-READY.md) **first** (agency install model — not SaaS).
+2. Open this register when the user asks “what’s next?”, “harden production”, or “fix the gaps”.
+3. Pick the highest-priority GAP with status `open` (or the one the user names).
+4. Read `docs/architecture/gaps/GAP-XXX-….md` before coding.
+5. Propose approach → get approval if architectural → implement → mark status `done` here and in the brief.
+6. Do **not** invent new mega-features while P0/P1 security GAPs are open unless the user explicitly prioritizes product work.
+
+**Business model reminder:** Phase 1 = agency installs (see `SELL-READY.md`). Phase 2 self-serve is optional later and only if low complexity; needs a separate marketing site — do not build by drift.
+
+
 
 ---
 

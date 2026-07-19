@@ -1,0 +1,16 @@
+---
+description: Sell-ready Phase 1 agency install; Phase 2 self-serve only if easy later
+alwaysApply: true
+---
+
+# Sell-ready product path
+
+Read `docs/architecture/SELL-READY.md` for selling / sell-ready / first client / Shopify-like questions.
+
+**Phase 1 (now):** Agency installs this repo for clients. Must-haves: GAP-001, 004, 002, 003, 006, 005.
+
+**Phase 2 (optional later):** Self-serve “pay → store ready” only if complexity stays reasonable. Would need a **separate marketing site** (can be another repo) plus provisioning — do not build unless the user asks to evaluate Phase 2.
+
+**Phase 3:** Full SaaS — out of scope.
+
+Do not treat SaaS self-serve as a blocker for Phase 1 sales. Do not start multi-tenant platform work by drift.
