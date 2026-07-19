@@ -328,6 +328,7 @@ For a new store, prefer changing data — not code:
 | [`docs/architecture/ADR-021-admin-design-system.md`](docs/architecture/ADR-021-admin-design-system.md) | Admin Design System |
 | [`docs/architecture/ADR-022-customer-management.md`](docs/architecture/ADR-022-customer-management.md) | Admin Customer Management |
 | [`docs/architecture/ADR-023-inventory-stock-management.md`](docs/architecture/ADR-023-inventory-stock-management.md) | Inventory & stock (RFC-023) |
+| [`docs/architecture/GAP-REGISTER.md`](docs/architecture/GAP-REGISTER.md) | Production gaps backlog (P0–P3) — not ADRs |
 | [`docs/architecture/`](docs/architecture/) | All Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
 

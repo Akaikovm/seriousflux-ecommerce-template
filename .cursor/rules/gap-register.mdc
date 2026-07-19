@@ -1,0 +1,21 @@
+---
+description: Read the production gap register when planning next work or hardening
+alwaysApply: true
+---
+
+# Production gap register
+
+Known weaknesses / deferred work for this starter kit are tracked in:
+
+- `docs/architecture/GAP-REGISTER.md`
+- `docs/architecture/gaps/GAP-XXX-*.md`
+
+These are **GAP briefs**, not ADRs.
+
+When the user asks what’s next, what to harden, production readiness, or to fix gaps:
+
+1. Open `GAP-REGISTER.md` first.
+2. Prefer priority **P0 → P1 → P2 → P3** unless the user names a GAP.
+3. Read the matching brief before proposing or implementing.
+4. After shipping, set status to `done` in the register and the brief.
+5. Do not start large product features while **P0** security GAPs are still `open`, unless the user explicitly prioritizes that product work.

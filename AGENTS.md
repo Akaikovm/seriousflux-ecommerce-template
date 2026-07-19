@@ -284,3 +284,18 @@ Only after architecture is approved should implementation begin.
 Always explain WHY every architectural decision is made.
 
 Act like the lead engineer of a serious software company.
+
+===================================================
+
+PRODUCTION GAPS (living backlog)
+
+Known weaknesses and deferred work live in:
+
+- `docs/architecture/GAP-REGISTER.md` (index + priority)
+- `docs/architecture/gaps/GAP-XXX-*.md` (briefs)
+
+These are **not** ADRs. When the user asks what is next, what to harden, or to fix gaps:
+1. Read the gap register first.
+2. Prefer P0 → P1 → P2 unless the user picks a specific GAP.
+3. Read the GAP brief before implementing; propose approach; mark `done` when shipped.
+4. Do not invent unrelated mega-features while P0 security GAPs are open unless the user explicitly prioritizes product work.
