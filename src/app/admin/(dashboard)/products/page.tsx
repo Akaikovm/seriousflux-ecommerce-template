@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 
 import { AdminProductsTable } from "@/features/admin/products";
+import { toAdminProductRow } from "@/features/admin/products/admin-product-row";
 import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
+import type { InventoryRecord } from "@/features/inventory/types";
+import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
 import {
   ProductError,
   ProductService,
@@ -56,13 +62,33 @@ export default async function AdminProductsPage() {
     getCategories(),
   ]);
 
+  let inventoryMap = new Map<string, InventoryRecord>();
+  try {
+    inventoryMap = await new InventoryService().getInventoryByProductIds(
+      products.map((product) => product.id),
+    );
+  } catch (error) {
+    if (error instanceof InventoryError) {
+      console.error(`[InventoryService] ${error.code}: ${error.message}`);
+    } else {
+      console.error(
+        "[InventoryService] Unexpected error listing inventory",
+        error,
+      );
+    }
+  }
+
+  const rows = products.map((product) =>
+    toAdminProductRow(product, inventoryMap.get(product.id)?.quantity ?? null),
+  );
+
   const categoryNames = Object.fromEntries(
     categories.map((category) => [category.id, category.name]),
   );
 
   return (
     <AdminProductsTable
-      products={products}
+      products={rows}
       categoryNames={categoryNames}
       locale={settings.locale}
       currency={settings.currency}

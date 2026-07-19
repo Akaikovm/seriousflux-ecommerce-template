@@ -7,12 +7,18 @@ import {
   CategoryService,
 } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
+import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
+import { shouldShowInCatalog } from "@/features/inventory/lib";
 import { ProductGrid } from "@/features/products/components/ProductGrid";
 import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
+import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -105,6 +111,26 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getProductsByCategory(category.id),
   ]);
 
+  const inventorySettings = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
+  let visibleProducts = products;
+
+  try {
+    const inventoryMap = await new InventoryService().getInventoryByProductIds(
+      products.map((product) => product.id),
+    );
+    visibleProducts = products.filter((product) =>
+      shouldShowInCatalog({
+        product,
+        quantity: inventoryMap.get(product.id)?.quantity ?? 0,
+        hideOutOfStockProducts: inventorySettings.hideOutOfStockProducts,
+      }),
+    );
+  } catch (error) {
+    if (error instanceof InventoryError) {
+      console.error(`[InventoryService] ${error.code}: ${error.message}`);
+    }
+  }
+
   return (
     <section
       className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
@@ -115,10 +141,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           name={category.name}
           description={category.description ?? ""}
           image={category.image}
-          productCount={products.length}
+          productCount={visibleProducts.length}
         />
 
-        {products.length === 0 ? (
+        {visibleProducts.length === 0 ? (
           <EmptyState
             title="No products in this collection"
             description="Products assigned to this category will appear here once published."
@@ -130,7 +156,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           />
         ) : (
           <ProductGrid
-            products={products}
+            products={visibleProducts}
             locale={settings.locale}
             currency={settings.currency}
           />

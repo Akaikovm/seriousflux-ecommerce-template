@@ -6,6 +6,9 @@ import {
   CategoryService,
 } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
+import {
+  DEFAULT_INVENTORY_SETTINGS,
+} from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
 export const metadata: Metadata = {
@@ -37,6 +40,8 @@ export default async function AdminCreateProductPage() {
     getCategories(),
   ]);
 
+  const inventoryDefaults = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
+
   return (
     <ProductForm
       mode="create"
@@ -45,6 +50,11 @@ export default async function AdminCreateProductPage() {
         name: category.name,
       }))}
       defaultCurrency={settings.currency}
+      inventoryDefaults={{
+        trackInventory: inventoryDefaults.defaultTrackInventory,
+        lowStockThreshold: inventoryDefaults.defaultLowStockThreshold,
+        allowBackorders: inventoryDefaults.defaultAllowBackorders,
+      }}
     />
   );
 }

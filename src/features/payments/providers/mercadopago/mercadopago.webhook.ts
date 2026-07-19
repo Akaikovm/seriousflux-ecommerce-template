@@ -4,6 +4,10 @@ import {
 } from "mercadopago";
 
 import { OrderError, OrderService } from "@/features/orders/services";
+import {
+  commitSaleSafely,
+  restoreSaleSafely,
+} from "@/features/inventory/lib/inventory-order-hooks";
 import { dispatchNotificationSafely } from "@/features/notifications/lib/dispatch-notification";
 import { PaymentError } from "@/features/payments/services/payment-error";
 import { getMercadoPagoConfig } from "./mercadopago.config";
@@ -156,8 +160,10 @@ export async function processMercadoPagoWebhook(input: {
     });
 
     // External email send only after successful persistence (RFC-019).
+    // Inventory commit after paid — validation #2 inside commitSale (RFC-023).
     if (previousPaymentStatus !== updated.payment.status) {
       if (updated.payment.status === "paid") {
+        await commitSaleSafely(updated.id);
         await dispatchNotificationSafely({
           type: "payment.approved",
           orderId: updated.id,
@@ -167,6 +173,8 @@ export async function processMercadoPagoWebhook(input: {
           type: "payment.failed",
           orderId: updated.id,
         });
+      } else if (updated.payment.status === "refunded") {
+        await restoreSaleSafely(updated.id);
       }
     }
 

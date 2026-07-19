@@ -1,5 +1,6 @@
 export type {
   EnabledPaymentMethods,
+  InventorySettings,
   NotificationProviderSettingsId,
   NotificationsSettings,
   PaymentProviderConfig,
@@ -8,4 +9,9 @@ export type {
   StoreHeroSettings,
   StoreSettings,
   StoreSettingsUpdateInput,
+} from "./settings";
+
+export {
+  DEFAULT_INVENTORY_SETTINGS,
+  mapInventorySettings,
 } from "./settings";

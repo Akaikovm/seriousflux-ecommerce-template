@@ -8,9 +8,16 @@ import {
 } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
 import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
+import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
+import {
+  DEFAULT_INVENTORY_SETTINGS,
+} from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
 export const metadata: Metadata = {
@@ -69,15 +76,33 @@ export default async function AdminEditProductPage({
     notFound();
   }
 
+  let initialStockQuantity = 0;
+  try {
+    const inventory = await new InventoryService().getInventory(id);
+    initialStockQuantity = inventory?.quantity ?? 0;
+  } catch (error) {
+    if (error instanceof InventoryError) {
+      console.error(`[InventoryService] ${error.code}: ${error.message}`);
+    }
+  }
+
+  const inventoryDefaults = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
+
   return (
     <ProductForm
       mode="edit"
       product={productResult}
+      initialStockQuantity={initialStockQuantity}
       categories={categories.map((category) => ({
         id: category.id,
         name: category.name,
       }))}
       defaultCurrency={settings.currency}
+      inventoryDefaults={{
+        trackInventory: inventoryDefaults.defaultTrackInventory,
+        lowStockThreshold: inventoryDefaults.defaultLowStockThreshold,
+        allowBackorders: inventoryDefaults.defaultAllowBackorders,
+      }}
     />
   );
 }

@@ -1,3 +1,4 @@
+import type { StorefrontAvailability } from "@/features/inventory/lib";
 import type { Product } from "@/features/products/types";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ export type ProductDetailProps = {
   shippingEnabled?: boolean;
   /** From StoreSettings — optional trust line context. */
   storeName?: string;
+  /** Inventory availability for CTA / labels (RFC-023). */
+  availability?: StorefrontAvailability;
   className?: string;
 };
 
@@ -36,6 +39,7 @@ export function ProductDetail({
   categoryHref,
   shippingEnabled = false,
   storeName = "",
+  availability,
   className,
 }: ProductDetailProps) {
   return (
@@ -60,6 +64,7 @@ export function ProductDetail({
         categoryHref={categoryHref}
         shippingEnabled={shippingEnabled}
         storeName={storeName}
+        availability={availability}
       />
     </article>
   );

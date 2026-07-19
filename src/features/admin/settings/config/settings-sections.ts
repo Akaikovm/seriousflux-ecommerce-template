@@ -2,6 +2,7 @@ import {
   Bell,
   CreditCard,
   MapPin,
+  Package,
   Palette,
   Settings2,
   Store,
@@ -12,6 +13,7 @@ import { AdvancedSettingsSection } from "@/features/admin/settings/sections/Adva
 import { BrandingSettingsSection } from "@/features/admin/settings/sections/BrandingSettingsSection";
 import { ContactSettingsSection } from "@/features/admin/settings/sections/ContactSettingsSection";
 import { GeneralSettingsSection } from "@/features/admin/settings/sections/GeneralSettingsSection";
+import { InventorySettingsSection } from "@/features/admin/settings/sections/InventorySettingsSection";
 import { NotificationsSettingsSection } from "@/features/admin/settings/sections/NotificationsSettingsSection";
 import { PaymentsSettingsSection } from "@/features/admin/settings/sections/PaymentsSettingsSection";
 import { ShippingSettingsSection } from "@/features/admin/settings/sections/ShippingSettingsSection";
@@ -103,11 +105,20 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
     component: NotificationsSettingsSection,
   },
   {
+    id: "inventory",
+    title: "Inventory",
+    description: "Stock tracking defaults and catalog visibility.",
+    icon: Package,
+    order: 7,
+    fieldRoots: ["inventory"],
+    component: InventorySettingsSection,
+  },
+  {
     id: "advanced",
     title: "Advanced",
     description: "Maintenance mode and future integrations.",
     icon: Settings2,
-    order: 7,
+    order: 8,
     fieldRoots: ["maintenanceMode"],
     component: AdvancedSettingsSection,
   },

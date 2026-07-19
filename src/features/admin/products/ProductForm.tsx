@@ -13,12 +13,17 @@ import {
   AdminSaveBar,
 } from "@/features/admin/ui";
 import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
+import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
 import { slugify } from "@/lib/slugify";
 import { Input } from "@/shared/ui/Input";
+import { LabelWithHint } from "@/shared/ui/Tooltip";
 import { Select } from "@/shared/ui/Select";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -42,6 +47,15 @@ const productFormSchema = z.object({
   featured: z.boolean(),
   active: z.boolean(),
   order: z.coerce.number().int().min(0, "Order must be 0 or greater."),
+  sku: z.string().trim(),
+  trackInventory: z.boolean(),
+  stockQuantity: z.coerce.number().int().min(0, "Stock must be 0 or greater."),
+  lowStockThreshold: z.coerce
+    .number()
+    .int()
+    .min(0, "Threshold must be 0 or greater."),
+  allowBackorders: z.boolean(),
+  visibilityWhenOutOfStock: z.enum(["visible", "hidden"]),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -52,16 +66,27 @@ type CategoryOption = {
   name: string;
 };
 
+export type ProductFormInventoryDefaults = {
+  trackInventory: boolean;
+  lowStockThreshold: number;
+  allowBackorders: boolean;
+};
+
 type ProductFormProps = {
   mode: "create" | "edit";
   product?: Product;
+  /** Current inventory quantity when editing (from InventoryService). */
+  initialStockQuantity?: number;
   categories: CategoryOption[];
   defaultCurrency: string;
+  inventoryDefaults?: ProductFormInventoryDefaults;
 };
 
 function toInitialValues(
   product: Product | undefined,
   defaultCurrency: string,
+  inventoryDefaults: ProductFormInventoryDefaults,
+  initialStockQuantity: number,
 ): ProductFormValues {
   return {
     name: product?.name ?? "",
@@ -74,26 +99,50 @@ function toInitialValues(
     featured: product?.featured ?? false,
     active: product?.active ?? true,
     order: product?.order ?? 0,
+    sku: product?.sku ?? "",
+    trackInventory: product?.trackInventory ?? inventoryDefaults.trackInventory,
+    stockQuantity: initialStockQuantity,
+    lowStockThreshold:
+      product?.lowStockThreshold ?? inventoryDefaults.lowStockThreshold,
+    allowBackorders:
+      product?.allowBackorders ?? inventoryDefaults.allowBackorders,
+    visibilityWhenOutOfStock: product?.visibilityWhenOutOfStock ?? "visible",
   };
 }
 
 /**
- * Controlled create/edit form for products (RFC-012).
- * Persists through ProductService only. Images upload via MediaService.
+ * Controlled create/edit form for products (RFC-012 / RFC-023).
+ * Commercial fields → ProductService. Quantity → InventoryService only.
  */
 export function ProductForm({
   mode,
   product,
+  initialStockQuantity = 0,
   categories,
   defaultCurrency,
+  inventoryDefaults = {
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+  },
 }: ProductFormProps) {
   const router = useRouter();
   const toast = useToast();
   const [values, setValues] = useState<ProductFormValues>(() =>
-    toInitialValues(product, defaultCurrency),
+    toInitialValues(
+      product,
+      defaultCurrency,
+      inventoryDefaults,
+      initialStockQuantity,
+    ),
   );
   const [snapshot, setSnapshot] = useState<ProductFormValues>(() =>
-    toInitialValues(product, defaultCurrency),
+    toInitialValues(
+      product,
+      defaultCurrency,
+      inventoryDefaults,
+      initialStockQuantity,
+    ),
   );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -152,14 +201,33 @@ export function ProductForm({
         featured: parsed.data.featured,
         active: parsed.data.active,
         order: parsed.data.order,
+        sku: parsed.data.sku,
+        trackInventory: parsed.data.trackInventory,
+        lowStockThreshold: parsed.data.lowStockThreshold,
+        allowBackorders: parsed.data.allowBackorders,
+        visibilityWhenOutOfStock: parsed.data.visibilityWhenOutOfStock,
       };
 
+      const inventoryService = new InventoryService();
+
       if (mode === "create") {
-        await new ProductService().create(input);
+        const created = await new ProductService().create(input);
+        if (parsed.data.trackInventory) {
+          await inventoryService.setQuantity({
+            productId: created.id,
+            quantity: parsed.data.stockQuantity,
+          });
+        }
         toast.success("Product created.");
         router.push("/admin/products");
       } else if (product) {
         await new ProductService().update(product.id, input);
+        if (parsed.data.trackInventory) {
+          await inventoryService.setQuantity({
+            productId: product.id,
+            quantity: parsed.data.stockQuantity,
+          });
+        }
         toast.success("Product updated.");
         setSnapshot({ ...parsed.data });
         setValues({ ...parsed.data });
@@ -167,7 +235,7 @@ export function ProductForm({
 
       router.refresh();
     } catch (err) {
-      if (err instanceof ProductError) {
+      if (err instanceof ProductError || err instanceof InventoryError) {
         setFormError(err.message);
         toast.error(err.message);
       } else {
@@ -292,6 +360,16 @@ export function ProductForm({
           />
 
           <Input
+            name="sku"
+            label="SKU"
+            value={values.sku}
+            error={fieldErrors.sku}
+            helperText="Optional commercial identifier."
+            disabled={loading}
+            onChange={(event) => setField("sku", event.target.value)}
+          />
+
+          <Input
             name="order"
             label="Order"
             type="number"
@@ -320,6 +398,108 @@ export function ProductForm({
             disabled={loading}
             onChange={(event) => setField("active", event.target.checked)}
           />
+
+          <div className="border-t border-border pt-5">
+            <p className="mb-4 text-sm font-medium text-foreground">Inventory</p>
+
+            <div className="flex flex-col gap-5">
+              <Switch
+                name="trackInventory"
+                label={
+                  <LabelWithHint hint="Enforces available units at checkout. Turn off to keep the product always sellable.">
+                    Track inventory
+                  </LabelWithHint>
+                }
+                checked={values.trackInventory}
+                disabled={loading}
+                onChange={(event) =>
+                  setField("trackInventory", event.target.checked)
+                }
+              />
+
+              {values.trackInventory ? (
+                <>
+                  <Input
+                    name="stockQuantity"
+                    label={
+                      <LabelWithHint hint="Units available to sell. Goes down when an order is paid; restored on cancel or refund.">
+                        Stock quantity
+                      </LabelWithHint>
+                    }
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={String(values.stockQuantity)}
+                    error={fieldErrors.stockQuantity}
+                    disabled={loading}
+                    onChange={(event) =>
+                      setField(
+                        "stockQuantity",
+                        Number(event.target.value || 0),
+                      )
+                    }
+                  />
+
+                  <Input
+                    name="lowStockThreshold"
+                    label={
+                      <LabelWithHint hint="At or below this quantity: Low stock in Admin, and optional “Only X left” on the storefront.">
+                        Low stock threshold
+                      </LabelWithHint>
+                    }
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={String(values.lowStockThreshold)}
+                    error={fieldErrors.lowStockThreshold}
+                    disabled={loading}
+                    onChange={(event) =>
+                      setField(
+                        "lowStockThreshold",
+                        Number(event.target.value || 0),
+                      )
+                    }
+                  />
+
+                  <Switch
+                    name="allowBackorders"
+                    label={
+                      <LabelWithHint hint="Customers can still buy when quantity is 0. You fulfill after restocking.">
+                        Allow backorders
+                      </LabelWithHint>
+                    }
+                    checked={values.allowBackorders}
+                    disabled={loading}
+                    onChange={(event) =>
+                      setField("allowBackorders", event.target.checked)
+                    }
+                  />
+
+                  <Select
+                    name="visibilityWhenOutOfStock"
+                    label={
+                      <LabelWithHint hint="Keep visible shows out of stock. Hide removes it from listings when stock is zero and backorders are off.">
+                        When out of stock
+                      </LabelWithHint>
+                    }
+                    value={values.visibilityWhenOutOfStock}
+                    error={fieldErrors.visibilityWhenOutOfStock}
+                    disabled={loading}
+                    options={[
+                      { value: "visible", label: "Keep visible" },
+                      { value: "hidden", label: "Hide from catalog" },
+                    ]}
+                    onChange={(event) =>
+                      setField(
+                        "visibilityWhenOutOfStock",
+                        event.target.value as "visible" | "hidden",
+                      )
+                    }
+                  />
+                </>
+              ) : null}
+            </div>
+          </div>
         </AdminFormLayout>
       </form>
     </AdminPage>

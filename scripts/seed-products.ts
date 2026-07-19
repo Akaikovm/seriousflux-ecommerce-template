@@ -1,21 +1,19 @@
 /**
- * Seed catalog data into Firestore (RFC-007 products + required categories).
+ * Seed catalog + inventory — SeriousFlux Demo (blank-project demos).
  *
- * Idempotent: uses stable document ids (slug / category id) via setDoc.
+ * Idempotent: stable document ids via setDoc merge.
  *
  * Usage:
  *   npm run seed:products
+ *   npm run seed:demo
  *
- * Requires `.env.local` with NEXT_PUBLIC_FIREBASE_* values.
- * Firestore security rules must allow these writes (open rules in early
- * development, or run while authenticated as an admin later).
+ * Stock states covered for QA:
+ * - in stock, low stock, out of stock, not tracked, backorders allowed
  */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
-import { initializeApp } from "firebase/app";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { initSeedFirestore } from "./lib/firebase-seed";
 
 type SeedCategory = {
   id: string;
@@ -40,128 +38,225 @@ type SeedProduct = {
   featured: boolean;
   active: boolean;
   order: number;
+  sku: string;
+  trackInventory: boolean;
+  lowStockThreshold: number;
+  allowBackorders: boolean;
+  visibilityWhenOutOfStock: "visible" | "hidden";
+  /** Seeded into inventory/{id} — not stored on the product document. */
+  stockQuantity: number;
 };
-
-/** Minimal `.env.local` loader so the script needs no extra dependencies. */
-function loadEnvLocal(): void {
-  const envPath = resolve(process.cwd(), ".env.local");
-  const content = readFileSync(envPath, "utf8");
-
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-
-    const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
-
-    if (key && process.env[key] === undefined) {
-      process.env[key] = value;
-    }
-  }
-}
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
-  return value;
-}
 
 const SEED_CATEGORIES: SeedCategory[] = [
   {
-    id: "camisas",
-    name: "Camisas",
-    slug: "camisas",
-    description: "Camisetas y kits de fútbol.",
+    id: "apparel",
+    name: "Apparel",
+    slug: "apparel",
+    description: "SeriousFlux demo tees, hoodies, and everyday wear.",
     image:
-      "https://images.unsplash.com/photo-1671016233853-5db7def7ff76?w=800&q=80",
+      "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80",
     featured: true,
     active: true,
     order: 1,
   },
   {
-    id: "pantalones",
-    name: "Pantalones",
-    slug: "pantalones",
-    description: "Shorts y pantalones de juego.",
+    id: "accessories",
+    name: "Accessories",
+    slug: "accessories",
+    description: "Bags, caps, and small goods for the demo storefront.",
     image:
-      "https://images.unsplash.com/photo-1605400948609-6023886f4cc0?w=800&q=80",
-    featured: true,
-    active: true,
-    order: 2,
-  },
-];
-
-const SEED_PRODUCTS: SeedProduct[] = [
-  {
-    id: "camisa-oxford-blanca",
-    name: "Camisa Oxford Blanca",
-    slug: "camisa-oxford-blanca",
-    description:
-      "Camiseta de fútbol blanca, corte clásico. Ideal para local o entrenamiento.",
-    // Argentina-style white football jersey (Unsplash)
-    image:
-      "https://images.unsplash.com/photo-1671016233853-5db7def7ff76?w=800&q=80",
-    price: 45900,
-    currency: "ARS",
-    categoryId: "camisas",
-    featured: true,
-    active: true,
-    order: 1,
-  },
-  {
-    id: "camisa-negra-premium",
-    name: "Camisa Negra Premium",
-    slug: "camisa-negra-premium",
-    description:
-      "Camiseta de fútbol premium. Tela liviana y acabado de competencia.",
-    // Hanging Nike football jersey — product-style shot (Unsplash)
-    image:
-      "https://images.unsplash.com/photo-1552066379-e7bfd22155c5?w=800&q=80",
-    price: 52900,
-    currency: "ARS",
-    categoryId: "camisas",
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80",
     featured: true,
     active: true,
     order: 2,
   },
   {
-    id: "pantalon-chino-beige",
-    name: "Pantalón Chino Beige",
-    slug: "pantalon-chino-beige",
-    description:
-      "Short de juego / entrenamiento. Corte cómodo para el partido completo.",
-    // Players in kit shorts on the pitch (Unsplash)
+    id: "digital",
+    name: "Digital",
+    slug: "digital",
+    description: "Digital / untracked demo SKUs (no physical stock).",
     image:
-      "https://images.unsplash.com/photo-1605400948609-6023886f4cc0?w=800&q=80",
-    price: 48900,
-    currency: "ARS",
-    categoryId: "pantalones",
-    featured: true,
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+    featured: false,
     active: true,
     order: 3,
   },
 ];
 
-async function seed(): Promise<void> {
-  loadEnvLocal();
+const SEED_PRODUCTS: SeedProduct[] = [
+  {
+    id: "sf-logo-tee-black",
+    name: "SeriousFlux Logo Tee — Black",
+    slug: "sf-logo-tee-black",
+    description:
+      "Demo cotton tee with SeriousFlux mark. In-stock sample for catalog and cart flows.",
+    image:
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
+    price: 18900,
+    currency: "ARS",
+    categoryId: "apparel",
+    featured: true,
+    active: true,
+    order: 1,
+    sku: "SF-TEE-BLK",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 42,
+  },
+  {
+    id: "sf-logo-tee-white",
+    name: "SeriousFlux Logo Tee — White",
+    slug: "sf-logo-tee-white",
+    description:
+      "Light tee for PDP / featured grid demos. Comfortable everyday cut.",
+    image:
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&q=80",
+    price: 18900,
+    currency: "ARS",
+    categoryId: "apparel",
+    featured: true,
+    active: true,
+    order: 2,
+    sku: "SF-TEE-WHT",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 28,
+  },
+  {
+    id: "sf-hoodie-black",
+    name: "SeriousFlux Hoodie — Black",
+    slug: "sf-hoodie-black",
+    description:
+      "Heavyweight hoodie demo SKU. Featured product for hero → PDP journeys.",
+    image:
+      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&q=80",
+    price: 45900,
+    currency: "ARS",
+    categoryId: "apparel",
+    featured: true,
+    active: true,
+    order: 3,
+    sku: "SF-HOOD-BLK",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 15,
+  },
+  {
+    id: "sf-cap-red",
+    name: "SeriousFlux Cap — Accent Red",
+    slug: "sf-cap-red",
+    description:
+      "Low-stock demo accessory. Triggers “Only X left” when settings allow.",
+    image:
+      "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&q=80",
+    price: 12900,
+    currency: "ARS",
+    categoryId: "accessories",
+    featured: true,
+    active: true,
+    order: 4,
+    sku: "SF-CAP-RED",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 3,
+  },
+  {
+    id: "sf-tote-canvas",
+    name: "SeriousFlux Canvas Tote",
+    slug: "sf-tote-canvas",
+    description:
+      "Out-of-stock demo. Stays visible so you can test unavailable ATC UX.",
+    image:
+      "https://images.unsplash.com/photo-1590874103328-eac38a67437f?w=800&q=80",
+    price: 15900,
+    currency: "ARS",
+    categoryId: "accessories",
+    featured: false,
+    active: true,
+    order: 5,
+    sku: "SF-TOTE-CVS",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 0,
+  },
+  {
+    id: "sf-socks-pack",
+    name: "SeriousFlux Socks Pack",
+    slug: "sf-socks-pack",
+    description:
+      "Backorder demo — purchasable at qty 0 with allowBackorders enabled.",
+    image:
+      "https://images.unsplash.com/photo-1586350977771-b3b0abd50c40?w=800&q=80",
+    price: 8900,
+    currency: "ARS",
+    categoryId: "accessories",
+    featured: false,
+    active: true,
+    order: 6,
+    sku: "SF-SOCK-3PK",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: true,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 0,
+  },
+  {
+    id: "sf-gift-card-digital",
+    name: "SeriousFlux Digital Gift Card",
+    slug: "sf-gift-card-digital",
+    description:
+      "Not-tracked digital SKU. Inventory quantity is ignored for purchase rules.",
+    image:
+      "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&q=80",
+    price: 25000,
+    currency: "ARS",
+    categoryId: "digital",
+    featured: false,
+    active: true,
+    order: 7,
+    sku: "SF-GIFT-DIG",
+    trackInventory: false,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 0,
+  },
+  {
+    id: "sf-sticker-pack",
+    name: "SeriousFlux Sticker Pack",
+    slug: "sf-sticker-pack",
+    description: "Small accessory with healthy stock for multi-item carts.",
+    image:
+      "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&q=80",
+    price: 4900,
+    currency: "ARS",
+    categoryId: "accessories",
+    featured: false,
+    active: true,
+    order: 8,
+    sku: "SF-STK-PK",
+    trackInventory: true,
+    lowStockThreshold: 5,
+    allowBackorders: false,
+    visibilityWhenOutOfStock: "visible",
+    stockQuantity: 100,
+  },
+];
 
-  const app = initializeApp({
-    apiKey: requireEnv("NEXT_PUBLIC_FIREBASE_API_KEY"),
-    authDomain: requireEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
-    projectId: requireEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
-    storageBucket: requireEnv("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"),
-    messagingSenderId: requireEnv("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
-    appId: requireEnv("NEXT_PUBLIC_FIREBASE_APP_ID"),
-  });
+export async function seedProducts(): Promise<void> {
+  const { db, projectId } = initSeedFirestore();
 
-  const db = getFirestore(app);
-
-  console.log(`Seeding catalog into project: ${requireEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID")}`);
+  console.log(`Seeding catalog into project: ${projectId}`);
 
   for (const category of SEED_CATEGORIES) {
     const { id, ...data } = category;
@@ -170,15 +265,33 @@ async function seed(): Promise<void> {
   }
 
   for (const product of SEED_PRODUCTS) {
-    const { id, ...data } = product;
+    const { id, stockQuantity, ...data } = product;
     await setDoc(doc(db, "products", id), data, { merge: true });
     console.log(`  ✓ products/${id}`);
+
+    await setDoc(
+      doc(db, "inventory", id),
+      {
+        productId: id,
+        quantity: stockQuantity,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    console.log(`  ✓ inventory/${id} (qty ${stockQuantity})`);
   }
 
-  console.log("Seed complete.");
+  console.log("Catalog seed complete.");
 }
 
-seed().catch((error: unknown) => {
-  console.error("Seed failed:", error);
-  process.exit(1);
-});
+const invokedDirectly = /seed-products(\.ts)?$/i.test(
+  (process.argv[1] ?? "").replace(/\\/g, "/"),
+);
+
+if (invokedDirectly) {
+  seedProducts().catch((error: unknown) => {
+    console.error("Seed failed:", error);
+    process.exit(1);
+  });
+}

@@ -32,7 +32,8 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Products CRUD (image optional)
 - Orders list + detail (payment / fulfillment / notes)
 - Customers list + detail (role / status / profile; order history via `OrderService`)
-- Modular Store Settings (General, Branding, Contact, Shipping, Payments, Notifications, Advanced) — one document, one save
+- Modular Store Settings (General, Branding, Contact, Shipping, Payments, Notifications, Inventory, Advanced) — one document, one save
+- Inventory & stock (RFC-023): per-product quantity, checkout validation, commit/restore on paid/cancel, Admin stock column + dashboard widgets
 - Image uploads via Firebase Storage (`MediaService`)
 
 ### Payments
@@ -54,7 +55,8 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Clean separation: UI → features → services → Firebase
 - Identity (`auth`) vs Account (`account`) vs Customer Admin (`customers` + `admin/customers`) vs Orders — separate ownership
 - Domain services own Firestore/Storage (no Firebase imports in UI)
-- **External integrations (Payments, Notifications, future Inventory/Analytics) run through server API routes** — not from client components or domain persistence services
+- **External integrations (Payments, Notifications, Analytics later) run through server API routes** — not from client components or domain persistence services
+- Inventory is a first-class feature (`features/inventory`); only `InventoryService` mutates `inventory/*`
 - Typed models + Zod validation on admin/checkout forms
 - Settings ∩ registered providers decide which payment methods appear at checkout
 - Storefront design tokens + CSS variables from Settings (rebrand without forking UI)
@@ -144,22 +146,35 @@ Collections used by the kit:
 
 | Collection | Purpose |
 |------------|---------|
-| `settings/general` | Store identity & branding |
+| `settings/general` | Store identity & branding (+ inventory defaults) |
 | `categories` | Catalog groupings |
-| `products` | Sellable items |
-| `orders` | Checkout purchases |
+| `products` | Sellable items (policy only — no quantity field) |
+| `inventory` | Stock quantity per product (`inventory/{productId}`) |
+| `orders` | Checkout purchases (+ `inventoryCommitStatus`) |
 | `customers` | Identity + buyer profile (`role`, `status`) — Auth uid |
 
 See [`docs/firestore.md`](docs/firestore.md) for the full data model.
 
-### 4. Seed sample data (optional)
+### 4. Seed SeriousFlux demo data (recommended for a blank project)
+
+After clone + `.env.local`, fill Firestore with **Serious Flux** sample branding, catalog, inventory, and demo orders so you can showcase the full app:
 
 ```bash
-npm run seed:settings
-npm run seed:products
+npm run seed:demo
 ```
 
-Seeds write to the Firebase project configured in `.env.local`. Create categories in Admin (or Firestore) before expecting category pages to resolve products.
+That runs settings → products/categories/inventory → sample orders in one shot.
+
+| Command | What it writes |
+|---------|----------------|
+| `npm run seed:demo` | Full demo kit (preferred) |
+| `npm run seed:settings` | `settings/general` only (Serious Flux identity) |
+| `npm run seed:products` | Categories, products, `inventory/{productId}` |
+| `npm run seed:orders` | Guest demo orders (pending / paid / shipped / shortfall) |
+
+Seeds target the Firebase project in `.env.local`. They are idempotent (`setDoc` merge) and do **not** create Auth users or payment/email secrets.
+
+**Still required for Admin:** create an Auth user and set `customers/{uid}.role = "admin"` (step 3 above). Storefront works without that.
 
 ### 5. Run
 
@@ -238,8 +253,10 @@ npm run start
 | `npm run build` | Production build |
 | `npm run start` | Serve production build |
 | `npm run lint` | ESLint |
-| `npm run seed:settings` | Seed `settings/general` |
-| `npm run seed:products` | Seed sample products |
+| `npm run seed:demo` | Full SeriousFlux demo (settings + catalog + inventory + orders) |
+| `npm run seed:settings` | Seed `settings/general` (Serious Flux) |
+| `npm run seed:products` | Seed categories, products, and inventory |
+| `npm run seed:orders` | Seed sample guest orders for Admin demos |
 
 ---
 
@@ -261,6 +278,7 @@ src/
     checkout/              # Checkout form + optional auth prompt
     customers/             # CustomerProfile types + CustomerAdminService (Admin ops)
     home/                  # Homepage section shells
+    inventory/             # Stock domain + InventoryService (RFC-023)
     media/                 # MediaService + ImageUpload
     notifications/         # NotificationProvider + Resend + templates
     orders/                # Order domain + service
@@ -272,10 +290,10 @@ src/
   lib/                     # Shared pure helpers (formatPrice, slugify, cn)
   shared/                  # Design tokens + UI primitives
 docs/
-  architecture/            # ADRs
+  architecture/            # ADRs (incl. ADR-023 inventory)
   firestore.md             # Data model
   payments-mercadopago.md  # MP setup, webhooks, troubleshooting
-scripts/                   # Seed scripts
+scripts/                   # Demo seeds (`seed:demo`, settings, products, orders)
 ```
 
 **Rule of thumb:** pages compose features; features talk to services; only services talk to Firebase.
@@ -309,6 +327,7 @@ For a new store, prefer changing data — not code:
 | [`docs/architecture/ADR-020-admin-settings-redesign.md`](docs/architecture/ADR-020-admin-settings-redesign.md) | Modular Admin Settings |
 | [`docs/architecture/ADR-021-admin-design-system.md`](docs/architecture/ADR-021-admin-design-system.md) | Admin Design System |
 | [`docs/architecture/ADR-022-customer-management.md`](docs/architecture/ADR-022-customer-management.md) | Admin Customer Management |
+| [`docs/architecture/ADR-023-inventory-stock-management.md`](docs/architecture/ADR-023-inventory-stock-management.md) | Inventory & stock (RFC-023) |
 | [`docs/architecture/`](docs/architecture/) | All Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
 
@@ -331,6 +350,8 @@ For a new store, prefer changing data — not code:
 - Checkout UX: session prefill + loading while redirecting to confirmation
 - Transactional email via Resend (Notifications settings + dispatch API)
 - Admin Customer Management (`/admin/customers` — role, status, profile, order history)
+- Inventory & stock (track policy, quantity docs, checkout validation, commit/restore, Admin UX)
+- SeriousFlux demo seed (`npm run seed:demo`) for blank-project showcases
 - Deploy path via Firebase App Hosting
 
 **Deferred / not production-ready yet**
@@ -342,7 +363,8 @@ For a new store, prefer changing data — not code:
 - Wishlist / Addresses / customer Notifications center
 - Apple / Facebook OAuth (Google is supported)
 - Per-client custom font families from Settings (kit default fonts today)
-- Product variants, inventory, coupons, reviews
+- Product variants, coupons, reviews
+- Stock reservations / multi-warehouse (InventoryService API leaves room — ADR-023)
 - Real shipping methods (single free “Standard” stub today)
 - Category filters / sort (listing UI is presentational today)
 - Guest order claiming (orders without `customerId` stay unlinked)

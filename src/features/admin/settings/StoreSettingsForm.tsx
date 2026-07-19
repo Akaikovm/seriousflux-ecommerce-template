@@ -21,8 +21,10 @@ import {
   areStoreSettingsFormValuesEqual,
   cloneStoreSettingsFormValues,
 } from "@/features/admin/settings/lib/settings-form-dirty";
+import type { InventoryFormValues } from "@/features/admin/settings/InventorySettingsFields";
 import type { NotificationsFormValues } from "@/features/admin/settings/NotificationsSettingsFields";
 import {
+  toInventorySettings,
   toNotificationsSettings,
   type StoreHeroFormData,
   type StoreSettingsFormData,
@@ -322,6 +324,12 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
               Object.values(fieldErrors.notifications).some(Boolean),
           );
         }
+        if (root === "inventory") {
+          return Boolean(
+            fieldErrors.inventory &&
+              Object.values(fieldErrors.inventory).some(Boolean),
+          );
+        }
         return Boolean(
           fieldErrors[root as keyof StoreSettingsFieldErrors],
         );
@@ -338,7 +346,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   function setField<
     K extends Exclude<
       keyof StoreSettingsFormValues,
-      "hero" | "paymentProviders" | "notifications"
+      "hero" | "paymentProviders" | "notifications" | "inventory"
     >,
   >(key: K, value: StoreSettingsFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -367,6 +375,11 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   function setNotifications(next: NotificationsFormValues) {
     setValues((current) => ({ ...current, notifications: next }));
     setFieldErrors((current) => ({ ...current, notifications: undefined }));
+  }
+
+  function setInventory(next: InventoryFormValues) {
+    setValues((current) => ({ ...current, inventory: next }));
+    setFieldErrors((current) => ({ ...current, inventory: undefined }));
   }
 
   function handleCancel() {
@@ -434,22 +447,33 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
           }
           continue;
         }
+        if (root === "inventory" && typeof issue.path[1] === "string") {
+          const fieldKey = issue.path[1] as keyof InventoryFormValues;
+          if (!nextErrors.inventory?.[fieldKey]) {
+            nextErrors.inventory = {
+              ...nextErrors.inventory,
+              [fieldKey]: issue.message,
+            };
+          }
+          continue;
+        }
         if (
           typeof root === "string" &&
           root !== "hero" &&
           root !== "paymentProviders" &&
           root !== "notifications" &&
+          root !== "inventory" &&
           !nextErrors[
             root as Exclude<
               keyof StoreSettingsFormValues,
-              "hero" | "paymentProviders" | "notifications"
+              "hero" | "paymentProviders" | "notifications" | "inventory"
             >
           ]
         ) {
           nextErrors[
             root as Exclude<
               keyof StoreSettingsFormValues,
-              "hero" | "paymentProviders" | "notifications"
+              "hero" | "paymentProviders" | "notifications" | "inventory"
             >
           ] = issue.message;
         }
@@ -462,10 +486,11 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
     setLoading(true);
 
     try {
-      const { notifications, ...rest } = parsed.data;
+      const { notifications, inventory, ...rest } = parsed.data;
       await new StoreSettingsService().updateGeneralSettings({
         ...rest,
         notifications: toNotificationsSettings(notifications),
+        inventory: toInventorySettings(inventory),
       });
       const nextSnapshot = cloneStoreSettingsFormValues(parsed.data);
       setValues(nextSnapshot);
@@ -508,7 +533,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
       <AdminPageHeader
         eyebrow="Store configuration"
         title="Settings"
-        description="Identity, branding, contact, shipping, payments, and notifications — one place for everything that shapes this store."
+        description="Identity, branding, contact, shipping, payments, notifications, and inventory — one place for everything that shapes this store."
       />
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
@@ -538,6 +563,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
             setHeroField={setHeroField}
             setPaymentProviders={setPaymentProviders}
             setNotifications={setNotifications}
+            setInventory={setInventory}
             flashSectionId={flashSectionId}
             flashToken={flashToken}
           />

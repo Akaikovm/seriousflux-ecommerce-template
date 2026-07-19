@@ -21,6 +21,7 @@ import {
   normalizeOrderStatus,
 } from "@/features/orders/lib/order-status";
 import type {
+  InventoryCommitStatus,
   Order,
   OrderCreateInput,
   OrderItem,
@@ -239,6 +240,7 @@ function toFirestorePayload(
     payment,
     totals,
     currency: input.currency,
+    inventoryCommitStatus: "none",
     createdAt: now,
     updatedAt: now,
   };
@@ -642,6 +644,38 @@ export class OrderService {
       };
 
       await updateDoc(doc(this.db, ORDERS_COLLECTION, id), patch);
+      const updated = await this.getById(id);
+      if (!updated) {
+        throw new OrderError("Order not found.", "not-found");
+      }
+      return updated;
+    } catch (error) {
+      throw toOrderError(error);
+    }
+  }
+
+  /**
+   * Narrow inventory idempotency / shortfall field write (RFC-023).
+   * Does not perform stock math — InventoryService owns mutations.
+   *
+   * @throws {OrderError} on Firestore failures.
+   */
+  async updateInventoryCommitStatus(
+    id: string,
+    status: InventoryCommitStatus,
+  ): Promise<Order> {
+    try {
+      const current = await this.getById(id);
+      if (!current) {
+        throw new OrderError("Order not found.", "not-found");
+      }
+
+      const now = Timestamp.now();
+      await updateDoc(doc(this.db, ORDERS_COLLECTION, id), {
+        inventoryCommitStatus: status,
+        updatedAt: now,
+      });
+
       const updated = await this.getById(id);
       if (!updated) {
         throw new OrderError("Order not found.", "not-found");

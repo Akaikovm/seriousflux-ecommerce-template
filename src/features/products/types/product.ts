@@ -1,8 +1,14 @@
 /**
- * Product size label as a free-form string.
+ * Product document.
  *
- * Reserved for order line-item snapshots and a future variants RFC.
- * Product catalog v1 (RFC-007) does not expose sizes on `Product`.
+ * Collection: `products`
+ *
+ * Field names match Firestore 1:1 (RFC-007 / RFC-023). Variants (sizes / colors /
+ * per-variant stock) are intentionally deferred — keep the first catalog
+ * version simple and reusable across clients.
+ *
+ * Commercial catalog + selling policy live here.
+ * Quantity lives in `inventory/{productId}` via InventoryService — never on Product.
  */
 export type ProductSize = string;
 
@@ -20,15 +26,9 @@ export interface ProductColor {
   hex: string;
 }
 
-/**
- * Product document.
- *
- * Collection: `products`
- *
- * Field names match Firestore 1:1 (RFC-007). Variants (sizes / colors /
- * per-variant stock) are intentionally deferred — keep the first catalog
- * version simple and reusable across clients.
- */
+/** Storefront visibility when tracked stock is exhausted. */
+export type ProductOutOfStockVisibility = "visible" | "hidden";
+
 export interface Product {
   /** Firestore document id. */
   id: string;
@@ -74,10 +74,32 @@ export interface Product {
    * Lower values appear first. Firestore field: `order`.
    */
   order: number;
+
+  /**
+   * Commercial SKU. Snapshotted onto order line items when present.
+   * Optional — omitted on legacy documents.
+   */
+  sku?: string;
+
+  /**
+   * When true, InventoryService enforces quantity.
+   * Missing on legacy documents → treated as `false` (backward compatible).
+   * New products default to `true` on create (ADR-023).
+   */
+  trackInventory: boolean;
+
+  /** Badge / widget threshold when tracking inventory. */
+  lowStockThreshold: number;
+
+  /** When true, checkout may proceed even if quantity ≤ 0. */
+  allowBackorders: boolean;
+
+  /** Listing/PDP behavior when out of stock (tracked, no backorders). */
+  visibilityWhenOutOfStock: ProductOutOfStockVisibility;
 }
 
 /**
- * Fields required to create a product document (RFC-011).
+ * Fields required to create a product document (RFC-011 / RFC-023).
  * `id` is assigned by Firestore (or an explicit id on create).
  */
 export type ProductWriteInput = {
@@ -91,6 +113,12 @@ export type ProductWriteInput = {
   featured: boolean;
   active: boolean;
   order: number;
+  sku?: string;
+  /** Defaults to `true` when omitted on create (ADR-023). */
+  trackInventory?: boolean;
+  lowStockThreshold?: number;
+  allowBackorders?: boolean;
+  visibilityWhenOutOfStock?: ProductOutOfStockVisibility;
 };
 
 /** Partial update payload for admin product edits. */

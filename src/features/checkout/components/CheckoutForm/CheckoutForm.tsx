@@ -14,6 +14,7 @@ import {
   STANDARD_SHIPPING_METHOD,
 } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutFormValues } from "@/features/checkout/types";
+import { validateCheckoutInventory } from "@/features/inventory/lib/validate-checkout-inventory";
 import { OrderError } from "@/features/orders/services";
 import { requestNotification } from "@/features/notifications";
 import { PaymentMethodSelector } from "@/features/payments/components/PaymentMethodSelector";
@@ -199,6 +200,23 @@ export function CheckoutForm({
     setLoading(true);
 
     try {
+      const inventoryCheck = await validateCheckoutInventory(
+        items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      );
+
+      if (!inventoryCheck.ok) {
+        const message =
+          inventoryCheck.message ??
+          "Some items are unavailable. Please update your cart.";
+        setFormError(message);
+        toast.error(message);
+        setLoading(false);
+        return;
+      }
+
       const { order, redirectUrl } = await new PaymentService().checkout({
         paymentMethod: parsed.data.paymentMethod,
         orderInput: {

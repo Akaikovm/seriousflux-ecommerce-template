@@ -1,4 +1,5 @@
 import type {
+  InventoryCommitStatus,
   Order,
   OrderItem,
   OrderPaymentStatus,
@@ -37,6 +38,8 @@ export type AdminOrderView = {
   totals: OrderTotals;
   currency: string;
   notes?: string;
+  /** Inventory commit / shortfall flag (RFC-023). */
+  inventoryCommitStatus?: InventoryCommitStatus;
   /** ISO 8601 */
   createdAt: string;
   /** ISO 8601 */
@@ -78,6 +81,9 @@ export function toAdminOrderView(order: Order): AdminOrderView {
   }
   if (order.notes) {
     view.notes = order.notes;
+  }
+  if (order.inventoryCommitStatus) {
+    view.inventoryCommitStatus = order.inventoryCommitStatus;
   }
   if (order.payment.externalId) {
     view.payment.externalId = order.payment.externalId;

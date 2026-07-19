@@ -23,8 +23,13 @@ import type {
   OrderPaymentStatus,
   OrderWritableStatus,
 } from "@/features/orders/types";
+import {
+  commitSaleSafely,
+  restoreSaleSafely,
+} from "@/features/inventory/lib/inventory-order-hooks";
 import { requestNotification } from "@/features/notifications";
 import { formatPrice } from "@/lib/format-price";
+import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { Select } from "@/shared/ui/Select";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -113,6 +118,7 @@ export function AdminOrderDetail({
         fulfillmentStatus === "cancelled" &&
         previousStatus !== "cancelled"
       ) {
+        await restoreSaleSafely(order.id);
         requestNotification({ event: "order.cancelled", orderId: order.id });
       }
       toast.success("Fulfillment status updated.");
@@ -138,6 +144,7 @@ export function AdminOrderDetail({
       const previousPayment = order.payment.status;
       await new OrderService().updatePaymentStatus(order.id, paymentStatus);
       if (paymentStatus === "paid" && previousPayment !== "paid") {
+        await commitSaleSafely(order.id);
         requestNotification({
           event: "payment.approved",
           orderId: order.id,
@@ -147,6 +154,11 @@ export function AdminOrderDetail({
           event: "payment.failed",
           orderId: order.id,
         });
+      } else if (
+        paymentStatus === "refunded" &&
+        previousPayment !== "refunded"
+      ) {
+        await restoreSaleSafely(order.id);
       }
       toast.success("Payment status updated.");
       router.refresh();
@@ -195,6 +207,19 @@ export function AdminOrderDetail({
         title="Order detail"
         description="Review customer, payment, and fulfillment for this order."
       />
+
+      {order.inventoryCommitStatus === "shortfall" ? (
+        <AdminSection
+          title="Inventory shortfall"
+          description="Payment succeeded but stock was insufficient at commit. Do not auto-refund — review and resolve manually."
+        >
+          <Badge variant="secondary">Needs manual review</Badge>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Inventory was not decreased. Use notes, restock, contact the customer,
+            or refund via payment tools when appropriate.
+          </p>
+        </AdminSection>
+      ) : null}
 
       <AdminSection title="Order summary">
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

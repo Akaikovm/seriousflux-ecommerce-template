@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { InventoryFieldErrors } from "@/features/admin/settings/InventorySettingsFields";
 import type { NotificationsFieldErrors } from "@/features/admin/settings/NotificationsSettingsFields";
 import type { PaymentProviderFieldErrors } from "@/features/admin/settings/PaymentProvidersSettingsFields";
 import type { StoreHeroFormData } from "@/features/admin/settings/store-settings-form-data";
@@ -40,6 +41,17 @@ const notificationsSchema = z.object({
   enableWelcomeEmail: z.boolean(),
 });
 
+const inventorySchema = z.object({
+  defaultTrackInventory: z.boolean(),
+  defaultLowStockThreshold: z.coerce
+    .number()
+    .int()
+    .min(0, "Threshold must be 0 or greater."),
+  defaultAllowBackorders: z.boolean(),
+  hideOutOfStockProducts: z.boolean(),
+  showRemainingStock: z.boolean(),
+});
+
 /**
  * Client validation for the admin store-settings form.
  * Rules match the prior inline schema — do not change without a product RFC.
@@ -76,6 +88,7 @@ export const storeSettingsFormSchema = z.object({
   shippingEnabled: z.boolean(),
   paymentProviders: paymentProvidersSchema,
   notifications: notificationsSchema,
+  inventory: inventorySchema,
   hero: heroFormSchema,
 });
 
@@ -85,7 +98,7 @@ export type StoreSettingsFieldErrors = Partial<
   Record<
     Exclude<
       keyof StoreSettingsFormValues,
-      "hero" | "paymentProviders" | "notifications"
+      "hero" | "paymentProviders" | "notifications" | "inventory"
     >,
     string
   >
@@ -93,4 +106,5 @@ export type StoreSettingsFieldErrors = Partial<
   hero?: Partial<Record<keyof StoreHeroFormData, string>>;
   paymentProviders?: PaymentProviderFieldErrors;
   notifications?: NotificationsFieldErrors;
+  inventory?: InventoryFieldErrors;
 };

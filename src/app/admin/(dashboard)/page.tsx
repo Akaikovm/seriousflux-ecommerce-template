@@ -6,6 +6,11 @@ import {
   CategoryService,
 } from "@/features/categories/services";
 import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
+import { resolveInventoryStatus } from "@/features/inventory/lib/stock-status";
+import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
@@ -44,20 +49,68 @@ async function getCategoryCount(): Promise<number> {
   }
 }
 
+async function getInventoryWidgetCounts(): Promise<{
+  lowStockCount: number;
+  outOfStockCount: number;
+}> {
+  try {
+    const products = await new ProductService().listAll();
+    const tracked = products.filter((product) => product.trackInventory);
+    if (tracked.length === 0) {
+      return { lowStockCount: 0, outOfStockCount: 0 };
+    }
+
+    const inventoryMap = await new InventoryService().getInventoryByProductIds(
+      tracked.map((product) => product.id),
+    );
+
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
+
+    for (const product of tracked) {
+      const quantity = inventoryMap.get(product.id)?.quantity ?? 0;
+      const status = resolveInventoryStatus({
+        trackInventory: true,
+        quantity,
+        lowStockThreshold: product.lowStockThreshold,
+      });
+      if (status === "low_stock") {
+        lowStockCount += 1;
+      }
+      if (status === "out_of_stock") {
+        outOfStockCount += 1;
+      }
+    }
+
+    return { lowStockCount, outOfStockCount };
+  } catch (error) {
+    if (error instanceof InventoryError || error instanceof ProductError) {
+      console.error(`[Dashboard inventory] ${error.message}`);
+    } else {
+      console.error("[Dashboard inventory] Unexpected error", error);
+    }
+    return { lowStockCount: 0, outOfStockCount: 0 };
+  }
+}
+
 /**
  * Admin dashboard — `/admin`.
  */
 export default async function AdminDashboardPage() {
-  const [settings, productCount, categoryCount] = await Promise.all([
-    getStoreSettings(),
-    getProductCount(),
-    getCategoryCount(),
-  ]);
+  const [settings, productCount, categoryCount, inventoryCounts] =
+    await Promise.all([
+      getStoreSettings(),
+      getProductCount(),
+      getCategoryCount(),
+      getInventoryWidgetCounts(),
+    ]);
 
   return (
     <DashboardOverview
       productCount={productCount}
       categoryCount={categoryCount}
+      lowStockCount={inventoryCounts.lowStockCount}
+      outOfStockCount={inventoryCounts.outOfStockCount}
       storeName={settings.storeName}
       maintenanceMode={settings.maintenanceMode}
     />

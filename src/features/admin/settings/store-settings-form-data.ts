@@ -3,14 +3,17 @@
  * Safe to pass from Server Components to Client Components.
  */
 
+import type { InventoryFormValues } from "@/features/admin/settings/InventorySettingsFields";
 import type { NotificationsFormValues } from "@/features/admin/settings/NotificationsSettingsFields";
 import { DEFAULT_NOTIFICATIONS_SETTINGS } from "@/features/notifications/lib/default-notifications-settings";
 import { resolvePaymentProvidersConfig } from "@/features/payments/lib/resolve-enabled-payment-methods";
 import type {
   EnabledPaymentMethods,
+  InventorySettings,
   NotificationsSettings,
   PaymentProvidersConfig,
 } from "@/features/settings/types";
+import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 
 export type StoreHeroFormData = {
   title: string;
@@ -45,6 +48,8 @@ export type StoreSettingsFormData = {
   paymentProviders: PaymentProvidersConfig;
   /** Business-facing notification fields only (RFC-019.1). */
   notifications: NotificationsFormValues;
+  /** Global inventory defaults (RFC-023). */
+  inventory: InventoryFormValues;
   hero: StoreHeroFormData;
 };
 
@@ -86,6 +91,27 @@ export function toNotificationsSettings(
   };
 }
 
+export function toInventoryFormValues(
+  inventory?: InventorySettings | null,
+): InventoryFormValues {
+  return {
+    ...DEFAULT_INVENTORY_SETTINGS,
+    ...inventory,
+  };
+}
+
+export function toInventorySettings(
+  form: InventoryFormValues,
+): InventorySettings {
+  return {
+    defaultTrackInventory: form.defaultTrackInventory,
+    defaultLowStockThreshold: form.defaultLowStockThreshold,
+    defaultAllowBackorders: form.defaultAllowBackorders,
+    hideOutOfStockProducts: form.hideOutOfStockProducts,
+    showRemainingStock: form.showRemainingStock,
+  };
+}
+
 /**
  * Maps store settings onto serializable form props.
  */
@@ -114,6 +140,7 @@ export function toStoreSettingsFormData(settings: {
   paymentProviders?: PaymentProvidersConfig;
   enabledPaymentMethods?: EnabledPaymentMethods;
   notifications?: NotificationsSettings;
+  inventory?: InventorySettings;
   hero?: Partial<StoreHeroFormData> | null;
 }): StoreSettingsFormData {
   return {
@@ -140,6 +167,7 @@ export function toStoreSettingsFormData(settings: {
     shippingEnabled: settings.shippingEnabled,
     paymentProviders: resolvePaymentProvidersConfig(settings),
     notifications: toNotificationsFormValues(settings.notifications),
+    inventory: toInventoryFormValues(settings.inventory),
     hero: {
       title: settings.hero?.title ?? "",
       subtitle: settings.hero?.subtitle ?? "",

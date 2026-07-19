@@ -5,12 +5,18 @@ import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
+import {
+  InventoryError,
+  InventoryService,
+} from "@/features/inventory/services";
+import { resolveStorefrontAvailability } from "@/features/inventory/lib";
 import { ProductDetail } from "@/features/products/components/ProductDetail";
 import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
+import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { StorefrontBreadcrumb } from "@/features/storefront/components/StorefrontBreadcrumb";
 
@@ -18,14 +24,9 @@ type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-/**
- * Loads a product by slug for the detail page and metadata.
- * Returns `null` when missing or when ProductService fails (logged).
- */
 async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const service = new ProductService();
-    return await service.getBySlug(slug);
+    return await new ProductService().getBySlug(slug);
   } catch (error) {
     if (error instanceof ProductError) {
       console.error(`[ProductService] ${error.code}: ${error.message}`);
@@ -35,27 +36,19 @@ async function getProductBySlug(slug: string): Promise<Product | null> {
         error,
       );
     }
-
     return null;
   }
 }
 
-/**
- * Resolves display name + href for `product.categoryId`.
- * Failures are logged and ignored — the detail page still renders.
- */
 async function getProductCategory(
   categoryId: string,
 ): Promise<{ name: string; href?: string } | undefined> {
   try {
     const category = await new CategoryService().getById(categoryId);
-
     if (!category?.name.trim()) {
       return undefined;
     }
-
     const canLink = category.active && category.slug.trim().length > 0;
-
     return {
       name: category.name,
       href: canLink ? `/categories/${category.slug}` : undefined,
@@ -69,7 +62,6 @@ async function getProductCategory(
         error,
       );
     }
-
     return undefined;
   }
 }
@@ -79,14 +71,12 @@ export async function generateMetadata({
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-
   if (!product) {
     return {
       title: "Product not found",
       description: "The requested product could not be found.",
     };
   }
-
   return {
     title: product.name,
     description: product.description,
@@ -94,10 +84,7 @@ export async function generateMetadata({
 }
 
 /**
- * Product detail route — `/products/[slug]`.
- *
- * Composition root: loads via ProductService + StoreSettings (locale/currency),
- * renders presentational ProductDetail. Never imports Firebase in UI.
+ * Product detail route — `/products/[slug]` (RFC-023 inventory UX).
  */
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
@@ -106,21 +93,41 @@ export default async function ProductPage({ params }: ProductPageProps) {
     getStoreSettings(),
   ]);
 
-  if (!product) {
+  if (!product || !product.active) {
     notFound();
   }
 
-  const category = await getProductCategory(product.categoryId);
+  const inventorySettings = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
+  let quantity = 0;
+  try {
+    const inventory = await new InventoryService().getInventory(product.id);
+    quantity = inventory?.quantity ?? 0;
+  } catch (error) {
+    if (error instanceof InventoryError) {
+      console.error(`[InventoryService] ${error.code}: ${error.message}`);
+    }
+  }
 
+  if (
+    product.trackInventory &&
+    quantity <= 0 &&
+    !product.allowBackorders &&
+    product.visibilityWhenOutOfStock === "hidden"
+  ) {
+    notFound();
+  }
+
+  const availability = resolveStorefrontAvailability({
+    product,
+    quantity,
+    inventorySettings,
+  });
+
+  const category = await getProductCategory(product.categoryId);
   const breadcrumbItems = [
     { label: "Home", href: "/" },
     ...(category
-      ? [
-          {
-            label: category.name,
-            href: category.href,
-          },
-        ]
+      ? [{ label: category.name, href: category.href }]
       : [{ label: "Shop", href: "/#featured" }]),
     { label: product.name },
   ];
@@ -140,6 +147,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           categoryHref={category?.href}
           shippingEnabled={settings.shippingEnabled}
           storeName={settings.storeName}
+          availability={availability}
         />
       </div>
     </section>

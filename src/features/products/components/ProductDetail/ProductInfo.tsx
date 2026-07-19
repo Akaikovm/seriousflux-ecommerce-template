@@ -1,15 +1,14 @@
 import Link from "next/link";
 
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton";
+import type { StorefrontAvailability } from "@/features/inventory/lib";
 import { formatPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 import { spacing, typography } from "@/shared/design/tokens";
 
 /**
  * Product text block for the detail page: name, description, price,
- * category label, and Add to Cart (RFC-009).
- *
- * Reserved space for future variants and reviews — not implemented.
+ * category label, and Add to Cart (RFC-009 / RFC-023).
  */
 
 export type ProductInfoProps = {
@@ -28,6 +27,7 @@ export type ProductInfoProps = {
   categoryHref?: string;
   shippingEnabled?: boolean;
   storeName?: string;
+  availability?: StorefrontAvailability;
   className?: string;
 };
 
@@ -44,10 +44,13 @@ export function ProductInfo({
   categoryHref,
   shippingEnabled = false,
   storeName = "",
+  availability,
   className,
 }: ProductInfoProps) {
   const formattedPrice = formatPrice(price, currency, locale);
   const categoryLabel = categoryName?.trim() ?? "";
+  const canPurchase = availability?.canPurchase ?? true;
+  const hideAddToCart = availability?.hideAddToCart ?? false;
 
   return (
     <div
@@ -85,6 +88,12 @@ export function ProductInfo({
           {formattedPrice}
         </p>
 
+        {availability?.availabilityLabel ? (
+          <p className="text-sm font-medium text-muted-foreground">
+            {availability.availabilityLabel}
+          </p>
+        ) : null}
+
         {description.trim().length > 0 ? (
           <p
             className="max-w-prose text-muted-foreground"
@@ -102,15 +111,28 @@ export function ProductInfo({
       <div className="hidden" aria-hidden data-product-variants />
 
       <div className="space-y-4 border-t border-border/70 pt-6">
-        <AddToCartButton
-          productId={productId}
-          name={name}
-          slug={slug}
-          image={image}
-          price={price}
-          currency={currency}
-          className="w-full sm:w-auto sm:min-w-[14rem]"
-        />
+        {!hideAddToCart ? (
+          <AddToCartButton
+            productId={productId}
+            name={name}
+            slug={slug}
+            image={image}
+            price={price}
+            currency={currency}
+            canPurchase={canPurchase}
+            maxQuantity={availability?.maxQuantity ?? null}
+            unavailableLabel={
+              availability?.availabilityLabel === "Available on backorder"
+                ? "Out of stock"
+                : (availability?.availabilityLabel ?? "Out of stock")
+            }
+            className="w-full sm:w-auto sm:min-w-[14rem]"
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            This product is currently unavailable.
+          </p>
+        )}
 
         <p className="text-sm text-muted-foreground">
           {shippingEnabled

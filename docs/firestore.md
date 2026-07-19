@@ -240,11 +240,13 @@ The store sells football shirts, hoodies and shorts. Those product lines are mod
 
 ### Initial seed (example)
 
-| name             | slug               | featured | order |
-|------------------|--------------------|----------|-------|
-| Football Shirts  | `football-shirts`  | true     | 1     |
-| Hoodies          | `hoodies`          | true     | 2     |
-| Shorts           | `shorts`           | true     | 3     |
+SeriousFlux demo kit (`npm run seed:products` / `seed:demo`):
+
+| name         | slug           | featured | order |
+|--------------|----------------|----------|-------|
+| Apparel      | `apparel`      | true     | 1     |
+| Accessories  | `accessories`  | true     | 2     |
+| Digital      | `digital`      | false    | 3     |
 
 ### Suggested indexes
 
@@ -263,7 +265,7 @@ The store sells football shirts, hoodies and shorts. Those product lines are mod
 
 The first catalog version is intentionally **simple**: one image, one price, one currency, and visibility/sort flags (`active`, `featured`, `order`). Variants (sizes, colors, per-variant stock) are deferred so the storefront can ship featured products without inventing inventory complexity every client may not need.
 
-`categoryId` links to `categories/{id}` (e.g. `camisas`, `pantalones`).
+`categoryId` links to `categories/{id}` (e.g. `apparel`, `accessories`).
 
 ### Fields
 
@@ -280,6 +282,14 @@ The first catalog version is intentionally **simple**: one image, one price, one
 | `featured`    | `boolean` | yes      | Homepage / highlight eligibility |
 | `active`      | `boolean` | yes      | Storefront visibility |
 | `order`       | `number`  | yes      | Ascending catalog / grid order |
+| `sku`           | `string`  | no       | Commercial SKU (RFC-023) |
+| `trackInventory`| `boolean` | yes*     | Legacy missing → `false`; new creates default `true` |
+| `lowStockThreshold` | `number` | yes* | Low-stock badge threshold (default 5) |
+| `allowBackorders` | `boolean` | yes*   | Allow purchase when quantity ≤ 0 |
+| `visibilityWhenOutOfStock` | `string` | yes* | `"visible"` | `"hidden"` |
+
+* Selling policy only. **Quantity is not stored on products** — see `inventory` (RFC-023).
+`ProductService` never writes inventory documents.
 
 ### Service contract (RFC-007)
 
@@ -295,34 +305,35 @@ The first catalog version is intentionally **simple**: one image, one price, one
 
 ### Initial seed (example)
 
-Use existing category document ids `camisas` and `pantalones`.
-
-Bootstrap locally with:
+Bootstrap a blank project with the SeriousFlux demo kit:
 
 ```bash
+npm run seed:demo
+# or catalog only:
 npm run seed:products
 ```
 
-| name                 | slug                   | categoryId   | price  | currency | featured | active | order |
-|----------------------|------------------------|--------------|--------|----------|----------|--------|-------|
-| Camisa Oxford Blanca | `camisa-oxford-blanca` | `camisas`    | 45900  | `ARS`    | true     | true   | 1     |
-| Camisa Negra Premium | `camisa-negra-premium` | `camisas`    | 52900  | `ARS`    | true     | true   | 2     |
-| Pantalón Chino Beige | `pantalon-chino-beige` | `pantalones` | 48900  | `ARS`    | true     | true   | 3     |
+Demo products cover in-stock, low-stock, out-of-stock, backorder, and not-tracked SKUs (see `scripts/seed-products.ts`). Quantity is written to `inventory/{productId}`, not on the product document.
 
-Example document (`products` — auto-id or slug-based id):
+Example product document:
 
 ```json
 {
-  "name": "Camisa Oxford Blanca",
-  "slug": "camisa-oxford-blanca",
-  "description": "Camisa oxford de algodón, corte clásico.",
-  "image": "https://cdn.example.com/products/camisa-oxford-blanca.jpg",
-  "price": 45900,
+  "name": "SeriousFlux Logo Tee — Black",
+  "slug": "sf-logo-tee-black",
+  "description": "Demo cotton tee with SeriousFlux mark.",
+  "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
+  "price": 18900,
   "currency": "ARS",
-  "categoryId": "camisas",
+  "categoryId": "apparel",
   "featured": true,
   "active": true,
-  "order": 1
+  "order": 1,
+  "sku": "SF-TEE-BLK",
+  "trackInventory": true,
+  "lowStockThreshold": 5,
+  "allowBackorders": false,
+  "visibilityWhenOutOfStock": "visible"
 }
 ```
 
@@ -336,6 +347,26 @@ Example document (`products` — auto-id or slug-based id):
 - `active` ASC + `featured` ASC + `order` ASC (`getFeatured`)
 - `active` ASC + `categoryId` ASC + `order` ASC (`getByCategory`)
 - `slug` ASC (unique lookup / `getBySlug`)
+
+---
+
+## 3b. `inventory` (RFC-023)
+
+**Path:** `inventory/{productId}` (MVP storage — document id = product id)  
+**TypeScript:** `src/features/inventory/types/inventory.ts` → `InventoryRecord`  
+**Service:** `src/features/inventory/services/inventory.service.ts` → `InventoryService`
+
+Sole writer of quantity. Callers must use InventoryService (not ProductService, Checkout, or Orders).
+
+| Field       | Type        | Required | Description |
+|-------------|-------------|----------|-------------|
+| `productId` | `string`    | yes      | Same as document id |
+| `quantity`  | `number`    | yes      | Available sellable units (≥ 0) |
+| `createdAt` | `Timestamp` | yes      | Created |
+| `updatedAt` | `Timestamp` | yes      | Last mutation |
+| `updatedBy` | `string`    | no       | Optional Admin uid |
+
+Orders gain `inventoryCommitStatus`: `"none"` \| `"committed"` \| `"restored"` \| `"shortfall"`.
 
 ---
 
@@ -427,7 +458,7 @@ Same bootable pattern as `ProductService`: avoid composite indexes so Admin work
 
 ### Why this structure
 
-Orders own payment + fulfillment state and keep **immutable line-item snapshots**. Size and color chosen at checkout are stored on each item; stock deduction still targets the parent product’s `stock` field.
+Orders own payment + fulfillment state and keep **immutable line-item snapshots**. Size and color chosen at checkout are stored on each item; stock deduction targets `inventory/{productId}` via InventoryService (RFC-023).
 
 Payment is abstracted via `OrderPayment.provider` so Mercado Pago can ship first and Stripe/PayPal can plug in later without reshaping the order document.
 
@@ -583,10 +614,11 @@ These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope fo
 |----------------------|--------------|
 | Coupons              | Needs its own validation + redemption rules |
 | Reviews              | Needs moderation + product aggregation |
-| Inventory / stock    | Deferred until a dedicated inventory RFC |
+| Inventory / stock    | Done (RFC-023) — `inventory/{productId}` + InventoryService |
 | Variants (size/color)| Explicitly deferred in RFC-007 |
 | Cart persistence     | Cart remains client state (Zustand) until a later RFC |
 | Nested order events  | Status history can be added as subcollection later |
+| Reservations / warehouses | Deferred — InventoryService API leaves room (ADR-023) |
 
 ---
 
@@ -596,7 +628,8 @@ These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope fo
 |-----------------------------------|------------------------|
 | Stripe / PayPal                   | New `PaymentProviderId` + provider fields on `OrderPayment` |
 | Settings split                    | Add `settings/shipping`, `settings/payments`, `settings/seo` docs |
-| Per-variant stock                 | Add `variants[]` or `inventory` collection in a later RFC |
+| Per-variant stock                 | Add variant stockable ids behind InventoryService (same public API) |
+| Multi-warehouse inventory         | Evolve storage behind InventoryService; keep method contracts |
 | Nested categories                 | Add optional `parentId` on `Category` |
 | Guest checkout                    | Done (RFC-013) — `customerId` optional; email snapshots |
 | Authenticated checkout            | Done (RFC-017 / RFC-018) — optional Google/email at checkout; sets `customerId` |
@@ -610,9 +643,30 @@ These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope fo
 
 ---
 
+## Demo seeds (Serious Flux showcase)
+
+For a blank Firebase project after clone, prefer:
+
+```bash
+npm run seed:demo
+```
+
+| Script | Writes |
+|--------|--------|
+| `scripts/seed-demo.ts` | Orchestrates settings → catalog/inventory → orders |
+| `scripts/seed-settings.ts` | `settings/general` (Serious Flux branding + inventory defaults) |
+| `scripts/seed-products.ts` | `categories`, `products`, `inventory/{productId}` |
+| `scripts/seed-orders.ts` | Sample guest `orders` (incl. shortfall demo) |
+
+Shared helper: `scripts/lib/firebase-seed.ts`. Seeds do not create Auth admins or payment secrets. See README “Seed SeriousFlux demo data”.
+
+Architecture: [`docs/architecture/ADR-023-inventory-stock-management.md`](architecture/ADR-023-inventory-stock-management.md).
+
+---
+
 ## Non-goals of RFC-001 / RFC-002
 
-- Seed scripts for local bootstrap: `npm run seed:products` (`scripts/seed-products.ts`)
+- Seed scripts for local bootstrap (documented above; not part of RFC-001 scope)
 - No Firestore Security Rules (later RFC)
 - No composite index JSON commit (create when queries exist)
 - No settings write / admin CRUD (RFC-002 is read-only)

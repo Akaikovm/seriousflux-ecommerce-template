@@ -1,7 +1,9 @@
 import type { Timestamp } from "firebase/firestore";
 
+import type { InventoryCommitStatus } from "@/features/inventory/types";
 import type { ProductColor, ProductSize } from "@/features/products/types/product";
 
+export type { InventoryCommitStatus };
 /**
  * Supported payment providers on orders (RFC-016.5).
  * Implemented today: Mercado Pago, Cash on Delivery.
@@ -269,6 +271,13 @@ export interface Order {
    * Not shown on storefront confirmation; separate from customer-facing copy.
    */
   notes?: string;
+
+  /**
+   * Inventory commit idempotency + shortfall flag (RFC-023 / ADR-023).
+   * Missing on legacy orders → treat as `"none"`.
+   * Does not change fulfillment or payment status enums.
+   */
+  inventoryCommitStatus?: InventoryCommitStatus;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;

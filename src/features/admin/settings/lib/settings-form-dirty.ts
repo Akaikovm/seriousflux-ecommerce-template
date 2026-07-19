@@ -18,6 +18,7 @@ export function cloneStoreSettingsFormValues(
       bankTransfer: { ...settings.paymentProviders.bankTransfer },
     },
     notifications: { ...settings.notifications },
+    inventory: { ...settings.inventory },
   };
 }
 

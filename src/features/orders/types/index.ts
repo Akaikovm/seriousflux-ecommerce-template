@@ -3,6 +3,7 @@ export type {
   OrderStatus,
   OrderWritableStatus,
   OrderPaymentStatus,
+  InventoryCommitStatus,
   OrderItem,
   OrderShippingAddress,
   OrderShippingMethod,

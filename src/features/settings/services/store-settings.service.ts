@@ -20,12 +20,15 @@ import {
   resolvePaymentProvidersConfig,
   toLegacyEnabledPaymentMethods,
 } from "@/features/payments/lib/resolve-enabled-payment-methods";
-import type {
-  EnabledPaymentMethods,
-  NotificationsSettings,
-  PaymentProvidersConfig,
-  StoreSettings,
-  StoreSettingsUpdateInput,
+import {
+  DEFAULT_INVENTORY_SETTINGS,
+  mapInventorySettings,
+  type InventorySettings,
+  type EnabledPaymentMethods,
+  type NotificationsSettings,
+  type PaymentProvidersConfig,
+  type StoreSettings,
+  type StoreSettingsUpdateInput,
 } from "@/features/settings/types";
 
 /** Firestore collection that holds store configuration documents. */
@@ -89,6 +92,7 @@ export function getDefaultStoreSettings(
     paymentProviders,
     enabledPaymentMethods: toLegacyEnabledPaymentMethods(paymentProviders),
     notifications: { ...DEFAULT_NOTIFICATIONS_SETTINGS },
+    inventory: { ...DEFAULT_INVENTORY_SETTINGS },
     createdAt: now,
     updatedAt: now,
   };
@@ -193,6 +197,11 @@ export function mapStoreSettings(
     defaults.notifications ?? DEFAULT_NOTIFICATIONS_SETTINGS,
   );
 
+  const inventory: InventorySettings = mapInventorySettings(
+    data.inventory,
+    defaults.inventory ?? DEFAULT_INVENTORY_SETTINGS,
+  );
+
   return {
     storeName: asString(data.storeName, defaults.storeName),
     tagline: asString(data.tagline, defaults.tagline),
@@ -218,6 +227,7 @@ export function mapStoreSettings(
     paymentProviders,
     enabledPaymentMethods,
     notifications,
+    inventory,
     hero,
     createdAt: asTimestamp(data.createdAt, defaults.createdAt),
     updatedAt: asTimestamp(data.updatedAt, defaults.updatedAt),
@@ -352,6 +362,11 @@ export class StoreSettingsService {
           ? mapNotificationsSettings(input.notifications)
           : (current.notifications ?? { ...DEFAULT_NOTIFICATIONS_SETTINGS });
 
+      const inventory: InventorySettings =
+        input.inventory !== undefined
+          ? mapInventorySettings(input.inventory)
+          : (current.inventory ?? { ...DEFAULT_INVENTORY_SETTINGS });
+
       const next: StoreSettings = {
         ...current,
         ...input,
@@ -359,6 +374,7 @@ export class StoreSettingsService {
         paymentProviders,
         enabledPaymentMethods,
         notifications,
+        inventory,
         createdAt: current.createdAt,
         updatedAt: now,
       };
@@ -370,6 +386,7 @@ export class StoreSettingsService {
         paymentProviders: nextProviders,
         enabledPaymentMethods: nextLegacy,
         notifications: nextNotifications,
+        inventory: nextInventory,
         ...rest
       } = next;
 
@@ -379,6 +396,7 @@ export class StoreSettingsService {
         ...(nextProviders ? { paymentProviders: nextProviders } : {}),
         ...(nextLegacy ? { enabledPaymentMethods: nextLegacy } : {}),
         ...(nextNotifications ? { notifications: nextNotifications } : {}),
+        ...(nextInventory ? { inventory: nextInventory } : {}),
         createdAt,
         updatedAt,
       });

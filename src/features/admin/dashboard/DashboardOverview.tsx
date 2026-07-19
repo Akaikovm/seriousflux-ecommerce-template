@@ -9,16 +9,21 @@ import { Badge } from "@/shared/ui/Badge";
 type DashboardOverviewProps = {
   productCount: number;
   categoryCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
   storeName: string;
   maintenanceMode: boolean;
 };
 
 /**
- * Admin dashboard overview (ADR-021).
+ * Admin dashboard overview (ADR-021 / RFC-023).
+ * Extends existing Overview — does not introduce a separate Inventory dashboard.
  */
 export function DashboardOverview({
   productCount,
   categoryCount,
+  lowStockCount,
+  outOfStockCount,
   storeName,
   maintenanceMode,
 }: DashboardOverviewProps) {
@@ -40,6 +45,16 @@ export function DashboardOverview({
           label="Categories"
           value={categoryCount}
           hint="Active and inactive"
+        />
+        <AdminStatCard
+          label="Low stock"
+          value={lowStockCount}
+          hint="Tracked products at or below threshold"
+        />
+        <AdminStatCard
+          label="Out of stock"
+          value={outOfStockCount}
+          hint="Tracked products with zero quantity"
         />
         <AdminSurface compact>
           <p className="admin-stat-card__label">Store status</p>

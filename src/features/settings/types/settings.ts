@@ -1,10 +1,20 @@
 import type { Timestamp } from "firebase/firestore";
 
+import type { InventorySettings } from "./inventory";
 import type { NotificationsSettings } from "./notifications";
 import type {
   EnabledPaymentMethods,
   PaymentProvidersConfig,
 } from "./payment-providers";
+
+export type {
+  InventorySettings,
+} from "./inventory";
+
+export {
+  DEFAULT_INVENTORY_SETTINGS,
+  mapInventorySettings,
+} from "./inventory";
 
 export type {
   NotificationProviderSettingsId,
@@ -131,6 +141,12 @@ export interface StoreSettings {
    * Never stores API keys — secrets remain in server env vars (e.g. RESEND_API_KEY).
    */
   notifications?: NotificationsSettings;
+
+  /**
+   * Public inventory defaults (RFC-023).
+   * Per-product policy fields override where applicable.
+   */
+  inventory?: InventorySettings;
 
   /**
    * @deprecated Prefer `paymentProviders`. Still accepted when reading older documents.

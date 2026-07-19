@@ -67,7 +67,10 @@ export function mapProduct(
 ): Product {
   const data = snapshot.data() ?? {};
 
-  return {
+  const visibility =
+    data.visibilityWhenOutOfStock === "hidden" ? "hidden" : "visible";
+
+  const product: Product = {
     id: snapshot.id,
     name: asString(data.name),
     slug: asString(data.slug),
@@ -79,7 +82,18 @@ export function mapProduct(
     featured: asBoolean(data.featured, false),
     active: asBoolean(data.active, false),
     order: asNumber(data.order, 0),
+    // Legacy docs without the field remain always-sellable (ADR-023).
+    trackInventory: asBoolean(data.trackInventory, false),
+    lowStockThreshold: asNumber(data.lowStockThreshold, 5),
+    allowBackorders: asBoolean(data.allowBackorders, false),
+    visibilityWhenOutOfStock: visibility,
   };
+
+  if (typeof data.sku === "string" && data.sku.trim()) {
+    product.sku = data.sku.trim();
+  }
+
+  return product;
 }
 
 function sortByOrder(products: Product[]): Product[] {
@@ -87,7 +101,7 @@ function sortByOrder(products: Product[]): Product[] {
 }
 
 function toFirestorePayload(input: ProductWriteInput): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     name: input.name,
     slug: input.slug,
     description: input.description,
@@ -98,7 +112,43 @@ function toFirestorePayload(input: ProductWriteInput): Record<string, unknown> {
     featured: input.featured,
     active: input.active,
     order: input.order,
+    // New products default to tracking inventory (ADR-023).
+    trackInventory: input.trackInventory ?? true,
+    lowStockThreshold: input.lowStockThreshold ?? 5,
+    allowBackorders: input.allowBackorders ?? false,
+    visibilityWhenOutOfStock: input.visibilityWhenOutOfStock ?? "visible",
   };
+
+  if (input.sku !== undefined) {
+    const sku = input.sku.trim();
+    payload.sku = sku.length > 0 ? sku : null;
+  }
+
+  return payload;
+}
+
+function mapCreatedProduct(id: string, input: ProductWriteInput): Product {
+  const product: Product = {
+    id,
+    name: input.name,
+    slug: input.slug,
+    description: input.description,
+    image: input.image,
+    price: input.price,
+    currency: input.currency,
+    categoryId: input.categoryId,
+    featured: input.featured,
+    active: input.active,
+    order: input.order,
+    trackInventory: input.trackInventory ?? true,
+    lowStockThreshold: input.lowStockThreshold ?? 5,
+    allowBackorders: input.allowBackorders ?? false,
+    visibilityWhenOutOfStock: input.visibilityWhenOutOfStock ?? "visible",
+  };
+  if (input.sku?.trim()) {
+    product.sku = input.sku.trim();
+  }
+  return product;
 }
 
 function toProductError(error: unknown): ProductError {
@@ -297,14 +347,21 @@ export class ProductService {
   async create(input: ProductWriteInput, id?: string): Promise<Product> {
     try {
       const payload = toFirestorePayload(input);
+      const normalized: ProductWriteInput = {
+        ...input,
+        trackInventory: input.trackInventory ?? true,
+        lowStockThreshold: input.lowStockThreshold ?? 5,
+        allowBackorders: input.allowBackorders ?? false,
+        visibilityWhenOutOfStock: input.visibilityWhenOutOfStock ?? "visible",
+      };
 
       if (id) {
         await setDoc(doc(this.db, PRODUCTS_COLLECTION, id), payload);
-        return { id, ...input };
+        return mapCreatedProduct(id, normalized);
       }
 
       const ref = await addDoc(collection(this.db, PRODUCTS_COLLECTION), payload);
-      return { id: ref.id, ...input };
+      return mapCreatedProduct(ref.id, normalized);
     } catch (error) {
       throw toProductError(error);
     }

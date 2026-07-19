@@ -264,5 +264,15 @@ export function mapOrder(
     order.notes = data.notes;
   }
 
+  const commitStatus = data.inventoryCommitStatus;
+  if (
+    commitStatus === "none" ||
+    commitStatus === "committed" ||
+    commitStatus === "restored" ||
+    commitStatus === "shortfall"
+  ) {
+    order.inventoryCommitStatus = commitStatus;
+  }
+
   return order;
 }

@@ -2,6 +2,9 @@ import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
 import type {
+  InventoryFormValues,
+} from "@/features/admin/settings/InventorySettingsFields";
+import type {
   NotificationsFormValues,
 } from "@/features/admin/settings/NotificationsSettingsFields";
 import type {
@@ -23,6 +26,7 @@ export type SettingsSectionId =
   | "shipping"
   | "payments"
   | "notifications"
+  | "inventory"
   | "advanced";
 
 /**
@@ -44,7 +48,7 @@ export type SettingsSectionProps = {
   setField: <
     K extends Exclude<
       keyof StoreSettingsFormValues,
-      "hero" | "paymentProviders" | "notifications"
+      "hero" | "paymentProviders" | "notifications" | "inventory"
     >,
   >(
     key: K,
@@ -56,6 +60,7 @@ export type SettingsSectionProps = {
   ) => void;
   setPaymentProviders: (next: PaymentProvidersConfig) => void;
   setNotifications: (next: NotificationsFormValues) => void;
+  setInventory: (next: InventoryFormValues) => void;
 };
 
 export type SettingsSectionDefinition = {
