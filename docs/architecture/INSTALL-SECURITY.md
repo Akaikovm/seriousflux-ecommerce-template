@@ -98,6 +98,13 @@ firebase use the-casacas-club
 firebase deploy --only firestore:rules,storage
 ```
 
+**Estado (Casacas / `the-casacas-club`):**
+
+| Target | Estado |
+|--------|--------|
+| Firestore rules | Desplegadas (2026-07-22) |
+| Storage rules | Pendiente — hay que activar Storage en Console → Storage → Get Started, luego `firebase deploy --only storage` |
+
 **Antes de desplegar rules:** Admin SDK debe estar configurado (local y/o App Hosting). Si no, Admin SSR y sync de pagos se rompen.
 
 ### Smoke checklist después de rules
