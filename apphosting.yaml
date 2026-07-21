@@ -42,7 +42,7 @@ env:
 
   # --- Public / build-time (non-secret) ---
   - variable: NEXT_PUBLIC_APP_URL
-    value: https://seriousflux-ecommerce--the-casacas-club.us-east4.hosted.app
+    value: https://www.thecasacasclub.com
     availability:
       - BUILD
       - RUNTIME
