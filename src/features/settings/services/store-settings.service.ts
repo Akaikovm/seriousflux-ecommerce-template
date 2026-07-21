@@ -78,6 +78,7 @@ export function getDefaultStoreSettings(
     currency: "ARS",
     locale: "es-AR",
     language: "es",
+    allowLanguageSwitch: false,
     country: "AR",
     email: "",
     phone: "",
@@ -213,6 +214,10 @@ export function mapStoreSettings(
     currency: asString(data.currency, defaults.currency),
     locale: asString(data.locale, defaults.locale),
     language: asString(data.language, defaults.language),
+    allowLanguageSwitch: asBoolean(
+      data.allowLanguageSwitch,
+      defaults.allowLanguageSwitch,
+    ),
     country: asString(data.country, defaults.country),
     email: asString(data.email, defaults.email),
     phone: asString(data.phone, defaults.phone),

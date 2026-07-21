@@ -16,9 +16,11 @@ Newsletter UI fakes success locally. `locale` formats money but UI copy is hardc
 
 ## Language approach (shipped)
 
-UI chrome uses `src/i18n` dictionaries (`en` / `es`) selected by `StoreSettings.language`.
+UI chrome uses `src/i18n` dictionaries (`en` / `es`).
+Default language comes from `StoreSettings.language` (Admin → Settings → General).
+Optional: enable `allowLanguageSwitch` so the storefront shows an ES/EN control; preference is stored in the `sf_lang` cookie and overrides the default for UI chrome.
 `StoreSettings.locale` remains for number/date formatting only.
-Agency sets language per client install in Admin → Settings → General.
+Agency sets the default language per client install; bilingual stores opt into the switch.
 
 Still open: newsletter persistence (below).
 

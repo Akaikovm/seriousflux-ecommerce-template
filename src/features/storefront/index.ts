@@ -3,6 +3,7 @@ export { BrandStory } from "./components/BrandStory";
 export { BrandValues } from "./components/BrandValues";
 export { Footer } from "./components/Footer";
 export { Hero } from "./components/Hero";
+export { LanguageSwitch } from "./components/LanguageSwitch";
 export { Navbar } from "./components/Navbar";
 export { Newsletter } from "./components/Newsletter";
 export { Container, Section } from "./components/Section";

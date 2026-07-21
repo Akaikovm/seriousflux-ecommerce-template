@@ -30,6 +30,7 @@ const SEED_SETTINGS = {
   currency: "ARS",
   locale: "es-AR",
   language: "es",
+  allowLanguageSwitch: true,
   country: "AR",
   email: "demo@seriousflux.dev",
   phone: "+54 11 5555-0100",

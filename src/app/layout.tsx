@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { AppProviders } from "@/app/providers";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { buildStoreMetadata } from "@/features/settings/lib/store-metadata";
-import { getDictionary, resolveLanguage } from "@/i18n";
+import { getDictionary } from "@/i18n";
+import { getRequestLanguage } from "@/i18n/get-request-language";
 
 import "./globals.css";
 
@@ -51,7 +52,7 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const settings = await getStoreSettings();
-  const language = resolveLanguage(settings.language);
+  const language = await getRequestLanguage(settings.language);
   const dictionary = getDictionary(language);
 
   return (

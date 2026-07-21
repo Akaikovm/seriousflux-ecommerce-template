@@ -40,6 +40,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
       "country",
       "locale",
       "language",
+      "allowLanguageSwitch",
     ],
     component: GeneralSettingsSection,
   },

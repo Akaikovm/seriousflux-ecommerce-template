@@ -92,6 +92,12 @@ export interface StoreSettings {
   /** Primary UI language code (e.g. `"es"`). */
   language: string;
 
+  /**
+   * When true, storefront shows an ES/EN switch.
+   * Shopper preference is stored in a cookie and overrides `language` for UI chrome.
+   */
+  allowLanguageSwitch: boolean;
+
   /** ISO 3166-1 alpha-2 country code (e.g. `"AR"`). */
   country: string;
 

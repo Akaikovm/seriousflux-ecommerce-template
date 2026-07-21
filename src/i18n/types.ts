@@ -1,6 +1,6 @@
 /**
  * Supported UI languages for the starter kit.
- * Driven by StoreSettings.language (agency sets per client install).
+ * Default from StoreSettings.language; optional shopper override via cookie.
  */
 export type AppLanguage = "en" | "es";
 

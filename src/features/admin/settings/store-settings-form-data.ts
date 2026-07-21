@@ -34,6 +34,7 @@ export type StoreSettingsFormData = {
   currency: string;
   locale: string;
   language: string;
+  allowLanguageSwitch: boolean;
   country: string;
   email: string;
   phone: string;
@@ -126,6 +127,7 @@ export function toStoreSettingsFormData(settings: {
   currency: string;
   locale: string;
   language: string;
+  allowLanguageSwitch: boolean;
   country: string;
   email: string;
   phone: string;
@@ -154,6 +156,7 @@ export function toStoreSettingsFormData(settings: {
     currency: settings.currency,
     locale: settings.locale,
     language: settings.language,
+    allowLanguageSwitch: settings.allowLanguageSwitch,
     country: settings.country,
     email: settings.email,
     phone: settings.phone,

@@ -88,6 +88,7 @@ export function createStoreSettingsFormSchema(t: TranslateFn) {
       .string()
       .trim()
       .min(1, t("admin.settings.validation.languageRequired")),
+    allowLanguageSwitch: z.boolean(),
     country: z
       .string()
       .trim()

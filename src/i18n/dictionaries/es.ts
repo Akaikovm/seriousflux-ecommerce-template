@@ -57,6 +57,7 @@ export const es: Dictionary = {
     mobile: "Móvil",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
+    language: "Idioma",
   },
 
   footer: {
@@ -917,6 +918,9 @@ export const es: Dictionary = {
         localeHelper: "Para formato de precios y fechas (ej. es-AR).",
         language: "Idioma",
         languageHelper: "Idioma principal de la tienda y el admin.",
+        allowLanguageSwitch: "Permitir cambio de idioma",
+        allowLanguageSwitchHelper:
+          "Muestra un control ES / EN en la tienda para que los compradores puedan cambiar el idioma.",
       },
       branding: {
         logo: "Logo",

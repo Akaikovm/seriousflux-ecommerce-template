@@ -26,7 +26,7 @@ type I18nProviderProps = {
 
 /**
  * Provides UI language + `t()` to client components.
- * Language comes from StoreSettings (resolved in RootLayout).
+ * Language is resolved in RootLayout: cookie override → StoreSettings.language.
  */
 export function I18nProvider({
   language,

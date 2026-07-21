@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { CartLink } from "@/features/cart/components/CartLink";
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
+import { LanguageSwitch } from "@/features/storefront/components/LanguageSwitch";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,8 @@ type NavbarProps = {
   storeName: string;
   logo: string;
   navLinks: StorefrontNavLink[];
+  /** When true, show ES | EN control (Admin → Settings → General). */
+  allowLanguageSwitch?: boolean;
 };
 
 /**
@@ -24,7 +27,12 @@ type NavbarProps = {
  *
  * Client island for mobile menu + auth-aware account link. No Firebase.
  */
-export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
+export function Navbar({
+  storeName,
+  logo,
+  navLinks,
+  allowLanguageSwitch = false,
+}: NavbarProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const { isAuthenticated, loading } = useCurrentUser();
@@ -85,6 +93,11 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {allowLanguageSwitch ? (
+            <span className="hidden sm:inline-flex">
+              <LanguageSwitch />
+            </span>
+          ) : null}
           {loading ? (
             <span className="hidden sm:inline-flex" aria-hidden>
               <LoadingState width="4rem" height="1.25rem" />
@@ -133,6 +146,11 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
             >
               {accountLabel}
             </Link>
+          ) : null}
+          {allowLanguageSwitch ? (
+            <div className="py-2.5">
+              <LanguageSwitch />
+            </div>
           ) : null}
         </nav>
       </div>

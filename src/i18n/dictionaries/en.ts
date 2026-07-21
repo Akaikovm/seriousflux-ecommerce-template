@@ -56,6 +56,7 @@ export const en = {
     mobile: "Mobile",
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    language: "Language",
   },
 
   footer: {
@@ -909,6 +910,9 @@ export const en = {
         localeHelper: "Used for price and date formatting (e.g. es-AR).",
         language: "Language",
         languageHelper: "Primary UI language for the storefront and admin.",
+        allowLanguageSwitch: "Allow language switch",
+        allowLanguageSwitchHelper:
+          "Show an ES / EN control on the storefront so shoppers can override the default language.",
       },
       branding: {
         logo: "Logo",

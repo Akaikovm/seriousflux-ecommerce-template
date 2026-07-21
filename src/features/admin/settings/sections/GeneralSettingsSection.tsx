@@ -3,6 +3,7 @@
 import type { SettingsSectionProps } from "@/features/admin/settings/types/settings-section";
 import { useT } from "@/i18n";
 import { Input } from "@/shared/ui/Input";
+import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 
 /**
@@ -91,6 +92,17 @@ export function GeneralSettingsSection({
           onChange={(event) => setField("language", event.target.value)}
         />
       </div>
+
+      <Switch
+        name="allowLanguageSwitch"
+        label={t("admin.settings.general.allowLanguageSwitch")}
+        helperText={t("admin.settings.general.allowLanguageSwitchHelper")}
+        checked={values.allowLanguageSwitch}
+        disabled={disabled}
+        onChange={(event) =>
+          setField("allowLanguageSwitch", event.target.checked)
+        }
+      />
     </div>
   );
 }
