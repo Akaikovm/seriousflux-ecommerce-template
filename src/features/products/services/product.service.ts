@@ -260,15 +260,15 @@ export class ProductService {
    */
   async getFeatured(): Promise<Product[]> {
     try {
+      // Rules require queries to constrain `active == true` for public list reads.
       const productsQuery = query(
         collection(this.db, PRODUCTS_COLLECTION),
+        where("active", "==", true),
         where("featured", "==", true),
       );
       const snapshot = await getDocs(productsQuery);
 
-      return sortByOrder(
-        snapshot.docs.map(mapProduct).filter((product) => product.active),
-      );
+      return sortByOrder(snapshot.docs.map(mapProduct));
     } catch (error) {
       throw toProductError(error);
     }
@@ -283,13 +283,12 @@ export class ProductService {
     try {
       const productsQuery = query(
         collection(this.db, PRODUCTS_COLLECTION),
+        where("active", "==", true),
         where("categoryId", "==", categoryId),
       );
       const snapshot = await getDocs(productsQuery);
 
-      return sortByOrder(
-        snapshot.docs.map(mapProduct).filter((product) => product.active),
-      );
+      return sortByOrder(snapshot.docs.map(mapProduct));
     } catch (error) {
       throw toProductError(error);
     }
@@ -323,6 +322,7 @@ export class ProductService {
     try {
       const productsQuery = query(
         collection(this.db, PRODUCTS_COLLECTION),
+        where("active", "==", true),
         where("slug", "==", slug),
         limit(1),
       );

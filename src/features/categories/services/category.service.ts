@@ -188,6 +188,7 @@ export class CategoryService {
     try {
       const categoriesQuery = query(
         collection(this.db, CATEGORIES_COLLECTION),
+        where("active", "==", true),
         where("slug", "==", slug),
         limit(1),
       );

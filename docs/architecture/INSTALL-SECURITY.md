@@ -1,140 +1,143 @@
 # Agency install: Security rules + Firebase Admin (GAP-001 / GAP-004)
 
-Guía práctica para ti (y para el próximo cliente). Complementa [ADR-024](./ADR-024-firestore-rules-admin-sdk.md).
+Practical handoff for humans and agents. Complements [ADR-024](./ADR-024-firestore-rules-admin-sdk.md).
+
+> **Language:** repo docs and code stay in **English**. Chat with the agency can be any language.
 
 ---
 
-## Qué problema resolvimos
+## Problem we solved
 
-Antes, con rules abiertas, cualquiera con la API key web podía leer/escribir Firestore.  
-Al cerrar rules, el servidor (webhooks, Admin SSR, emails) dejaba de poder escribir/leer porque usaba el **client SDK sin usuario**.
+With open rules, anyone holding the web API key could read/write Firestore.  
+With locked rules, server paths (webhooks, Admin SSR, order emails) broke because they used the **client SDK with no Auth user**.
 
-**Solución:**
+**Solution:**
 
-1. **Rules** en el repo (`firestore.rules`, `storage.rules`) — quién puede qué desde el navegador.
-2. **Firebase Admin SDK** en el servidor — bypass de rules solo en código de confianza.
-
----
-
-## Template vs cliente (Casacas / próximo store)
-
-| Qué | Dónde vive | ¿Se vende con el template? |
-|-----|------------|----------------------------|
-| Código Next.js / features | Este repo | Sí — motor reutilizable |
-| Marca demo “Serious Flux” | Seeds + defaults en código | Solo para demos (`npm run seed:demo`) |
-| Marca real del cliente | Firestore `settings/general` + Admin Settings | Por proyecto Firebase |
-| Catálogo / pedidos | Firestore del proyecto | Por cliente |
-| Secrets (Admin key, MP, Resend) | `.env.local` / App Hosting secrets | **Nunca** en Git |
-| Proyecto Firebase | p.ej. `the-casacas-club` | Un proyecto (o copia) por cliente |
-
-**Casacas Club** = primer install en Firebase `the-casacas-club`.  
-**Serious Flux** = nombre de tu agencia / kit. No hay que “limpiar Casacas del código” si la marca está en Firestore, no hardcodeada en TypeScript.
-
-Para el **siguiente cliente**: nuevo Firebase + nuevo `.env` + seed o import de catálogo + Admin Settings. El mismo repo.
+1. **Rules** in-repo (`firestore.rules`, `storage.rules`) — browser access model.
+2. **Firebase Admin SDK** on the server — trusted bypass of rules.
 
 ---
 
-## Archivos importantes
+## Template vs client store
 
-| Archivo | Rol |
-|---------|-----|
-| `firestore.rules` / `storage.rules` | Modelo de seguridad |
-| `firebase.json` | Apunta el CLI a esas rules |
-| `.firebaserc` | Proyecto Firebase activo (hoy: `the-casacas-club`) |
-| `src/firebase/admin.ts` | Init Admin SDK (server-only) |
-| `src/features/orders/services/order.admin.ts` | Órdenes privilegiadas |
-| `src/features/inventory/services/inventory.admin.ts` | Commit/restore stock en webhook |
-| `src/features/admin/lib/admin-server-data.ts` | Lecturas Admin SSR |
-| `apphosting.yaml` | Referencia al secret `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| Layer | Where it lives | Sold with the kit? |
+|-------|----------------|--------------------|
+| Next.js / features code | This repo | Yes — reusable engine |
+| Demo brand “Serious Flux” | Seeds + code defaults | Demo only (`npm run seed:demo`) |
+| Real client brand | Firestore `settings/general` + Admin Settings | Per Firebase project |
+| Catalog / orders | That project’s Firestore | Per client |
+| Secrets (Admin key, MP, Resend) | `.env.local` / App Hosting secrets | **Never** in Git |
+| Firebase project | e.g. first client project id | One project (or fork) per install |
 
-**Nunca commits:** `.env.local`, `.secrets/`, `*firebase-adminsdk*.json`
+**Agency name (Serious Flux)** = kit / company.  
+**First client store** = data in their Firebase project (settings, products), not hardcoded in TypeScript.
+
+**Next client:** new Firebase project + new env + seed/import + Admin Settings. Same repo.
 
 ---
 
-## Local (tu máquina)
+## Important files
 
-1. Service account JSON en `.secrets/firebase-admin.json`
-2. En `.env.local`:
+| File | Role |
+|------|------|
+| `firestore.rules` / `storage.rules` | Security model |
+| `firebase.json` | CLI points at those rules |
+| `.firebaserc` | Active Firebase project alias |
+| `src/firebase/admin.ts` | Admin SDK init (`server-only`) |
+| `src/features/orders/services/order.admin.ts` | Privileged order writes/reads |
+| `src/features/inventory/services/inventory.admin.ts` | Webhook stock commit/restore |
+| `src/features/admin/lib/admin-server-data.ts` | Admin SSR loaders |
+| `apphosting.yaml` | Maps `FIREBASE_SERVICE_ACCOUNT_KEY` secret |
+
+**Never commit:** `.env.local`, `.secrets/`, `*firebase-adminsdk*.json`
+
+---
+
+## Local
+
+1. Service account JSON at `.secrets/firebase-admin.json`
+2. In `.env.local`:
    ```env
    GOOGLE_APPLICATION_CREDENTIALS=.secrets/firebase-admin.json
    ```
-   (alternativa: `FIREBASE_SERVICE_ACCOUNT_KEY=` + JSON en una línea)
+   (or `FIREBASE_SERVICE_ACCOUNT_KEY=` + one-line JSON)
 3. `npm run dev`
 
-Con Admin configurado: Admin SSR + webhooks + emails de orden funcionan **aunque** las rules estén desplegadas.
+With Admin configured, Admin SSR + webhooks + order emails work **even when rules are locked**.
+
+### Storefront queries and rules
+
+Public list/get queries must include `active == true` (Firestore rule constraint).  
+`ProductService.getFeatured` / `getByCategory` / `getBySlug` and `CategoryService.getBySlug` do this. Filtering `active` only in memory is **not** enough and causes `permission-denied`.
 
 ---
 
-## App Hosting (producción)
+## App Hosting
 
-Ya creado en el proyecto:
+Typical setup:
 
 - Secret: `FIREBASE_SERVICE_ACCOUNT_KEY`
-- Backend: `seriousflux-ecommerce`
-- Referencia en `apphosting.yaml` (`RUNTIME`)
+- Backend id from `firebase apphosting:backends:list`
+- Reference in `apphosting.yaml` (`RUNTIME`)
 
-Tras push de `apphosting.yaml`, hace falta un **nuevo rollout**.
+After pushing `apphosting.yaml`, create a **new rollout**.
 
-Otros secrets (cuando quieras):
+Optional secrets:
 
 ```bash
-firebase use the-casacas-club
+firebase use <project-id>
 firebase apphosting:secrets:set NOTIFICATIONS_DISPATCH_SECRET
 firebase apphosting:secrets:set MERCADOPAGO_ACCESS_TOKEN
 firebase apphosting:secrets:set MERCADOPAGO_WEBHOOK_SECRET
 firebase apphosting:secrets:set RESEND_API_KEY
 ```
 
-Luego descomenta esos bloques en `apphosting.yaml`.
+Then uncomment matching blocks in `apphosting.yaml`.
 
-`NEXT_PUBLIC_*` y `NEXT_PUBLIC_APP_URL` (HTTPS del store) → Console → App Hosting → Environment.
+`NEXT_PUBLIC_*` and `NEXT_PUBLIC_APP_URL` (public HTTPS origin) → Console → App Hosting → Environment.
 
 ---
 
-## Desplegar Security Rules
+## Deploy security rules
 
 ```bash
-firebase use the-casacas-club
+firebase use <project-id>
 firebase deploy --only firestore:rules,storage
 ```
 
-**Estado (Casacas / `the-casacas-club`):**
-
-| Target | Estado |
+| Target | Notes |
 |--------|--------|
-| Firestore rules | Desplegadas (2026-07-22) |
-| Storage rules | Pendiente — hay que activar Storage en Console → Storage → Get Started, luego `firebase deploy --only storage` |
+| Firestore rules | Deploy when Admin SDK is ready |
+| Storage rules | Requires Storage enabled in Console → Storage → Get Started first |
 
-**Antes de desplegar rules:** Admin SDK debe estar configurado (local y/o App Hosting). Si no, Admin SSR y sync de pagos se rompen.
+### Smoke checklist after rules
 
-### Smoke checklist después de rules
-
-- [ ] Storefront carga productos / settings
-- [ ] Checkout crea orden (guest o logged-in)
-- [ ] Admin login + listados (productos, pedidos)
-- [ ] Admin edita producto / sube imagen
-- [ ] Mercado Pago webhook marca paid (o sandbox)
-- [ ] Emails de pedido (si Resend está on)
+- [ ] Storefront loads products / settings
+- [ ] Checkout creates an order (guest or signed-in)
+- [ ] Admin login + lists (products, orders)
+- [ ] Admin edits product / uploads image
+- [ ] Mercado Pago webhook marks paid (or sandbox)
+- [ ] Order emails (if Resend enabled)
 
 ---
 
-## Quién usa qué SDK
+## Which SDK where
 
 ```
-Browser (cliente / admin logueado)
+Browser (customer / signed-in admin)
   → Firebase client SDK + Security Rules
 
 Server (webhook, preference, Admin SSR, emails)
-  → Firebase Admin SDK (bypassa rules)
+  → Firebase Admin SDK (bypasses rules)
 ```
 
-No reexportes módulos Admin desde barrels que importan Client Components (`orders/services/index.ts` ya lo documenta).
+Do not re-export Admin modules from barrels imported by Client Components (`orders/services/index.ts` documents this).
 
 ---
 
-## Qué queda pendiente (sell-ready)
+## Sell-ready backlog
 
-| GAP | Estado |
+| GAP | Status |
 |-----|--------|
 | GAP-001 Rules | done |
 | GAP-004 Admin SDK | done |
@@ -145,8 +148,9 @@ No reexportes módulos Admin desde barrels que importan Client Components (`orde
 
 ---
 
-## Changelog de esta entrega
+## Changelog
 
-| Fecha | Nota |
-|-------|------|
-| 2026-07-22 | Rules + Admin SDK + secret App Hosting + docs de install; emails de orden leen vía Admin cuando está configurado |
+| Date | Note |
+|------|------|
+| 2026-07-22 | Rules + Admin SDK + App Hosting secret + install guide; order emails use Admin when configured |
+| 2026-07-22 | Doc in English; storefront product/category queries constrain `active == true` for locked rules |
