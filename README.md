@@ -21,6 +21,8 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Signed-in checkout prefills name, email, and phone (when saved on the profile)
 - Checkout shows a loading state while finalizing the order (no empty-cart flash before confirmation)
 - Branding driven by `settings/general` (name, logo, favicon, colors, locale, contact, social, hero)
+- EN / ES UI copy via `src/i18n` dictionaries (default from Settings → Language)
+- Optional storefront **ES | EN** switch when Admin enables “Allow language switch” (cookie override)
 - Maintenance mode gate from store settings
 - Shared storefront chrome: brand lockup, page headers, breadcrumbs, summary panels
 
@@ -33,6 +35,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Orders list + detail (payment / fulfillment / notes)
 - Customers list + detail (role / status / profile; order history via `OrderService`)
 - Modular Store Settings (General, Branding, Contact, Shipping, Payments, Notifications, Inventory, Advanced) — one document, one save
+- General Settings: default UI language + optional bilingual storefront switch
 - Inventory & stock (RFC-023): per-product quantity, checkout validation, commit/restore on paid/cancel, Admin stock column + dashboard widgets
 - Image uploads via Firebase Storage (`MediaService`)
 
@@ -60,6 +63,7 @@ This is not a one-off store. It is the base product of the agency: one codebase 
 - Typed models + Zod validation on admin/checkout forms
 - Settings ∩ registered providers decide which payment methods appear at checkout
 - Storefront design tokens + CSS variables from Settings (rebrand without forking UI)
+- Lightweight i18n (`src/i18n`): dictionaries + `t()` — not a full i18n framework; catalog CMS content stays one language
 - Admin Design System under `features/admin/ui` (neutral console; do not put Admin layouts in `shared/ui`)
 - Full Mercado Pago guide: [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md)
 
@@ -287,6 +291,7 @@ src/
     settings/              # StoreSettings service + loaders
     storefront/            # Shell: Hero, Navbar, Footer, BrandStory, shared chrome
   firebase/                # App / Auth / Firestore / Storage accessors
+  i18n/                    # EN/ES dictionaries, provider, language cookie helpers
   lib/                     # Shared pure helpers (formatPrice, slugify, cn)
   shared/                  # Design tokens + UI primitives
 docs/
@@ -308,11 +313,12 @@ For a new store, prefer changing data — not code:
 
 1. Firebase project (or same project with new `settings/general`)
 2. Logo, favicon, colors, hero — Admin → Settings
-3. Currency / locale / country / language — Settings
-4. Contact + social links — Settings
-5. Categories + products — Admin catalog
-6. Payment methods — enable in Settings + set server env secrets (MP / future Stripe)
-7. Domain + hosting env vars (`NEXT_PUBLIC_APP_URL`, Firebase, payment credentials)
+3. Currency / locale / country / default language (`es` or `en`) — Settings → General
+4. Optional: enable **Allow language switch** for bilingual storefronts (ES | EN in the navbar)
+5. Contact + social links — Settings
+6. Categories + products — Admin catalog (write catalog copy in the store’s primary language)
+7. Payment methods — enable in Settings + set server env secrets (MP / future Stripe)
+8. Domain + hosting env vars (`NEXT_PUBLIC_APP_URL`, Firebase, payment credentials)
 
 ---
 
@@ -330,6 +336,7 @@ For a new store, prefer changing data — not code:
 | [`docs/architecture/ADR-023-inventory-stock-management.md`](docs/architecture/ADR-023-inventory-stock-management.md) | Inventory & stock (RFC-023) |
 | [`docs/architecture/SELL-READY.md`](docs/architecture/SELL-READY.md) | Sell path: Phase 1 agency install; Phase 2 optional self-serve |
 | [`docs/architecture/GAP-REGISTER.md`](docs/architecture/GAP-REGISTER.md) | Production gaps backlog (P0–P3) — not ADRs |
+| [`docs/architecture/gaps/GAP-013-newsletter-i18n.md`](docs/architecture/gaps/GAP-013-newsletter-i18n.md) | Newsletter (open) + language approach (shipped) |
 | [`docs/architecture/`](docs/architecture/) | All Architecture Decision Records |
 | [`AGENTS.md`](AGENTS.md) | Product / engineering conventions for agents |
 
@@ -353,6 +360,7 @@ For a new store, prefer changing data — not code:
 - Transactional email via Resend (Notifications settings + dispatch API)
 - Admin Customer Management (`/admin/customers` — role, status, profile, order history)
 - Inventory & stock (track policy, quantity docs, checkout validation, commit/restore, Admin UX)
+- EN / ES UI i18n (Settings default language + optional storefront language switch)
 - SeriousFlux demo seed (`npm run seed:demo`) for blank-project showcases
 - Deploy path via Firebase App Hosting
 
@@ -370,6 +378,8 @@ For a new store, prefer changing data — not code:
 - Real shipping methods (single free “Standard” stub today)
 - Category filters / sort (listing UI is presentational today)
 - Guest order claiming (orders without `customerId` stay unlinked)
+- Newsletter persistence (UI exists; subscribe is still local — GAP-013)
+- Multilingual catalog CMS content (UI chrome is bilingual; product/category copy is not)
 
 ---
 
