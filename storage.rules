@@ -2,27 +2,17 @@ rules_version = '2';
 
 /**
  * SeriousFlux Storage Security Rules (GAP-001 / ADR-024).
+ *
  * Media lives under `media/{folder}/{file}` (see MediaService).
+ * Public read; privileged writes go through Firebase Admin SDK
+ * (`uploadMediaAction`) so uploads do not depend on Storage↔Firestore
+ * cross-service IAM (`firestore.get` in Storage rules).
  */
 service firebase.storage {
   match /b/{bucket}/o {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isActiveAdmin() {
-      return isSignedIn()
-        && firestore.exists(/databases/(default)/documents/customers/$(request.auth.uid))
-        && firestore.get(/databases/(default)/documents/customers/$(request.auth.uid)).data.role == 'admin'
-        && firestore.get(/databases/(default)/documents/customers/$(request.auth.uid)).data.status == 'active';
-    }
-
     match /media/{allPaths=**} {
       allow read: if true;
-      allow write: if isActiveAdmin()
-        && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
-      allow delete: if isActiveAdmin();
+      allow write: if false;
     }
   }
 }

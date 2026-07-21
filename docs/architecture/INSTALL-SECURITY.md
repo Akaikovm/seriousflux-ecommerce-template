@@ -43,7 +43,8 @@ With locked rules, server paths (webhooks, Admin SSR, order emails) broke becaus
 | `firestore.rules` / `storage.rules` | Security model |
 | `firebase.json` | CLI points at those rules |
 | `.firebaserc` | Active Firebase project alias |
-| `src/firebase/admin.ts` | Admin SDK init (`server-only`) |
+| `src/firebase/admin.ts` | Admin SDK init (`server-only`) — Firestore + Storage |
+| `src/features/media/lib/upload-media-action.ts` | Admin image uploads (bypasses Storage rules) |
 | `src/features/orders/services/order.admin.ts` | Privileged order writes/reads |
 | `src/features/inventory/services/inventory.admin.ts` | Webhook stock commit/restore |
 | `src/features/admin/lib/admin-server-data.ts` | Admin SSR loaders |
@@ -63,7 +64,9 @@ With locked rules, server paths (webhooks, Admin SSR, order emails) broke becaus
    (or `FIREBASE_SERVICE_ACCOUNT_KEY=` + one-line JSON)
 3. `npm run dev`
 
-With Admin configured, Admin SSR + webhooks + order emails work **even when rules are locked**.
+With Admin configured, Admin SSR + webhooks + order emails + **Admin image uploads** work **even when rules are locked**.
+
+Storage rules allow public read under `media/**` and deny client writes. Uploads use `uploadMediaAction` → Admin SDK after verifying an active admin ID token.
 
 ### Storefront queries and rules
 
@@ -154,3 +157,4 @@ Do not re-export Admin modules from barrels imported by Client Components (`orde
 |------|------|
 | 2026-07-22 | Rules + Admin SDK + App Hosting secret + install guide; order emails use Admin when configured |
 | 2026-07-22 | Doc in English; storefront product/category queries constrain `active == true` for locked rules |
+| 2026-07-22 | Admin image uploads via Admin SDK; Storage client writes denied (no cross-service IAM required) |

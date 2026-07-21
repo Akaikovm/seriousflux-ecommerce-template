@@ -9,6 +9,7 @@ import {
   type ServiceAccount,
 } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getStorage, type Storage } from "firebase-admin/storage";
 
 /**
  * Firebase Admin SDK (GAP-004).
@@ -76,6 +77,8 @@ function tryInitializeAdminApp(): App | undefined {
   }
 
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  const storageBucket =
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() || undefined;
   const keyJson = process.env[SERVICE_ACCOUNT_ENV]?.trim();
 
   try {
@@ -84,6 +87,7 @@ function tryInitializeAdminApp(): App | undefined {
       adminApp = initializeApp({
         credential: cert(serviceAccount),
         projectId: serviceAccount.projectId ?? projectId ?? undefined,
+        ...(storageBucket ? { storageBucket } : {}),
       });
       return adminApp;
     }
@@ -92,6 +96,7 @@ function tryInitializeAdminApp(): App | undefined {
     adminApp = initializeApp({
       credential: applicationDefault(),
       ...(projectId ? { projectId } : {}),
+      ...(storageBucket ? { storageBucket } : {}),
     });
     return adminApp;
   } catch (error) {
@@ -138,4 +143,12 @@ export function getAdminApp(): App {
  */
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp());
+}
+
+/**
+ * Privileged Storage (bypasses Security Rules). Server-only.
+ * Requires `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` on Admin app init.
+ */
+export function getAdminStorage(): Storage {
+  return getStorage(getAdminApp());
 }

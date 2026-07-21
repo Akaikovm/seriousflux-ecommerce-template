@@ -2,95 +2,29 @@ import {
   deleteObject,
   getDownloadURL,
   ref,
-  uploadBytesResumable,
   type FirebaseStorage,
   type StorageError,
 } from "firebase/storage";
 
+import { getFirebaseAuth } from "@/firebase/auth";
 import { getFirebaseStorage } from "@/firebase/storage";
+import { uploadMediaAction } from "@/features/media/lib/upload-media-action";
+import { extractStoragePath } from "@/features/media/lib/media-path";
+import {
+  MEDIA_ALLOWED_MIME_TYPES,
+  MEDIA_MAX_FILE_SIZE_BYTES,
+  MediaError,
+} from "@/features/media/services/media-error";
 import type {
   MediaUploadOptions,
   MediaUploadResult,
 } from "@/features/media/types";
 
-/** Default maximum upload size (5 MiB). */
-export const MEDIA_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-
-/** Allowed image MIME types for admin uploads. */
-export const MEDIA_ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-] as const;
-
-/**
- * Domain error for media uploads and Storage operations.
- * Wraps Firebase failures so UI never depends on Firebase error shapes.
- */
-export class MediaError extends Error {
-  readonly code:
-    | "invalid-file"
-    | "file-too-large"
-    | "unavailable"
-    | "permission-denied"
-    | "not-found"
-    | "unknown";
-
-  constructor(
-    message: string,
-    code: MediaError["code"] = "unknown",
-    options?: { cause?: unknown },
-  ) {
-    super(message, options);
-    this.name = "MediaError";
-    this.code = code;
-  }
-}
-
-function sanitizeFileName(name: string): string {
-  const base = name.replace(/^.*[\\/]/, "");
-  const cleaned = base
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return cleaned || "image";
-}
-
-function buildObjectPath(folder: string, fileName: string): string {
-  const safeFolder = folder.replace(/[^a-z0-9/_-]+/gi, "").replace(/^\/+|\/+$/g, "") || "general";
-  const stamp = Date.now();
-  return `media/${safeFolder}/${stamp}-${sanitizeFileName(fileName)}`;
-}
-
-/**
- * Extracts a Storage object path from a full download URL or returns the path as-is.
- */
-export function extractStoragePath(pathOrUrl: string): string | null {
-  const trimmed = pathOrUrl.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-    return trimmed.replace(/^\/+/, "");
-  }
-
-  try {
-    const url = new URL(trimmed);
-    // Firebase download URLs: /v0/b/{bucket}/o/{encodedPath}?...
-    const match = url.pathname.match(/\/o\/(.+)$/);
-    if (match?.[1]) {
-      return decodeURIComponent(match[1]);
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
+export {
+  MEDIA_ALLOWED_MIME_TYPES,
+  MEDIA_MAX_FILE_SIZE_BYTES,
+  MediaError,
+} from "@/features/media/services/media-error";
 
 function toMediaError(error: unknown): MediaError {
   if (error instanceof MediaError) {
@@ -100,7 +34,10 @@ function toMediaError(error: unknown): MediaError {
   const storageError = error as StorageError | undefined;
   const firebaseCode = storageError?.code;
 
-  if (firebaseCode === "storage/unauthorized" || firebaseCode === "storage/unauthenticated") {
+  if (
+    firebaseCode === "storage/unauthorized" ||
+    firebaseCode === "storage/unauthenticated"
+  ) {
     return new MediaError(
       "You do not have permission to manage media.",
       "permission-denied",
@@ -131,9 +68,10 @@ function toMediaError(error: unknown): MediaError {
 }
 
 /**
- * Owns all Firebase Storage access for the kit (RFC-012 / ADR-008).
+ * Owns media operations for the kit (RFC-012 / ADR-008 / ADR-024).
  *
- * ProductService, CategoryService, and StoreSettingsService persist URL strings only.
+ * Uploads go through a server action + Admin SDK (Storage rules deny client writes).
+ * Delete / public URL still use the client SDK where rules allow (public read).
  * UI components never import Firebase Storage.
  */
 export class MediaService {
@@ -152,7 +90,11 @@ export class MediaService {
       throw new MediaError("Please choose an image file.", "invalid-file");
     }
 
-    if (!MEDIA_ALLOWED_MIME_TYPES.includes(file.type as (typeof MEDIA_ALLOWED_MIME_TYPES)[number])) {
+    if (
+      !MEDIA_ALLOWED_MIME_TYPES.includes(
+        file.type as (typeof MEDIA_ALLOWED_MIME_TYPES)[number],
+      )
+    ) {
       throw new MediaError(
         "Only JPEG, PNG, WebP, or GIF images are allowed.",
         "invalid-file",
@@ -166,41 +108,41 @@ export class MediaService {
       );
     }
 
-    const path = buildObjectPath(options.folder ?? "general", file.name);
-    const objectRef = ref(this.storage, path);
-
-    try {
-      const task = uploadBytesResumable(objectRef, file, {
-        contentType: file.type,
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        task.on(
-          "state_changed",
-          (snapshot) => {
-            if (options.onProgress && snapshot.totalBytes > 0) {
-              const progress = Math.round(
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-              );
-              options.onProgress(progress);
-            }
-          },
-          (error) => reject(error),
-          () => resolve(),
-        );
-      });
-
-      const url = await getDownloadURL(task.snapshot.ref);
-
-      return {
-        url,
-        path,
-        contentType: file.type,
-        size: file.size,
-      };
-    } catch (error) {
-      throw toMediaError(error);
+    const user = getFirebaseAuth().currentUser;
+    if (!user) {
+      throw new MediaError(
+        "You do not have permission to manage media.",
+        "permission-denied",
+      );
     }
+
+    options.onProgress?.(15);
+
+    let idToken: string;
+    try {
+      idToken = await user.getIdToken();
+    } catch (error) {
+      throw new MediaError(
+        "You do not have permission to manage media.",
+        "permission-denied",
+        { cause: error },
+      );
+    }
+
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("folder", options.folder ?? "general");
+    formData.set("idToken", idToken);
+
+    options.onProgress?.(45);
+
+    const result = await uploadMediaAction(formData);
+    if (!result.ok) {
+      throw new MediaError(result.error, result.code);
+    }
+
+    options.onProgress?.(100);
+    return result.data;
   }
 
   /**
