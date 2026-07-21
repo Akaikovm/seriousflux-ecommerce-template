@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { transition } from "@/shared/design/tokens";
 
@@ -21,12 +24,14 @@ export function StorefrontBreadcrumb({
   items,
   className,
 }: StorefrontBreadcrumbProps) {
+  const t = useT();
+
   if (items.length === 0) {
     return null;
   }
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("mb-6 sm:mb-8", className)}>
+    <nav aria-label={t("breadcrumb.ariaLabel")} className={cn("mb-6 sm:mb-8", className)}>
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

@@ -24,13 +24,12 @@ import type {
 
 /**
  * Single source of truth for Admin Settings navigation and content.
+ * Titles/descriptions resolve via i18n at render time.
  * Add a future module by appending one definition (plus domain fields in a separate RFC).
  */
 export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   {
     id: "general",
-    title: "General",
-    description: "Store identity, currency, and locale.",
     icon: Store,
     order: 1,
     fieldRoots: [
@@ -46,8 +45,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "branding",
-    title: "Branding",
-    description: "Logo, colors, and homepage hero.",
     icon: Palette,
     order: 2,
     fieldRoots: [
@@ -61,8 +58,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "contact",
-    title: "Contact",
-    description: "Public contact details and social links.",
     icon: MapPin,
     order: 3,
     fieldRoots: [
@@ -79,8 +74,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "shipping",
-    title: "Shipping",
-    description: "Shipping availability and future shipping options.",
     icon: Truck,
     order: 4,
     fieldRoots: ["shippingEnabled"],
@@ -88,8 +81,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "payments",
-    title: "Payments",
-    description: "Checkout payment methods and labels.",
     icon: CreditCard,
     order: 5,
     fieldRoots: ["paymentProviders"],
@@ -97,8 +88,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "notifications",
-    title: "Notifications",
-    description: "Transactional email sender and enable flags.",
     icon: Bell,
     order: 6,
     fieldRoots: ["notifications"],
@@ -106,8 +95,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "inventory",
-    title: "Inventory",
-    description: "Stock tracking defaults and catalog visibility.",
     icon: Package,
     order: 7,
     fieldRoots: ["inventory"],
@@ -115,8 +102,6 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionDefinition[] = [
   },
   {
     id: "advanced",
-    title: "Advanced",
-    description: "Maintenance mode and future integrations.",
     icon: Settings2,
     order: 8,
     fieldRoots: ["maintenanceMode"],

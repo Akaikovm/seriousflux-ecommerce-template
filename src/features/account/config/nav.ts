@@ -1,6 +1,5 @@
 export type AccountNavItem = {
   id: string;
-  label: string;
   href: string;
   /** When false, reserved for a future RFC and not rendered. */
   enabled: boolean;
@@ -8,37 +7,33 @@ export type AccountNavItem = {
 
 /**
  * Account sidebar navigation (RFC-018).
+ * Labels resolved via i18n `account.nav.*` in AccountLayout.
  * Wishlist / Addresses / Notifications stay disabled until implemented.
  */
 export const ACCOUNT_NAV_ITEMS: readonly AccountNavItem[] = [
-  { id: "dashboard", label: "Dashboard", href: "/account", enabled: true },
+  { id: "dashboard", href: "/account", enabled: true },
   {
     id: "orders",
-    label: "Orders",
     href: "/account/orders",
     enabled: true,
   },
   {
     id: "profile",
-    label: "Profile",
     href: "/account/profile",
     enabled: true,
   },
   {
     id: "wishlist",
-    label: "Wishlist",
     href: "/account/wishlist",
     enabled: false,
   },
   {
     id: "addresses",
-    label: "Addresses",
     href: "/account/addresses",
     enabled: false,
   },
   {
     id: "notifications",
-    label: "Notifications",
     href: "/account/notifications",
     enabled: false,
   },

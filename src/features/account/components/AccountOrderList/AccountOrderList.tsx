@@ -7,6 +7,7 @@ import { useCustomerOrders } from "@/features/account/hooks/useCustomerOrders";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/features/orders/components/PaymentStatusBadge";
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { LoadingState } from "@/shared/ui/LoadingState";
@@ -20,6 +21,7 @@ type AccountOrderListProps = {
  * Customer order history — shows orderNumber, never Firestore ids.
  */
 export function AccountOrderList({ locale, currency }: AccountOrderListProps) {
+  const t = useT();
   const { orders, loading, error } = useCustomerOrders();
 
   if (loading) {
@@ -36,10 +38,10 @@ export function AccountOrderList({ locale, currency }: AccountOrderListProps) {
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
-          Orders
+          {t("account.ordersTitle")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Orders placed while you were signed in.
+          {t("account.ordersSubtitle")}
         </p>
       </header>
 
@@ -51,11 +53,11 @@ export function AccountOrderList({ locale, currency }: AccountOrderListProps) {
 
       {orders.length === 0 ? (
         <EmptyState
-          title="No orders yet"
-          description="Guest orders are not linked to your account. Sign in before checkout to track them here."
+          title={t("account.ordersEmptyTitle")}
+          description={t("account.ordersEmptyDescription")}
           action={
             <StorefrontPrimaryLink href="/#featured">
-              Continue shopping
+              {t("cart.continueShopping")}
             </StorefrontPrimaryLink>
           }
         />

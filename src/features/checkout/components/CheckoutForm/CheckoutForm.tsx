@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AccountService } from "@/features/account/services";
 import type { CartItem } from "@/features/cart/types";
 import { useCurrentUser } from "@/features/auth/hooks";
-import { checkoutFormSchema } from "@/features/checkout/lib/checkout-form-schema";
+import { createCheckoutFormSchema } from "@/features/checkout/lib/checkout-form-schema";
 import { mapCartItemsToOrderItems } from "@/features/checkout/lib/map-cart-to-order-items";
 import {
   getAvailableShippingMethods,
@@ -27,6 +27,7 @@ import type {
   PaymentMethod,
 } from "@/features/payments/types";
 import { PAYMENT_METHODS } from "@/features/payments/types";
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
@@ -75,10 +76,11 @@ export function CheckoutForm({
   paymentOptions,
   onOrderCreated,
 }: CheckoutFormProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const { user, customerId, loading: authLoading } = useCurrentUser();
-  const shippingMethods = getAvailableShippingMethods();
+  const shippingMethods = getAvailableShippingMethods(t);
   const enabledMethodIds = paymentOptions.map((option) => option.id);
   // First enabled option by sortOrder; PAYMENT_METHODS[0] only seeds empty state (submit blocked).
   const defaultPaymentMethod = paymentOptions[0]?.id ?? PAYMENT_METHODS[0];
@@ -156,7 +158,7 @@ export function CheckoutForm({
     }
 
     setFormError(null);
-    const parsed = checkoutFormSchema.safeParse(values);
+    const parsed = createCheckoutFormSchema(t).safeParse(values);
 
     if (!parsed.success) {
       const nextErrors: FieldErrors = {};
@@ -172,26 +174,28 @@ export function CheckoutForm({
 
     if (!enabledMethodIds.includes(parsed.data.paymentMethod)) {
       setFieldErrors({
-        paymentMethod: "The selected payment method is not available.",
+        paymentMethod: t("checkout.paymentUnavailable"),
       });
       return;
     }
 
-    const method = getShippingMethodById(parsed.data.shippingMethodId);
+    const method = getShippingMethodById(parsed.data.shippingMethodId, t);
     if (!method) {
-      setFieldErrors({ shippingMethodId: "Select a shipping method." });
+      setFieldErrors({
+        shippingMethodId: t("checkout.validation.shippingRequired"),
+      });
       return;
     }
 
     if (items.length === 0) {
-      const message = "Your cart is empty.";
+      const message = t("checkout.inventory.cartEmpty");
       setFormError(message);
       toast.error(message);
       return;
     }
 
     if (paymentOptions.length === 0) {
-      const message = "No payment methods are available.";
+      const message = t("checkout.noPaymentMethods");
       setFormError(message);
       toast.error(message);
       return;
@@ -208,9 +212,10 @@ export function CheckoutForm({
       );
 
       if (!inventoryCheck.ok) {
-        const message =
-          inventoryCheck.message ??
-          "Some items are unavailable. Please update your cart.";
+        const message = inventoryCheck.errorCode
+          ? t(`checkout.inventory.${inventoryCheck.errorCode}`)
+          : (inventoryCheck.message ??
+            t("checkout.inventory.insufficientStock"));
         setFormError(message);
         toast.error(message);
         setLoading(false);
@@ -247,7 +252,7 @@ export function CheckoutForm({
       requestNotification({ event: "order.created", orderId: order.id });
 
       onOrderCreated();
-      toast.success("Order placed successfully.");
+      toast.success(t("checkout.orderSuccess"));
       router.push(redirectUrl);
       // Keep the submit button loading until navigation unmounts this page.
       return;
@@ -256,7 +261,7 @@ export function CheckoutForm({
         setFormError(err.message);
         toast.error(err.message);
       } else {
-        const message = "We could not place your order. Please try again.";
+        const message = t("checkout.errors.placeOrderFailed");
         setFormError(message);
         toast.error(message);
       }
@@ -284,11 +289,11 @@ export function CheckoutForm({
           id="checkout-customer"
           className="storefront-heading text-lg tracking-tight text-foreground"
         >
-          Customer information
+          {t("checkout.customerInformation")}
         </h2>
         <Input
           name="fullName"
-          label="Full name"
+          label={t("checkout.fullName")}
           autoComplete="name"
           value={values.fullName}
           onChange={(event) => setField("fullName", event.target.value)}
@@ -299,7 +304,7 @@ export function CheckoutForm({
         <Input
           name="email"
           type="email"
-          label="Email"
+          label={t("checkout.email")}
           autoComplete="email"
           value={values.email}
           onChange={(event) => setField("email", event.target.value)}
@@ -310,7 +315,7 @@ export function CheckoutForm({
         <Input
           name="phone"
           type="tel"
-          label="Phone"
+          label={t("checkout.phone")}
           autoComplete="tel"
           value={values.phone}
           onChange={(event) => setField("phone", event.target.value)}
@@ -328,11 +333,11 @@ export function CheckoutForm({
           id="checkout-shipping"
           className="storefront-heading text-lg tracking-tight text-foreground"
         >
-          Shipping information
+          {t("checkout.shippingInformation")}
         </h2>
         <Input
           name="address"
-          label="Address"
+          label={t("checkout.address")}
           autoComplete="street-address"
           value={values.address}
           onChange={(event) => setField("address", event.target.value)}
@@ -343,7 +348,7 @@ export function CheckoutForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             name="city"
-            label="City"
+            label={t("checkout.city")}
             autoComplete="address-level2"
             value={values.city}
             onChange={(event) => setField("city", event.target.value)}
@@ -353,7 +358,7 @@ export function CheckoutForm({
           />
           <Input
             name="state"
-            label="State / province"
+            label={t("checkout.state")}
             autoComplete="address-level1"
             value={values.state}
             onChange={(event) => setField("state", event.target.value)}
@@ -365,7 +370,7 @@ export function CheckoutForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             name="postalCode"
-            label="Postal code"
+            label={t("checkout.postalCode")}
             autoComplete="postal-code"
             value={values.postalCode}
             onChange={(event) => setField("postalCode", event.target.value)}
@@ -375,7 +380,7 @@ export function CheckoutForm({
           />
           <Input
             name="country"
-            label="Country"
+            label={t("checkout.country")}
             autoComplete="country-name"
             value={values.country}
             onChange={(event) => setField("country", event.target.value)}
@@ -394,11 +399,11 @@ export function CheckoutForm({
           id="checkout-method"
           className="storefront-heading text-lg tracking-tight text-foreground"
         >
-          Shipping method
+          {t("checkout.shippingMethod")}
         </h2>
         <Select
           name="shippingMethodId"
-          label="Method"
+          label={t("checkout.method")}
           value={values.shippingMethodId}
           onChange={(event) => setField("shippingMethodId", event.target.value)}
           error={fieldErrors.shippingMethodId}
@@ -407,8 +412,8 @@ export function CheckoutForm({
             value: method.id,
             label:
               method.cost === 0
-                ? `${method.label} — Free`
-                : `${method.label}`,
+                ? t("checkout.freeShippingLabel", { label: method.label })
+                : method.label,
           }))}
         />
       </section>
@@ -421,7 +426,7 @@ export function CheckoutForm({
           id="checkout-payment"
           className="storefront-heading text-lg tracking-tight text-foreground"
         >
-          Payment method
+          {t("checkout.paymentMethod")}
         </h2>
         <PaymentMethodSelector
           value={values.paymentMethod}
@@ -433,7 +438,7 @@ export function CheckoutForm({
       </section>
 
       <Button type="submit" fullWidth disabled={loading || items.length === 0}>
-        {loading ? "Placing order…" : "Place order"}
+        {loading ? t("checkout.placingOrder") : t("checkout.placeOrder")}
       </Button>
     </form>
   );

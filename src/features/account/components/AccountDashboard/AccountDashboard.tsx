@@ -7,6 +7,7 @@ import { AccountAvatar } from "@/features/account/components/AccountAvatar";
 import { useAccountProfile } from "@/features/account/hooks/useAccountProfile";
 import { useCustomerOrders } from "@/features/account/hooks/useCustomerOrders";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
 import { Card } from "@/shared/ui/Card";
@@ -22,6 +23,7 @@ type AccountDashboardProps = {
  * Account dashboard — name, member since, order count, latest three orders.
  */
 export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
+  const t = useT();
   const { profile, loading: profileLoading, error: profileError } =
     useAccountProfile();
   const { orders, loading: ordersLoading, error: ordersError } =
@@ -42,8 +44,8 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
   if (profileError || !profile) {
     return (
       <EmptyState
-        title="Unable to load account"
-        description={profileError ?? "Please try again later."}
+        title={t("account.loadFailedTitle")}
+        description={profileError ?? t("account.loadFailedDescription")}
       />
     );
   }
@@ -51,7 +53,7 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
   const recentOrders = orders.slice(0, 3);
   const latestOrder = orders[0] ?? null;
   const displayName =
-    profile.displayName.trim() || profile.email || "Customer";
+    profile.displayName.trim() || profile.email || t("account.customerFallback");
 
   return (
     <div className="flex flex-col gap-8">
@@ -63,10 +65,12 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
         />
         <div className="flex min-w-0 flex-col gap-2">
           <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
-            Welcome, {displayName}
+            {t("account.dashboardWelcomeNamed", { name: displayName })}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Member since {formatAccountDate(profile.createdAt, locale)}
+            {t("account.memberSince", {
+              date: formatAccountDate(profile.createdAt, locale),
+            })}
           </p>
         </div>
       </header>
@@ -74,7 +78,7 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card padding="md">
           <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            Total orders
+            {t("account.totalOrders")}
           </p>
           <p className="mt-2 text-3xl font-semibold text-foreground">
             {orders.length}
@@ -82,13 +86,15 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
         </Card>
         <Card padding="md">
           <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            Latest order status
+            {t("account.latestOrderStatus")}
           </p>
           <div className="mt-3">
             {latestOrder ? (
               <OrderStatusBadge status={latestOrder.status} />
             ) : (
-              <p className="text-sm text-muted-foreground">No orders yet</p>
+              <p className="text-sm text-muted-foreground">
+                {t("account.noOrdersTitle")}
+              </p>
             )}
           </div>
         </Card>
@@ -103,25 +109,25 @@ export function AccountDashboard({ locale, currency }: AccountDashboardProps) {
       <section className="flex flex-col gap-4">
         <div className="flex items-end justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">
-            Recent orders
+            {t("account.recentOrders")}
           </h2>
           {orders.length > 0 ? (
             <Link
               href="/account/orders"
               className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
             >
-              View all
+              {t("common.viewAll")}
             </Link>
           ) : null}
         </div>
 
         {recentOrders.length === 0 ? (
           <EmptyState
-            title="No orders yet"
-            description="When you place an order while signed in, it will appear here."
+            title={t("account.noOrdersTitle")}
+            description={t("account.noOrdersDescription")}
             action={
               <StorefrontPrimaryLink href="/#featured">
-                Continue shopping
+                {t("cart.continueShopping")}
               </StorefrontPrimaryLink>
             }
           />

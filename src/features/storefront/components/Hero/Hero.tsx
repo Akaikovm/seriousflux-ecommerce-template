@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import type { ResolvedHeroContent } from "@/features/storefront/lib/resolve-hero-content";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
   radius,
@@ -32,7 +35,8 @@ export function Hero({
   ctaHref,
   className,
 }: HeroProps) {
-  const brand = storeName.trim() || title.trim() || "Store";
+  const t = useT();
+  const brand = storeName.trim() || title.trim() || t("hero.defaultStore");
   const marketingTitle =
     title.trim() && title.trim().toLowerCase() !== brand.toLowerCase()
       ? title.trim()
@@ -119,7 +123,7 @@ export function Hero({
       <section
         className={cn("relative w-full overflow-hidden", className)}
         style={{ minHeight: "var(--storefront-hero-min-h)" }}
-        aria-label="Hero"
+        aria-label={t("hero.ariaLabel")}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- remote hosts vary per client */}
         <img
@@ -145,7 +149,7 @@ export function Hero({
         className,
       )}
       style={{ minHeight: "var(--storefront-hero-min-h)" }}
-      aria-label="Hero"
+      aria-label={t("hero.ariaLabel")}
     >
       <div
         className="pointer-events-none absolute inset-0"

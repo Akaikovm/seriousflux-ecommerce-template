@@ -5,6 +5,7 @@ import type {
   CheckoutPaymentOption,
   PaymentMethod,
 } from "@/features/payments/types";
+import { useT } from "@/i18n";
 import { spacing, typography } from "@/shared/design/tokens";
 
 type PaymentMethodSelectorProps = {
@@ -34,13 +35,14 @@ export function PaymentMethodSelector({
   error,
   name = "paymentMethod",
 }: PaymentMethodSelectorProps) {
+  const t = useT();
   const groupName = name;
   const describedById = error ? `${groupName}-error` : undefined;
 
   if (options.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No payment methods are available for this store.
+        {t("checkout.noPaymentMethodsForStore")}
       </p>
     );
   }
@@ -54,11 +56,8 @@ export function PaymentMethodSelector({
       aria-describedby={describedById}
       aria-invalid={error ? true : undefined}
     >
-      <span
-        id={`${groupName}-legend`}
-        className="sr-only"
-      >
-        Payment method
+      <span id={`${groupName}-legend`} className="sr-only">
+        {t("checkout.paymentMethod")}
       </span>
 
       {options.map((option) => {

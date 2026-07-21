@@ -7,10 +7,11 @@ import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
 import { sanitizeRedirectTo } from "@/features/auth/lib/safe-redirect";
 import { requestNotification } from "@/features/notifications";
+import { translateAuthError, useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 
 type GoogleAuthButtonProps = {
-  /** Button label. */
+  /** Button label. Defaults to localized auth.continueWithGoogle. */
   label?: string;
   /**
    * Where to navigate after success.
@@ -32,7 +33,7 @@ type GoogleAuthButtonProps = {
  * Uses AuthProvider only — never Firebase Auth directly.
  */
 export function GoogleAuthButton({
-  label = "Continue with Google",
+  label,
   redirectTo = "/account",
   navigate = true,
   onSuccess,
@@ -40,6 +41,7 @@ export function GoogleAuthButton({
   fullWidth = true,
   className,
 }: GoogleAuthButtonProps) {
+  const t = useT();
   const { signInWithGoogle } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -66,8 +68,8 @@ export function GoogleAuthButton({
       }
       const message =
         err instanceof AuthError
-          ? err.message
-          : "Unable to continue with Google. Please try again.";
+          ? translateAuthError(err, t)
+          : t("auth.googleFailed");
       onError?.(message);
     } finally {
       setLoading(false);
@@ -84,7 +86,7 @@ export function GoogleAuthButton({
         void handleClick();
       }}
     >
-      {label}
+      {label ?? t("auth.continueWithGoogle")}
     </Button>
   );
 }

@@ -8,6 +8,7 @@ import {
   selectCartItemCount,
   useCartStore,
 } from "@/features/cart/store";
+import { useT } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 import { transition } from "@/shared/design/tokens";
 
@@ -18,14 +19,19 @@ import { transition } from "@/shared/design/tokens";
  */
 
 export function CartLink() {
+  const t = useT();
   const hydrated = useCartHydrated();
   const itemCount = useCartStore(selectCartItemCount);
   const showBadge = hydrated && itemCount > 0;
 
-  const label =
-    showBadge
-      ? `Cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`
-      : "Cart";
+  const itemsLabel =
+    itemCount === 1
+      ? t("cart.itemOne")
+      : t("cart.itemMany", { count: itemCount });
+
+  const label = showBadge
+    ? t("cart.ariaLabelWithCount", { count: itemsLabel })
+    : t("cart.ariaLabel");
 
   return (
     <Link

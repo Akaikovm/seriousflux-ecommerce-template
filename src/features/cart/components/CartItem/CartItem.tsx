@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 import type { CartItem as CartItemType } from "@/features/cart/types";
 import { formatPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 import { radius, spacing, transition } from "@/shared/design/tokens";
 
 /**
@@ -31,6 +34,7 @@ export function CartItem({
   onRemove,
   className,
 }: CartItemProps) {
+  const t = useT();
   const hasImage = item.image.trim().length > 0;
   const lineTotal = formatPrice(
     item.price * item.quantity,
@@ -41,10 +45,7 @@ export function CartItem({
 
   return (
     <article
-      className={cn(
-        "flex gap-4 py-5",
-        className,
-      )}
+      className={cn("flex gap-4 py-5", className)}
       data-product-id={item.productId}
       style={{ gap: spacing.lg }}
     >
@@ -75,7 +76,9 @@ export function CartItem({
             >
               {item.name}
             </Link>
-            <p className="text-sm text-muted-foreground">{unitPrice} each</p>
+            <p className="text-sm text-muted-foreground">
+              {t("cart.each", { price: unitPrice })}
+            </p>
           </div>
 
           <p className="shrink-0 text-sm font-medium text-foreground">
@@ -88,14 +91,14 @@ export function CartItem({
             className="inline-flex items-center border border-border"
             style={{ borderRadius: radius.md }}
             role="group"
-            aria-label={`Quantity for ${item.name}`}
+            aria-label={t("cart.quantityFor", { name: item.name })}
           >
             <button
               type="button"
               onClick={() => onDecrement(item.productId)}
               className="inline-flex size-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               style={{ transitionDuration: transition.fast }}
-              aria-label={`Decrease quantity of ${item.name}`}
+              aria-label={t("cart.decreaseOf", { name: item.name })}
             >
               <Minus className="size-3.5" aria-hidden />
             </button>
@@ -110,7 +113,7 @@ export function CartItem({
               onClick={() => onIncrement(item.productId)}
               className="inline-flex size-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               style={{ transitionDuration: transition.fast }}
-              aria-label={`Increase quantity of ${item.name}`}
+              aria-label={t("cart.increaseOf", { name: item.name })}
             >
               <Plus className="size-3.5" aria-hidden />
             </button>
@@ -121,10 +124,10 @@ export function CartItem({
             onClick={() => onRemove(item.productId)}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             style={{ transitionDuration: transition.fast }}
-            aria-label={`Remove ${item.name} from cart`}
+            aria-label={t("cart.removeNamed", { name: item.name })}
           >
             <Trash2 className="size-3.5" aria-hidden />
-            <span>Remove</span>
+            <span>{t("common.remove")}</span>
           </button>
         </div>
       </div>

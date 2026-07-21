@@ -1,10 +1,8 @@
-﻿import {
-  BrandValues,
-  buildDefaultBrandValues,
-} from "@/features/storefront/components/BrandValues";
+﻿import { BrandValues } from "@/features/storefront/components/BrandValues";
 import { BrandStory } from "@/features/storefront/components/BrandStory";
 import { Hero } from "@/features/storefront/components/Hero";
 import { Newsletter } from "@/features/storefront/components/Newsletter";
+import { buildDefaultBrandValues } from "@/features/storefront/lib/build-default-brand-values";
 import { resolveHeroContent } from "@/features/storefront/lib/resolve-hero-content";
 import { FeaturedCategories } from "@/features/home/components/FeaturedCategories";
 import { FeaturedProducts } from "@/features/home/components/FeaturedProducts";
@@ -12,6 +10,7 @@ import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
+import { toStorefrontCategory } from "@/features/categories/lib/to-storefront-category";
 import type { Category } from "@/features/categories/types";
 import {
   InventoryError,
@@ -25,6 +24,7 @@ import {
 import type { Product } from "@/features/products/types";
 import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 
 async function getFeaturedCategories(): Promise<Category[]> {
   try {
@@ -65,6 +65,7 @@ export default async function HomePage() {
     getFeaturedProducts(),
   ]);
 
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
   const inventorySettings = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
   let visibleProducts = products;
 
@@ -85,13 +86,14 @@ export default async function HomePage() {
     }
   }
 
-  const hero = resolveHeroContent(settings);
-  const brandValues = buildDefaultBrandValues(settings.shippingEnabled);
+  const hero = resolveHeroContent(settings, t);
+  const brandValues = buildDefaultBrandValues(settings.shippingEnabled, t);
+  const storefrontCategories = categories.map(toStorefrontCategory);
 
   return (
     <>
       <Hero {...hero} storeName={settings.storeName} />
-      <FeaturedCategories categories={categories} />
+      <FeaturedCategories categories={storefrontCategories} />
       <FeaturedProducts
         products={visibleProducts}
         locale={settings.locale}
@@ -105,8 +107,7 @@ export default async function HomePage() {
       />
       <BrandValues
         subtitle={
-          settings.tagline.trim() ||
-          "Thoughtful shopping experiences, tailored to every brand."
+          settings.tagline.trim() || t("brandValues.defaultSubtitle")
         }
         items={brandValues}
       />

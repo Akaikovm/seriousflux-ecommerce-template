@@ -9,6 +9,7 @@ import { buildLoginHref } from "@/features/auth/lib/safe-redirect";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
 import { requestNotification } from "@/features/notifications";
+import { translateAuthError, useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
@@ -24,6 +25,7 @@ type SignupFormProps = {
  * Google uses the same bootstrap path.
  */
 export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
+  const t = useT();
   const { signUp } = useAuth();
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
@@ -51,9 +53,9 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
       router.replace(redirectTo);
     } catch (err) {
       if (err instanceof AuthError) {
-        setError(err.message);
+        setError(translateAuthError(err, t));
       } else {
-        setError("Unable to create your account. Please try again.");
+        setError(t("auth.signupFailed"));
       }
     } finally {
       setLoading(false);
@@ -67,29 +69,24 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold text-foreground">
-            Create account
+            {t("auth.signupTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sign up with Google or email. Guest checkout still works without an
-            account.
+            {t("auth.signupDescription")}
           </p>
         </div>
 
-        <GoogleAuthButton
-          label="Continue with Google"
-          redirectTo={redirectTo}
-          onError={setError}
-        />
+        <GoogleAuthButton redirectTo={redirectTo} onError={setError} />
 
         <div className="flex items-center gap-3 text-xs uppercase tracking-[0.12em] text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
-          or
+          {t("common.or")}
           <span className="h-px flex-1 bg-border" />
         </div>
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           <Input
-            label="Name"
+            label={t("auth.displayName")}
             name="displayName"
             type="text"
             autoComplete="name"
@@ -99,7 +96,7 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
           />
 
           <Input
-            label="Email"
+            label={t("common.email")}
             name="email"
             type="email"
             autoComplete="email"
@@ -109,7 +106,7 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
           />
 
           <Input
-            label="Password"
+            label={t("common.password")}
             name="password"
             type="password"
             autoComplete="new-password"
@@ -118,21 +115,21 @@ export function SignupForm({ redirectTo = "/account" }: SignupFormProps) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             error={error}
-            helperText="At least 6 characters."
+            helperText={t("auth.passwordHint")}
           />
 
           <Button type="submit" loading={loading} fullWidth>
-            Create account
+            {t("auth.signupCta")}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("auth.haveAccount")}{" "}
           <Link
             href={loginHref}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Sign in
+            {t("auth.signInLink")}
           </Link>
         </p>
       </div>

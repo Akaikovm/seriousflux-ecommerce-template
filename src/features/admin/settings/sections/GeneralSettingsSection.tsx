@@ -1,6 +1,7 @@
 "use client";
 
 import type { SettingsSectionProps } from "@/features/admin/settings/types/settings-section";
+import { useT } from "@/i18n";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 
@@ -13,11 +14,13 @@ export function GeneralSettingsSection({
   disabled,
   setField,
 }: SettingsSectionProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <Input
         name="storeName"
-        label="Store name"
+        label={t("admin.settings.general.storeName")}
         value={values.storeName}
         error={fieldErrors.storeName}
         disabled={disabled}
@@ -26,7 +29,7 @@ export function GeneralSettingsSection({
 
       <Input
         name="tagline"
-        label="Tagline"
+        label={t("admin.settings.general.tagline")}
         value={values.tagline}
         error={fieldErrors.tagline}
         disabled={disabled}
@@ -35,10 +38,10 @@ export function GeneralSettingsSection({
 
       <Textarea
         name="description"
-        label="Description"
+        label={t("admin.settings.general.description")}
         value={values.description}
         error={fieldErrors.description}
-        helperText="Used for storefront about copy and page metadata."
+        helperText={t("admin.settings.general.descriptionHelper")}
         disabled={disabled}
         onChange={(event) => setField("description", event.target.value)}
       />
@@ -46,10 +49,10 @@ export function GeneralSettingsSection({
       <div className="grid gap-5 sm:grid-cols-2">
         <Input
           name="currency"
-          label="Currency"
+          label={t("admin.settings.general.currency")}
           value={values.currency}
           error={fieldErrors.currency}
-          helperText="ISO 4217, e.g. ARS"
+          helperText={t("admin.settings.general.currencyHelper")}
           disabled={disabled}
           onChange={(event) =>
             setField("currency", event.target.value.toUpperCase())
@@ -57,10 +60,10 @@ export function GeneralSettingsSection({
         />
         <Input
           name="country"
-          label="Country"
+          label={t("admin.settings.general.country")}
           value={values.country}
           error={fieldErrors.country}
-          helperText="ISO 3166-1, e.g. AR"
+          helperText={t("admin.settings.general.countryHelper")}
           disabled={disabled}
           onChange={(event) =>
             setField("country", event.target.value.toUpperCase())
@@ -71,19 +74,19 @@ export function GeneralSettingsSection({
       <div className="grid gap-5 sm:grid-cols-2">
         <Input
           name="locale"
-          label="Locale"
+          label={t("admin.settings.general.locale")}
           value={values.locale}
           error={fieldErrors.locale}
-          helperText="BCP 47, e.g. es-AR"
+          helperText={t("admin.settings.general.localeHelper")}
           disabled={disabled}
           onChange={(event) => setField("locale", event.target.value)}
         />
         <Input
           name="language"
-          label="Language"
+          label={t("admin.settings.general.language")}
           value={values.language}
           error={fieldErrors.language}
-          helperText="UI language, e.g. es"
+          helperText={t("admin.settings.general.languageHelper")}
           disabled={disabled}
           onChange={(event) => setField("language", event.target.value)}
         />

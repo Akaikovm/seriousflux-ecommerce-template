@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { AdminHeader } from "@/features/admin/components/AdminHeader";
 import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
 import { ADMIN_NAV_ITEMS } from "@/features/admin/config/nav";
+import { useT, type TranslateFn } from "@/i18n";
 
 import "@/features/admin/styles/tokens.css";
 import "@/features/admin/styles/admin.css";
@@ -17,7 +18,7 @@ type AdminLayoutProps = {
   children: ReactNode;
 };
 
-function resolvePageTitle(pathname: string): string {
+function resolvePageTitle(pathname: string, t: TranslateFn): string {
   const match = ADMIN_NAV_ITEMS.find((item) => {
     if (item.href === "/admin") {
       return pathname === "/admin";
@@ -25,7 +26,9 @@ function resolvePageTitle(pathname: string): string {
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   });
 
-  return match?.label ?? "Admin";
+  return match
+    ? t(`admin.nav.${match.labelKey}`)
+    : t("admin.common.adminLabel");
 }
 
 /**
@@ -35,9 +38,10 @@ function resolvePageTitle(pathname: string): string {
  * Mobile: off-canvas sidebar with accessible controls.
  */
 export function AdminLayout({ storeName, children }: AdminLayoutProps) {
+  const t = useT();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const title = resolvePageTitle(pathname);
+  const title = resolvePageTitle(pathname, t);
 
   return (
     <div className="admin-shell flex">

@@ -1,17 +1,10 @@
-import { Badge } from "@/shared/ui/Badge";
+"use client";
+
 import type { InventoryStatus } from "@/features/inventory/types";
+import { useT } from "@/i18n";
+import { Badge } from "@/shared/ui/Badge";
 
-const LABELS: Record<InventoryStatus, string> = {
-  not_tracked: "Inventory disabled",
-  in_stock: "In stock",
-  low_stock: "Low stock",
-  out_of_stock: "Out of stock",
-};
-
-const VARIANTS: Record<
-  InventoryStatus,
-  "primary" | "secondary"
-> = {
+const VARIANTS: Record<InventoryStatus, "primary" | "secondary"> = {
   not_tracked: "secondary",
   in_stock: "primary",
   low_stock: "secondary",
@@ -26,5 +19,11 @@ type StockStatusBadgeProps = {
  * Admin badge for inventory status (RFC-023 / ADR-021).
  */
 export function StockStatusBadge({ status }: StockStatusBadgeProps) {
-  return <Badge variant={VARIANTS[status]}>{LABELS[status]}</Badge>;
+  const t = useT();
+
+  return (
+    <Badge variant={VARIANTS[status]}>
+      {t(`inventory.status.${status}`)}
+    </Badge>
+  );
 }

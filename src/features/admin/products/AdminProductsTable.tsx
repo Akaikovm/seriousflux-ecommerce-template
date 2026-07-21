@@ -18,6 +18,7 @@ import {
   ProductError,
   ProductService,
 } from "@/features/products/services";
+import { useT } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -58,6 +59,7 @@ export function AdminProductsTable({
   locale,
   currency,
 }: AdminProductsTableProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const [pendingDelete, setPendingDelete] = useState<AdminProductRow | null>(
@@ -107,12 +109,14 @@ export function AdminProductsTable({
     setDeleting(true);
     try {
       await new ProductService().delete(pendingDelete.id);
-      toast.success("Product deleted.");
+      toast.success(t("admin.products.deleted"));
       setPendingDelete(null);
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof ProductError ? err.message : "Unable to delete product.";
+        err instanceof ProductError
+          ? err.message
+          : t("admin.products.deleteFailed");
       toast.error(message);
     } finally {
       setDeleting(false);
@@ -129,11 +133,17 @@ export function AdminProductsTable({
       await new ProductService().update(product.id, {
         active: !product.active,
       });
-      toast.success(product.active ? "Product disabled." : "Product enabled.");
+      toast.success(
+        product.active
+          ? t("admin.products.disabled")
+          : t("admin.products.enabled"),
+      );
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof ProductError ? err.message : "Unable to update product.";
+        err instanceof ProductError
+          ? err.message
+          : t("admin.products.updateFailed");
       toast.error(message);
     } finally {
       setTogglingId(null);
@@ -143,7 +153,7 @@ export function AdminProductsTable({
   const columns: AdminDataTableColumn<AdminProductRow>[] = [
     {
       id: "image",
-      header: "Image",
+      header: t("admin.products.columns.image"),
       className: "w-16",
       cell: (product) =>
         product.image ? (
@@ -159,7 +169,7 @@ export function AdminProductsTable({
     },
     {
       id: "name",
-      header: "Name",
+      header: t("admin.products.columns.name"),
       cell: (product) => (
         <div>
           <p className="font-medium text-foreground">{product.name}</p>
@@ -169,13 +179,13 @@ export function AdminProductsTable({
     },
     {
       id: "price",
-      header: "Price",
+      header: t("admin.products.columns.price"),
       cell: (product) =>
         formatPrice(product.price, locale, product.currency || currency),
     },
     {
       id: "stock",
-      header: "Stock",
+      header: t("admin.products.columns.stock"),
       cell: (product) =>
         product.trackInventory ? (
           <span className="tabular-nums">{product.stockQuantity ?? 0}</span>
@@ -185,27 +195,27 @@ export function AdminProductsTable({
     },
     {
       id: "inventory",
-      header: "Inventory",
+      header: t("admin.products.columns.inventory"),
       cell: (product) => <StockStatusBadge status={product.inventoryStatus} />,
     },
     {
       id: "category",
-      header: "Category",
+      header: t("admin.products.columns.category"),
       cell: (product) =>
         categoryNames[product.categoryId] || product.categoryId || "—",
     },
     {
       id: "status",
-      header: "Status",
+      header: t("admin.products.columns.status"),
       cell: (product) => (
         <Badge variant={product.active ? "primary" : "secondary"}>
-          {product.active ? "Active" : "Inactive"}
+          {product.active ? t("common.active") : t("common.inactive")}
         </Badge>
       ),
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("admin.products.columns.actions"),
       className: "text-right",
       cell: (product) => (
         <AdminRowActions>
@@ -215,14 +225,14 @@ export function AdminProductsTable({
             loading={togglingId === product.id}
             onClick={() => void handleToggleActive(product)}
           >
-            {product.active ? "Disable" : "Enable"}
+            {product.active ? t("common.disable") : t("common.enable")}
           </Button>
           <Link
             href={`/admin/products/${product.id}/edit`}
             className="inline-flex"
           >
             <Button type="button" className="admin-action-btn admin-btn-ghost">
-              Edit
+              {t("common.edit")}
             </Button>
           </Link>
           <Button
@@ -230,7 +240,7 @@ export function AdminProductsTable({
             className="admin-action-btn bg-destructive text-white hover:bg-destructive/90"
             onClick={() => setPendingDelete(product)}
           >
-            Delete
+            {t("common.delete")}
           </Button>
         </AdminRowActions>
       ),
@@ -240,13 +250,13 @@ export function AdminProductsTable({
   return (
     <AdminPage>
       <AdminPageHeader
-        eyebrow="Catalog"
-        title="Products"
-        description="Create, edit, and manage catalog products."
+        eyebrow={t("admin.products.eyebrow")}
+        title={t("admin.products.title")}
+        description={t("admin.products.description")}
         actions={
           <Link href="/admin/products/new" className="block sm:inline-flex">
             <Button type="button" className="admin-btn-accent w-full sm:w-auto">
-              Create product
+              {t("admin.products.create")}
             </Button>
           </Link>
         }
@@ -255,21 +265,27 @@ export function AdminProductsTable({
       <AdminTableToolbar>
         <Input
           name="product-search"
-          label="Search"
+          label={t("common.search")}
           value={search}
-          placeholder="Name, slug, or SKU"
+          placeholder={t("admin.products.searchPlaceholder")}
           onChange={(event) => setSearch(event.target.value)}
         />
         <Select
           name="stock-filter"
-          label="Inventory"
+          label={t("admin.products.columns.inventory")}
           value={stockFilter}
           options={[
-            { value: "all", label: "All" },
-            { value: "tracked", label: "Tracked" },
-            { value: "not_tracked", label: "Not tracked" },
-            { value: "low_stock", label: "Low stock" },
-            { value: "out_of_stock", label: "Out of stock" },
+            { value: "all", label: t("admin.products.filter.stockAll") },
+            { value: "tracked", label: t("admin.products.filter.stockTracked") },
+            {
+              value: "not_tracked",
+              label: t("admin.products.filter.stockNotTracked"),
+            },
+            { value: "low_stock", label: t("inventory.status.low_stock") },
+            {
+              value: "out_of_stock",
+              label: t("inventory.status.out_of_stock"),
+            },
           ]}
           onChange={(event) =>
             setStockFilter(event.target.value as StockFilter)
@@ -281,28 +297,26 @@ export function AdminProductsTable({
         columns={columns}
         rows={filtered}
         getRowId={(product) => product.id}
-        emptyTitle="No products yet"
-        emptyDescription="Create the first product for your catalog."
+        emptyTitle={t("admin.products.emptyTitle")}
+        emptyDescription={t("admin.products.emptyDescription")}
         emptyAction={
           <Link href="/admin/products/new">
             <Button type="button" className="admin-btn-accent">
-              Create product
+              {t("admin.products.create")}
             </Button>
           </Link>
         }
-        footer={`${filtered.length} product${filtered.length === 1 ? "" : "s"}`}
+        footer={t("admin.products.footerCount", { count: filtered.length })}
       />
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}
-        title="Delete product?"
+        title={t("admin.products.deleteTitle")}
         description={
-          pendingDelete
-            ? `“${pendingDelete.name}” will be permanently removed. This cannot be undone.`
-            : undefined
+          pendingDelete ? t("admin.products.deleteDescription") : undefined
         }
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        confirmLabel={t("admin.common.confirmDelete")}
+        cancelLabel={t("admin.common.cancel")}
         loading={deleting}
         destructive
         onCancel={() => {

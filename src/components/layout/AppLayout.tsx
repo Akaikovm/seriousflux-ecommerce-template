@@ -5,6 +5,7 @@ import { Footer } from "@/features/storefront/components/Footer";
 import { Navbar } from "@/features/storefront/components/Navbar";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
 import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 
 /**
  * Shell for every storefront page: Navbar → main → Footer.
@@ -18,19 +19,17 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-const BASE_NAV_LINKS: StorefrontNavLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Collections", href: "/#categories" },
-  { label: "Shop", href: "/#featured" },
-];
-
 export function AppLayout({ settings, children }: AppLayoutProps) {
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
   const hasStory =
     settings.description.trim().length > 0 || settings.tagline.trim().length > 0;
 
-  const navLinks: StorefrontNavLink[] = hasStory
-    ? [...BASE_NAV_LINKS, { label: "About", href: "/#about" }]
-    : BASE_NAV_LINKS;
+  const navLinks: StorefrontNavLink[] = [
+    { label: t("nav.home"), href: "/" },
+    { label: t("nav.collections"), href: "/#categories" },
+    { label: t("nav.shop"), href: "/#featured" },
+    ...(hasStory ? [{ label: t("nav.about"), href: "/#about" }] : []),
+  ];
 
   return (
     <div className="storefront-shell flex min-h-full flex-1 flex-col">
@@ -45,6 +44,7 @@ export function AppLayout({ settings, children }: AppLayoutProps) {
             storeName={settings.storeName}
             tagline={settings.tagline}
             logo={settings.logo}
+            fallbackMessage={t("maintenance.fallbackMessage")}
           />
         ) : (
           children
@@ -65,6 +65,19 @@ export function AppLayout({ settings, children }: AppLayoutProps) {
         youtube={settings.youtube}
         shippingEnabled={settings.shippingEnabled}
         shopLinks={navLinks}
+        labels={{
+          shop: t("footer.shop"),
+          contact: t("footer.contact"),
+          follow: t("footer.follow"),
+          shippingAvailable: t("footer.shippingAvailable"),
+          contactComingSoon: t("footer.contactComingSoon"),
+          socialComingSoon: t("footer.socialComingSoon"),
+          whatsapp: t("footer.whatsapp"),
+          copyright: t("footer.copyright", {
+            year: new Date().getFullYear(),
+            storeName: settings.storeName,
+          }),
+        }}
       />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { Input } from "@/shared/ui/Input";
 import { Switch } from "@/shared/ui/Switch";
+import { useT } from "@/i18n";
 
 /**
  * Business-facing notification fields only (RFC-019.1).
@@ -38,6 +39,8 @@ export function NotificationsSettingsFields({
   disabled,
   onChange,
 }: NotificationsSettingsFieldsProps) {
+  const t = useT();
+
   function patch<K extends keyof NotificationsFormValues>(
     key: K,
     next: NotificationsFormValues[K],
@@ -48,15 +51,13 @@ export function NotificationsSettingsFields({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Transactional email for orders, payments, and accounts. Delivery uses
-        Resend (configured by developers via{" "}
-        <code className="text-xs">RESEND_API_KEY</code>).
+        {t("admin.settings.notifications.intro")}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="senderName"
-          label="Sender name"
+          label={t("admin.settings.notifications.senderName")}
           value={value.senderName}
           error={errors?.senderName}
           disabled={disabled}
@@ -64,11 +65,11 @@ export function NotificationsSettingsFields({
         />
         <Input
           name="senderEmail"
-          label="Sender email"
+          label={t("admin.settings.notifications.senderEmail")}
           type="email"
           value={value.senderEmail}
           error={errors?.senderEmail}
-          helperText="Must be verified in your Resend account."
+          helperText={t("admin.settings.notifications.senderEmailHelper")}
           disabled={disabled}
           onChange={(event) => patch("senderEmail", event.target.value)}
         />
@@ -76,7 +77,7 @@ export function NotificationsSettingsFields({
 
       <Switch
         name="enableCustomerEmails"
-        label="Enable customer emails"
+        label={t("admin.settings.notifications.enableCustomerEmails")}
         checked={value.enableCustomerEmails}
         disabled={disabled}
         onChange={(event) =>
@@ -86,7 +87,7 @@ export function NotificationsSettingsFields({
 
       <Switch
         name="enableAdminEmails"
-        label="Enable admin emails"
+        label={t("admin.settings.notifications.enableAdminEmails")}
         checked={value.enableAdminEmails}
         disabled={disabled}
         onChange={(event) => patch("enableAdminEmails", event.target.checked)}
@@ -94,7 +95,7 @@ export function NotificationsSettingsFields({
 
       <Switch
         name="enableWelcomeEmail"
-        label="Enable welcome email"
+        label={t("admin.settings.notifications.enableWelcomeEmail")}
         checked={value.enableWelcomeEmail}
         disabled={disabled}
         onChange={(event) => patch("enableWelcomeEmail", event.target.checked)}

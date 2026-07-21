@@ -1,5 +1,8 @@
+"use client";
+
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { useT } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { radius } from "@/shared/design/tokens";
 
@@ -25,13 +28,17 @@ export function CheckoutConfirmation({
   storeName,
   logo = "",
 }: CheckoutConfirmationProps) {
+  const t = useT();
+
   if (!orderId) {
     return (
       <EmptyState
-        title="Order not found"
-        description="We could not find a confirmation for this visit. If you just placed an order, check your email or return to the store."
+        title={t("checkout.confirmationNotFoundTitle")}
+        description={t("checkout.confirmationNotFoundDescription")}
         action={
-          <StorefrontPrimaryLink href="/">Back to store</StorefrontPrimaryLink>
+          <StorefrontPrimaryLink href="/">
+            {t("common.backToStore")}
+          </StorefrontPrimaryLink>
         }
       />
     );
@@ -58,11 +65,10 @@ export function CheckoutConfirmation({
       </div>
 
       <h1 className="storefront-heading storefront-rise storefront-rise-delay-1 text-[clamp(1.75rem,4vw,2.5rem)] text-foreground text-balance">
-        Thank you for your order
+        {t("checkout.confirmationTitle")}
       </h1>
       <p className="storefront-rise storefront-rise-delay-2 mt-4 text-base text-muted-foreground">
-        {storeName} has received your order. We will follow up with next steps
-        for payment and fulfillment.
+        {t("checkout.confirmationReceived", { storeName })}
       </p>
 
       {orderNumber ? (
@@ -71,7 +77,7 @@ export function CheckoutConfirmation({
           style={{ borderRadius: radius.xl }}
         >
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Order number
+            {t("checkout.confirmationOrderNumber")}
           </p>
           <p className="storefront-heading mt-2 text-xl tracking-wide text-foreground">
             {orderNumber}
@@ -79,13 +85,13 @@ export function CheckoutConfirmation({
         </div>
       ) : (
         <p className="mt-8 text-sm text-muted-foreground">
-          Keep an eye on your inbox for confirmation details.
+          {t("checkout.confirmationInboxHint")}
         </p>
       )}
 
       <div className="mt-10">
         <StorefrontPrimaryLink href="/#featured">
-          Continue shopping
+          {t("checkout.continueShopping")}
         </StorefrontPrimaryLink>
       </div>
     </div>

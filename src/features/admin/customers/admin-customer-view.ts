@@ -1,6 +1,7 @@
 import type { PersistedRole, UserStatus } from "@/features/auth/types";
 import type { CustomerProfile } from "@/features/customers/types";
 import type { Order } from "@/features/orders/types";
+import type { TranslateFn } from "@/i18n";
 
 /**
  * Serializable customer row for Admin list/detail (no Firestore Timestamp).
@@ -74,7 +75,22 @@ export function summarizeCustomerOrders(
   };
 }
 
-export function getCustomerRoleLabel(role: PersistedRole): string {
+export function getCustomerRoleLabel(
+  role: PersistedRole,
+  t?: TranslateFn,
+): string {
+  if (t) {
+    switch (role) {
+      case "admin":
+        return t("admin.customers.role.admin");
+      case "staff":
+        return t("admin.customers.role.staff");
+      case "customer":
+      default:
+        return t("admin.customers.role.customer");
+    }
+  }
+
   switch (role) {
     case "admin":
       return "Admin";
@@ -86,6 +102,14 @@ export function getCustomerRoleLabel(role: PersistedRole): string {
   }
 }
 
-export function getCustomerStatusLabel(status: UserStatus): string {
+export function getCustomerStatusLabel(
+  status: UserStatus,
+  t?: TranslateFn,
+): string {
+  if (t) {
+    return status === "inactive"
+      ? t("admin.customers.status.inactive")
+      : t("admin.customers.status.active");
+  }
   return status === "inactive" ? "Inactive" : "Active";
 }

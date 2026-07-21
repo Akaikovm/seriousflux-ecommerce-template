@@ -1,8 +1,11 @@
+"use client";
+
 import {
   getOrderStatusLabel,
   normalizeOrderStatus,
 } from "@/features/orders/lib/order-status";
 import type { OrderStatus } from "@/features/orders/types";
+import { useT } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 
 type OrderStatusBadgeProps = {
@@ -14,6 +17,7 @@ type OrderStatusBadgeProps = {
  * Fulfillment status chip — domain wrapper over Design System Badge.
  */
 export function OrderStatusBadge({ status, className }: OrderStatusBadgeProps) {
+  const t = useT();
   const canonical = normalizeOrderStatus(status);
   const variant =
     canonical === "cancelled"
@@ -24,7 +28,7 @@ export function OrderStatusBadge({ status, className }: OrderStatusBadgeProps) {
 
   return (
     <Badge variant={variant} className={className}>
-      {getOrderStatusLabel(status)}
+      {getOrderStatusLabel(status, t)}
     </Badge>
   );
 }

@@ -19,6 +19,7 @@ import {
   normalizeOrderStatus,
   type OrderCanonicalStatus,
 } from "@/features/orders/lib/order-status";
+import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -64,6 +65,7 @@ export function AdminOrdersTable({
   locale,
   currency,
 }: AdminOrdersTableProps) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -83,8 +85,8 @@ export function AdminOrdersTable({
   }, [orders, search, statusFilter]);
 
   const statusOptions = [
-    { value: "", label: "All statuses" },
-    ...getOrderStatusFilterOptions().map((option) => ({
+    { value: "", label: t("admin.orders.allStatuses") },
+    ...getOrderStatusFilterOptions(t).map((option) => ({
       value: option.value,
       label: option.label,
     })),
@@ -93,7 +95,7 @@ export function AdminOrdersTable({
   const columns: AdminDataTableColumn<AdminOrderView>[] = [
     {
       id: "orderNumber",
-      header: "Order",
+      header: t("admin.orders.columns.order"),
       cell: (order) => (
         <Link
           href={`/admin/orders/${order.id}`}
@@ -105,7 +107,7 @@ export function AdminOrdersTable({
     },
     {
       id: "customer",
-      header: "Customer",
+      header: t("admin.orders.columns.customer"),
       cell: (order) => (
         <div>
           <p className="font-medium text-foreground">{order.customerName}</p>
@@ -115,7 +117,7 @@ export function AdminOrdersTable({
     },
     {
       id: "date",
-      header: "Date",
+      header: t("admin.orders.columns.date"),
       cell: (order) => (
         <span className="text-muted-foreground">
           {formatDate(order.createdAt, locale)}
@@ -124,29 +126,29 @@ export function AdminOrdersTable({
     },
     {
       id: "total",
-      header: "Total",
+      header: t("admin.orders.columns.total"),
       cell: (order) =>
         formatPrice(order.totals.total, order.currency || currency, locale),
     },
     {
       id: "payment",
-      header: "Payment",
+      header: t("admin.orders.columns.payment"),
       cell: (order) => <PaymentStatusBadge status={order.payment.status} />,
     },
     {
       id: "fulfillment",
-      header: "Fulfillment",
+      header: t("admin.orders.columns.fulfillment"),
       cell: (order) => <OrderStatusBadge status={order.status} />,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("common.actions"),
       className: "text-right",
       cell: (order) => (
         <AdminRowActions>
           <Link href={`/admin/orders/${order.id}`} className="inline-flex">
             <Button type="button" className="admin-action-btn admin-btn-ghost">
-              View
+              {t("admin.common.view")}
             </Button>
           </Link>
         </AdminRowActions>
@@ -157,21 +159,21 @@ export function AdminOrdersTable({
   return (
     <AdminPage>
       <AdminPageHeader
-        eyebrow="Commerce"
-        title="Orders"
-        description="Manage checkout orders, payment state, and fulfillment."
+        eyebrow={t("admin.orders.eyebrow")}
+        title={t("admin.orders.title")}
+        description={t("admin.orders.description")}
       />
 
       <AdminTableToolbar>
         <Input
-          label="Search"
+          label={t("common.search")}
           name="order-search"
-          placeholder="Order number, customer name, or email"
+          placeholder={t("admin.orders.searchPlaceholder")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
         <Select
-          label="Fulfillment status"
+          label={t("admin.orders.fulfillmentStatusFilter")}
           name="order-status-filter"
           options={statusOptions}
           value={statusFilter}
@@ -183,13 +185,17 @@ export function AdminOrdersTable({
         columns={columns}
         rows={filtered}
         getRowId={(order) => order.id}
-        emptyTitle="No orders found"
+        emptyTitle={t("admin.orders.emptyTitle")}
         emptyDescription={
           orders.length === 0
-            ? "Orders will appear here after customers complete checkout."
-            : "Try a different search or status filter."
+            ? t("admin.orders.emptyDescription")
+            : t("admin.orders.emptyFilteredDescription")
         }
-        footer={`${filtered.length} order${filtered.length === 1 ? "" : "s"}`}
+        footer={
+          filtered.length === 1
+            ? t("admin.orders.footerCount", { count: filtered.length })
+            : t("admin.orders.footerCountPlural", { count: filtered.length })
+        }
       />
     </AdminPage>
   );

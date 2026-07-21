@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 
 type AdminSaveBarProps = {
@@ -19,10 +20,15 @@ export function AdminSaveBar({
   dirty,
   loading = false,
   onDiscard,
-  saveLabel = "Save changes",
-  discardLabel = "Discard",
-  statusLabel = "Unsaved changes",
+  saveLabel,
+  discardLabel,
+  statusLabel,
 }: AdminSaveBarProps) {
+  const t = useT();
+  const resolvedSaveLabel = saveLabel ?? t("admin.common.saveChanges");
+  const resolvedDiscardLabel = discardLabel ?? t("admin.common.discard");
+  const resolvedStatusLabel = statusLabel ?? t("admin.ui.saveBarUnsaved");
+
   if (!dirty) {
     return null;
   }
@@ -31,12 +37,12 @@ export function AdminSaveBar({
     <div
       className="admin-savebar"
       role="region"
-      aria-label={statusLabel}
+      aria-label={resolvedStatusLabel}
     >
       <div className="admin-savebar__panel">
         <p className="admin-savebar__status" role="status">
           <span className="admin-savebar__dot" aria-hidden />
-          {statusLabel}
+          {resolvedStatusLabel}
         </p>
         <div className="admin-savebar__actions">
           <Button
@@ -45,7 +51,7 @@ export function AdminSaveBar({
             className="admin-savebar__discard"
             onClick={onDiscard}
           >
-            {discardLabel}
+            {resolvedDiscardLabel}
           </Button>
           <Button
             type="submit"
@@ -53,7 +59,7 @@ export function AdminSaveBar({
             disabled={!dirty || loading}
             className="admin-savebar__save"
           >
-            {saveLabel}
+            {resolvedSaveLabel}
           </Button>
         </div>
       </div>

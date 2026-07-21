@@ -6,6 +6,7 @@ import {
 import type { InventoryStatus } from "@/features/inventory/types";
 import type { Product } from "@/features/products/types";
 import type { InventorySettings } from "@/features/settings/types";
+import type { TranslateFn } from "@/i18n";
 
 export type StorefrontAvailability = {
   status: InventoryStatus;
@@ -16,11 +17,14 @@ export type StorefrontAvailability = {
   showRemaining: boolean;
   /** Out of stock / backorder / remaining-stock copy. */
   availabilityLabel: string | null;
+  /** True when the product is sellable via backorder (CTA uses out-of-stock label). */
+  isBackorder: boolean;
   hideAddToCart: boolean;
 };
 
 /**
  * Builds storefront availability from product policy + inventory quantity.
+ * Pass `t` so availability labels follow the active UI language.
  */
 export function resolveStorefrontAvailability(input: {
   product: Pick<
@@ -35,8 +39,9 @@ export function resolveStorefrontAvailability(input: {
     InventorySettings,
     "showRemainingStock" | "hideOutOfStockProducts"
   >;
+  t: TranslateFn;
 }): StorefrontAvailability {
-  const { product, quantity, inventorySettings } = input;
+  const { product, quantity, inventorySettings, t } = input;
   const status = resolveInventoryStatus({
     trackInventory: product.trackInventory,
     quantity,
@@ -61,12 +66,18 @@ export function resolveStorefrontAvailability(input: {
     product.trackInventory;
 
   let availabilityLabel: string | null = null;
+  let isBackorder = false;
   if (product.trackInventory && quantity <= 0) {
-    availabilityLabel = product.allowBackorders
-      ? "Available on backorder"
-      : "Out of stock";
+    if (product.allowBackorders) {
+      isBackorder = true;
+      availabilityLabel = t("inventory.availability.backorder");
+    } else {
+      availabilityLabel = t("inventory.availability.outOfStock");
+    }
   } else if (showRemaining) {
-    availabilityLabel = `Only ${quantity} left`;
+    availabilityLabel = t("inventory.availability.onlyXLeft", {
+      count: quantity,
+    });
   }
 
   const hideAddToCart =
@@ -81,6 +92,7 @@ export function resolveStorefrontAvailability(input: {
     maxQuantity,
     showRemaining,
     availabilityLabel,
+    isBackorder,
     hideAddToCart,
   };
 }

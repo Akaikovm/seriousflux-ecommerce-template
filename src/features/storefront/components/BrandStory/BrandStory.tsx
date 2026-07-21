@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import { Section } from "@/features/storefront/components/Section";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius, spacing, transition, typography } from "@/shared/design/tokens";
 
@@ -27,17 +30,20 @@ export function BrandStory({
   logo,
   tagline,
   description,
-  ctaText = "Explore the shop",
+  ctaText,
   ctaHref = "/#featured",
   className,
 }: BrandStoryProps) {
+  const t = useT();
   const story = description.trim() || tagline.trim();
   if (!story) {
     return null;
   }
 
-  const headline = tagline.trim() || `About ${storeName}`;
+  const headline =
+    tagline.trim() || t("brandStory.aboutStore", { storeName });
   const body = description.trim();
+  const resolvedCta = ctaText ?? t("brandStory.defaultCta");
 
   return (
     <Section
@@ -81,7 +87,7 @@ export function BrandStory({
 
           <div className="flex flex-col gap-6 lg:col-span-7">
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Our story
+              {t("brandStory.eyebrow")}
             </p>
             <h2
               id="brand-story-title"
@@ -111,7 +117,7 @@ export function BrandStory({
                   transitionDuration: transition.normal,
                 }}
               >
-                {ctaText}
+                {resolvedCta}
               </Link>
             </div>
           </div>

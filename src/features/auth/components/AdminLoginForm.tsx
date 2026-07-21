@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
 import { AdminSurface } from "@/features/admin/ui/AdminSurface";
+import { translateAuthError, useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { LoadingState } from "@/shared/ui/LoadingState";
@@ -17,6 +18,7 @@ import { LoadingState } from "@/shared/ui/LoadingState";
  * Authentication alone is not enough.
  */
 export function AdminLoginForm() {
+  const t = useT();
   const {
     user,
     role,
@@ -50,16 +52,16 @@ export function AdminLoginForm() {
 
       if (session.role !== "admin" || session.status !== "active") {
         await signOut();
-        setError("This account is not authorized for admin access.");
+        setError(t("auth.adminNotAuthorized"));
         return;
       }
 
       router.replace("/admin");
     } catch (err) {
       if (err instanceof AuthError) {
-        setError(err.message);
+        setError(translateAuthError(err, t));
       } else {
-        setError("Unable to sign in. Please try again.");
+        setError(t("auth.signInFailed"));
       }
     } finally {
       setLoading(false);
@@ -79,16 +81,15 @@ export function AdminLoginForm() {
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            Admin sign in
+            {t("auth.adminSignInTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sign in with an admin account to manage products, categories, and
-            settings.
+            {t("auth.adminSignInDescription")}
           </p>
         </div>
 
         <Input
-          label="Email"
+          label={t("common.email")}
           name="email"
           type="email"
           autoComplete="email"
@@ -98,7 +99,7 @@ export function AdminLoginForm() {
         />
 
         <Input
-          label="Password"
+          label={t("common.password")}
           name="password"
           type="password"
           autoComplete="current-password"
@@ -114,7 +115,7 @@ export function AdminLoginForm() {
           fullWidth
           className="admin-btn-accent"
         >
-          Sign in
+          {t("auth.signInCta")}
         </Button>
       </form>
     </AdminSurface>

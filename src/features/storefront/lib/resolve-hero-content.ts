@@ -1,4 +1,5 @@
 import type { StoreHeroSettings, StoreSettings } from "@/features/settings/types";
+import type { TranslateFn } from "@/i18n";
 
 /**
  * Resolved hero content always safe for presentational components.
@@ -6,7 +7,6 @@ import type { StoreHeroSettings, StoreSettings } from "@/features/settings/types
  */
 export type ResolvedHeroContent = StoreHeroSettings;
 
-const DEFAULT_CTA_TEXT = "Shop now";
 const DEFAULT_CTA_HREF = "/#featured";
 
 /**
@@ -14,13 +14,16 @@ const DEFAULT_CTA_HREF = "/#featured";
  *
  * Priority: explicit `settings.hero.*` → identity fields → elegant defaults.
  */
-export function resolveHeroContent(settings: StoreSettings): ResolvedHeroContent {
+export function resolveHeroContent(
+  settings: StoreSettings,
+  t: TranslateFn,
+): ResolvedHeroContent {
   const hero = settings.hero;
 
   const title =
     hero?.title.trim() ||
     settings.storeName.trim() ||
-    "Welcome";
+    t("hero.defaultTitle");
 
   const subtitle =
     hero?.subtitle.trim() ||
@@ -32,7 +35,7 @@ export function resolveHeroContent(settings: StoreSettings): ResolvedHeroContent
     title,
     subtitle,
     image: hero?.image.trim() || "",
-    ctaText: hero?.ctaText.trim() || DEFAULT_CTA_TEXT,
+    ctaText: hero?.ctaText.trim() || t("hero.defaultCta"),
     ctaHref: hero?.ctaHref.trim() || DEFAULT_CTA_HREF,
   };
 }

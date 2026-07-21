@@ -1,10 +1,13 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import { AdminSpinner } from "@/features/admin/ui/AdminSpinner";
+import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { LoadingState } from "@/shared/ui/LoadingState";
-import { cn } from "@/lib/utils";
 
 type DataTableProps<T> = {
   columns: AdminDataTableColumn<T>[];
@@ -41,12 +44,16 @@ export function DataTable<T>({
   getRowId,
   loading = false,
   pending = false,
-  emptyTitle = "No results",
+  emptyTitle,
   emptyDescription,
   emptyAction,
   footer,
   className,
 }: DataTableProps<T>) {
+  const t = useT();
+  const resolvedEmptyTitle = emptyTitle ?? t("admin.common.noResults");
+  const updatingLabel = t("admin.common.updatingResults");
+
   if (loading) {
     return (
       <div className={cn("admin-table admin-table__loading", className)}>
@@ -68,11 +75,11 @@ export function DataTable<T>({
         aria-busy={pending}
       >
         <EmptyState
-          title={emptyTitle}
+          title={resolvedEmptyTitle}
           description={emptyDescription}
           action={emptyAction}
         />
-        {pending ? <TablePendingOverlay label="Updating results" /> : null}
+        {pending ? <TablePendingOverlay label={updatingLabel} /> : null}
       </div>
     );
   }
@@ -107,7 +114,7 @@ export function DataTable<T>({
         </table>
       </div>
       {footer ? <div className="admin-table__footer">{footer}</div> : null}
-      {pending ? <TablePendingOverlay label="Updating results" /> : null}
+      {pending ? <TablePendingOverlay label={updatingLabel} /> : null}
     </div>
   );
 }

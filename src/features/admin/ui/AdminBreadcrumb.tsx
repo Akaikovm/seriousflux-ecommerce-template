@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 type BreadcrumbItem = {
@@ -17,8 +20,13 @@ type AdminBreadcrumbProps = {
  * Light Admin breadcrumb trail.
  */
 export function AdminBreadcrumb({ items, className }: AdminBreadcrumbProps) {
+  const t = useT();
+
   return (
-    <nav className={cn("admin-breadcrumb", className)} aria-label="Breadcrumb">
+    <nav
+      className={cn("admin-breadcrumb", className)}
+      aria-label={t("admin.ui.breadcrumbAria")}
+    >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         let node: ReactNode;
@@ -34,7 +42,10 @@ export function AdminBreadcrumb({ items, className }: AdminBreadcrumbProps) {
         }
 
         return (
-          <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
+          <span
+            key={`${item.label}-${index}`}
+            className="inline-flex items-center gap-1.5"
+          >
             {index > 0 ? (
               <span className="admin-breadcrumb__sep" aria-hidden>
                 /

@@ -7,11 +7,22 @@ export type CartAvailabilityLine = {
   quantity: number;
 };
 
+/** Maps onto `checkout.inventory.*` dictionary keys. */
+export type CheckoutInventoryErrorCode =
+  | "cartEmpty"
+  | "productsUnavailable"
+  | "insufficientStock"
+  | "verifyFailed";
+
 export type CheckoutInventoryValidationResult = {
   ok: boolean;
   results: AvailabilityResult[];
-  /** Human-readable summary for form error / toast. */
+  /**
+   * English summary for logs / fallback when `errorCode` is absent.
+   * Prefer translating `errorCode` via `t("checkout.inventory." + errorCode)`.
+   */
   message: string | null;
+  errorCode: CheckoutInventoryErrorCode | null;
   /** Inactive or missing product ids. */
   inactiveProductIds: string[];
 };
@@ -35,6 +46,7 @@ export async function validateCheckoutInventory(
       ok: false,
       results: [],
       message: "Your cart is empty.",
+      errorCode: "cartEmpty",
       inactiveProductIds: [],
     };
   }
@@ -65,6 +77,7 @@ export async function validateCheckoutInventory(
         results: [],
         message:
           "One or more products in your cart are no longer available. Please update your cart.",
+        errorCode: "productsUnavailable",
         inactiveProductIds,
       };
     }
@@ -79,6 +92,7 @@ export async function validateCheckoutInventory(
         results,
         message:
           "Some items are out of stock or have insufficient quantity. Please update your cart.",
+        errorCode: "insufficientStock",
         inactiveProductIds: [],
       };
     }
@@ -87,6 +101,7 @@ export async function validateCheckoutInventory(
       ok: true,
       results,
       message: null,
+      errorCode: null,
       inactiveProductIds: [],
     };
   } catch (error) {
@@ -95,6 +110,7 @@ export async function validateCheckoutInventory(
         ok: false,
         results: [],
         message: error.message,
+        errorCode: "verifyFailed",
         inactiveProductIds: [],
       };
     }
@@ -102,6 +118,7 @@ export async function validateCheckoutInventory(
       ok: false,
       results: [],
       message: "We could not verify stock availability. Please try again.",
+      errorCode: "verifyFailed",
       inactiveProductIds: [],
     };
   }

@@ -9,6 +9,7 @@ import {
 import { useCustomerOrder } from "@/features/account/hooks/useCustomerOrderDetail";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/features/orders/components/PaymentStatusBadge";
+import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { Card } from "@/shared/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -28,6 +29,7 @@ export function AccountOrderDetail({
   locale,
   currency,
 }: AccountOrderDetailProps) {
+  const t = useT();
   const { order, loading, error, notFound } = useCustomerOrder(orderId);
 
   if (loading) {
@@ -43,14 +45,14 @@ export function AccountOrderDetail({
   if (notFound || !order) {
     return (
       <EmptyState
-        title="Order not found"
-        description="This order does not exist or does not belong to your account."
+        title={t("account.orderNotFoundTitle")}
+        description={t("account.orderNotFoundDescription")}
         action={
           <Link
             href="/account/orders"
             className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Back to orders
+            {t("account.backToOrders")}
           </Link>
         }
       />
@@ -59,7 +61,10 @@ export function AccountOrderDetail({
 
   if (error) {
     return (
-      <EmptyState title="Unable to load order" description={error} />
+      <EmptyState
+        title={t("account.orderLoadFailedTitle")}
+        description={error}
+      />
     );
   }
 
@@ -73,41 +78,51 @@ export function AccountOrderDetail({
           href="/account/orders"
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          ← Orders
+          {t("account.backToOrdersShort")}
         </Link>
         <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
           {order.orderNumber}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Placed {formatAccountDateTime(order.createdAt, locale)}
+          {t("account.placedAt", {
+            date: formatAccountDateTime(order.createdAt, locale),
+          })}
         </p>
       </header>
 
       <Card padding="md">
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-xs text-muted-foreground">Status</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("common.status")}
+            </dt>
             <dd className="mt-1">
               <OrderStatusBadge status={order.status} />
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Payment</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("account.payment")}
+            </dt>
             <dd className="mt-1 flex flex-col gap-1">
               <PaymentStatusBadge status={order.payment.status} />
               <span className="text-xs text-muted-foreground">
-                {providerLabel(order.payment.provider)}
+                {providerLabel(order.payment.provider, t)}
               </span>
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Total</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("account.total")}
+            </dt>
             <dd className="mt-1 text-sm font-medium text-foreground">
               {formatPrice(order.totals.total, moneyCurrency, locale)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Shipping</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("account.shipping")}
+            </dt>
             <dd className="mt-1 text-sm text-foreground">
               {order.shippingMethod.label}
             </dd>
@@ -117,7 +132,9 @@ export function AccountOrderDetail({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card padding="md">
-          <h2 className="text-sm font-semibold text-foreground">Shipping</h2>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t("account.shipping")}
+          </h2>
           <address className="mt-4 text-sm not-italic text-foreground">
             <p>{address.fullName}</p>
             <p>{address.line1}</p>
@@ -131,23 +148,25 @@ export function AccountOrderDetail({
         </Card>
 
         <Card padding="md">
-          <h2 className="text-sm font-semibold text-foreground">Totals</h2>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t("account.totals")}
+          </h2>
           <dl className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Subtotal</dt>
+              <dt className="text-muted-foreground">{t("account.subtotal")}</dt>
               <dd>
                 {formatPrice(order.totals.subtotal, moneyCurrency, locale)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Shipping</dt>
+              <dt className="text-muted-foreground">{t("account.shipping")}</dt>
               <dd>
                 {formatPrice(order.totals.shipping, moneyCurrency, locale)}
               </dd>
             </div>
             {order.totals.discount > 0 ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Discount</dt>
+                <dt className="text-muted-foreground">{t("account.discount")}</dt>
                 <dd>
                   −
                   {formatPrice(order.totals.discount, moneyCurrency, locale)}
@@ -156,14 +175,14 @@ export function AccountOrderDetail({
             ) : null}
             {order.totals.tax > 0 ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Tax</dt>
+                <dt className="text-muted-foreground">{t("account.tax")}</dt>
                 <dd>
                   {formatPrice(order.totals.tax, moneyCurrency, locale)}
                 </dd>
               </div>
             ) : null}
             <div className="flex justify-between gap-4 border-t border-border pt-2 font-medium">
-              <dt>Total</dt>
+              <dt>{t("account.total")}</dt>
               <dd>
                 {formatPrice(order.totals.total, moneyCurrency, locale)}
               </dd>
@@ -173,7 +192,9 @@ export function AccountOrderDetail({
       </div>
 
       <Card padding="md">
-        <h2 className="text-sm font-semibold text-foreground">Items</h2>
+        <h2 className="text-sm font-semibold text-foreground">
+          {t("account.items")}
+        </h2>
         <ul className="mt-4 divide-y divide-border">
           {order.items.map((item) => (
             <li
@@ -189,7 +210,7 @@ export function AccountOrderDetail({
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-foreground">{item.productName}</p>
                 <p className="text-sm text-muted-foreground">
-                  Qty {item.quantity}
+                  {t("account.itemQty", { count: item.quantity })}
                   {item.selectedSize ? ` · ${item.selectedSize}` : ""}
                   {item.selectedColor ? ` · ${item.selectedColor}` : ""}
                 </p>

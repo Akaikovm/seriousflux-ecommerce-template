@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { AccountAvatar } from "@/features/account/components/AccountAvatar";
 import { useAccountProfile } from "@/features/account/hooks/useAccountProfile";
 import { useCurrentUser } from "@/features/auth/hooks";
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -22,6 +23,7 @@ type ProfileDraft = {
  * Edit displayName, photoURL, phone. Email / role / status / uid read-only.
  */
 export function AccountProfileForm() {
+  const t = useT();
   const { user, customerId, role, status } = useCurrentUser();
   const { profile, loading, error, saving, updateProfile } =
     useAccountProfile();
@@ -53,7 +55,7 @@ export function AccountProfileForm() {
 
     if (ok) {
       setDraft(null);
-      toast.success("Profile updated.");
+      toast.success(t("account.profileSaved"));
     }
   }
 
@@ -70,8 +72,8 @@ export function AccountProfileForm() {
   if (!profile) {
     return (
       <EmptyState
-        title="Profile unavailable"
-        description={error ?? "We could not load your profile."}
+        title={t("account.profileUnavailableTitle")}
+        description={error ?? t("account.profileUnavailableDescription")}
       />
     );
   }
@@ -80,11 +82,10 @@ export function AccountProfileForm() {
     <div className="flex max-w-xl flex-col gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="storefront-heading text-[clamp(1.75rem,3vw,2.25rem)] text-foreground">
-          Profile
+          {t("account.profileTitle")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Update your display name, photo URL, and phone. Email cannot be
-          changed here.
+          {t("account.profileDescription")}
         </p>
       </header>
 
@@ -97,13 +98,12 @@ export function AccountProfileForm() {
               size="lg"
             />
             <p className="text-sm text-muted-foreground">
-              Preview of your profile photo. Paste an https image URL below, or
-              keep the one from Google.
+              {t("account.photoPreviewHint")}
             </p>
           </div>
 
           <Input
-            label="Display name"
+            label={t("account.fields.displayName")}
             name="displayName"
             type="text"
             autoComplete="name"
@@ -115,17 +115,17 @@ export function AccountProfileForm() {
           />
 
           <Input
-            label="Photo URL"
+            label={t("account.fields.photoURL")}
             name="photoURL"
             type="url"
-            placeholder="https://"
+            placeholder={t("account.fields.photoURLPlaceholder")}
             value={photoURL}
             onChange={(event) => patchDraft({ photoURL: event.target.value })}
-            helperText="Optional https link to an avatar image."
+            helperText={t("account.fields.photoURLHelper")}
           />
 
           <Input
-            label="Phone"
+            label={t("common.phone")}
             name="phone"
             type="tel"
             autoComplete="tel"
@@ -134,7 +134,7 @@ export function AccountProfileForm() {
           />
 
           <Input
-            label="Email"
+            label={t("common.email")}
             name="email"
             type="email"
             value={profile.email || user?.email || ""}
@@ -143,16 +143,22 @@ export function AccountProfileForm() {
           />
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Input label="Role" name="role" value={role} readOnly disabled />
             <Input
-              label="Status"
+              label={t("account.fields.role")}
+              name="role"
+              value={role}
+              readOnly
+              disabled
+            />
+            <Input
+              label={t("common.status")}
               name="status"
               value={status ?? "—"}
               readOnly
               disabled
             />
             <Input
-              label="Customer id"
+              label={t("account.fields.customerId")}
               name="uid"
               value={customerId ?? ""}
               readOnly
@@ -167,7 +173,7 @@ export function AccountProfileForm() {
           ) : null}
 
           <Button type="submit" loading={saving}>
-            Save changes
+            {t("account.profileSave")}
           </Button>
         </form>
       </Card>

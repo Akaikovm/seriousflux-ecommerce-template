@@ -1,6 +1,9 @@
+"use client";
+
 import { ProductGrid } from "@/features/products/components/ProductGrid";
 import type { Product } from "@/features/products/types";
 import { Section } from "@/features/storefront/components/Section";
+import { useT } from "@/i18n";
 import { SectionTitle } from "@/shared/components/SectionTitle";
 
 /**
@@ -22,6 +25,8 @@ export function FeaturedProducts({
   locale,
   currency,
 }: FeaturedProductsProps) {
+  const t = useT();
+
   return (
     <Section
       id="featured"
@@ -31,8 +36,8 @@ export function FeaturedProducts({
       <div className="storefront-container">
         <SectionTitle
           id="featured-products-title"
-          title="Featured"
-          subtitle="A selection of products worth starting with."
+          title={t("home.featuredTitle")}
+          subtitle={t("home.featuredSubtitle")}
         />
         <ProductGrid
           products={products}

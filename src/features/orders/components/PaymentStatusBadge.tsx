@@ -1,5 +1,8 @@
+"use client";
+
 import { getPaymentStatusLabel } from "@/features/orders/lib/order-status";
 import type { OrderPaymentStatus } from "@/features/orders/types";
+import { useT } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 
 type PaymentStatusBadgeProps = {
@@ -14,11 +17,12 @@ export function PaymentStatusBadge({
   status,
   className,
 }: PaymentStatusBadgeProps) {
+  const t = useT();
   const variant = status === "paid" ? "primary" : "secondary";
 
   return (
     <Badge variant={variant} className={className}>
-      {getPaymentStatusLabel(status)}
+      {getPaymentStatusLabel(status, t)}
     </Badge>
   );
 }

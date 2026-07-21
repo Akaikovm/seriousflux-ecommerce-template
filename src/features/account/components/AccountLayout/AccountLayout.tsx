@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { getEnabledAccountNavItems } from "@/features/account/config/nav";
 import { useAuth } from "@/features/auth/providers";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 
@@ -24,6 +25,7 @@ function isActivePath(pathname: string, href: string): boolean {
  * Shared Account shell — config-driven sidebar + content (RFC-018).
  */
 export function AccountLayoutShell({ children }: AccountLayoutProps) {
+  const t = useT();
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
@@ -49,11 +51,11 @@ export function AccountLayoutShell({ children }: AccountLayoutProps) {
         <aside className="flex flex-col gap-6">
           <div>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              My Account
+              {t("account.myAccount")}
             </p>
             <nav
               className="mt-4 flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-1"
-              aria-label="Account"
+              aria-label={t("account.navAria")}
             >
               {navItems.map((item) => {
                 const active = isActivePath(pathname, item.href);
@@ -68,7 +70,7 @@ export function AccountLayoutShell({ children }: AccountLayoutProps) {
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    {item.label}
+                    {t(`account.nav.${item.id}`)}
                   </Link>
                 );
               })}
@@ -83,7 +85,7 @@ export function AccountLayoutShell({ children }: AccountLayoutProps) {
             }}
             className="w-full max-w-[12rem] bg-transparent text-foreground ring-1 ring-border hover:bg-muted"
           >
-            Logout
+            {t("account.signOut")}
           </Button>
         </aside>
 

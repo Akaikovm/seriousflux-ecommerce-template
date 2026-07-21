@@ -19,6 +19,7 @@ import type { Product } from "@/features/products/types";
 import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { StorefrontBreadcrumb } from "@/features/storefront/components/StorefrontBreadcrumb";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -70,11 +71,16 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const [product, settings] = await Promise.all([
+    getProductBySlug(slug),
+    getStoreSettings(),
+  ]);
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
+
   if (!product) {
     return {
-      title: "Product not found",
-      description: "The requested product could not be found.",
+      title: t("products.notFoundTitle"),
+      description: t("products.notFoundDescription"),
     };
   }
   return {
@@ -97,6 +103,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
   const inventorySettings = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
   let quantity = 0;
   try {
@@ -121,14 +128,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product,
     quantity,
     inventorySettings,
+    t,
   });
 
   const category = await getProductCategory(product.categoryId);
   const breadcrumbItems = [
-    { label: "Home", href: "/" },
+    { label: t("nav.home"), href: "/" },
     ...(category
       ? [{ label: category.name, href: category.href }]
-      : [{ label: "Shop", href: "/#featured" }]),
+      : [{ label: t("nav.shop"), href: "/#featured" }]),
     { label: product.name },
   ];
 

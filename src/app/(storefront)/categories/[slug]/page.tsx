@@ -21,6 +21,7 @@ import type { Product } from "@/features/products/types";
 import { DEFAULT_INVENTORY_SETTINGS } from "@/features/settings/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 type CategoryPageProps = {
@@ -75,12 +76,16 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const [category, settings] = await Promise.all([
+    getCategoryBySlug(slug),
+    getStoreSettings(),
+  ]);
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
 
   if (!category) {
     return {
-      title: "Category not found",
-      description: "The requested category could not be found.",
+      title: t("categories.notFoundTitle"),
+      description: t("categories.notFoundDescription"),
     };
   }
 
@@ -88,7 +93,7 @@ export async function generateMetadata({
     title: category.name,
     description:
       category.description?.trim() ||
-      `Browse products in ${category.name}.`,
+      t("categories.browseIn", { name: category.name }),
   };
 }
 
@@ -111,6 +116,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getProductsByCategory(category.id),
   ]);
 
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
   const inventorySettings = settings.inventory ?? DEFAULT_INVENTORY_SETTINGS;
   let visibleProducts = products;
 
@@ -146,11 +152,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         {visibleProducts.length === 0 ? (
           <EmptyState
-            title="No products in this collection"
-            description="Products assigned to this category will appear here once published."
+            title={t("categories.productsEmptyTitle")}
+            description={t("categories.productsEmptyDescription")}
             action={
               <StorefrontPrimaryLink href="/#featured">
-                Browse featured
+                {t("categories.browseFeatured")}
               </StorefrontPrimaryLink>
             }
           />

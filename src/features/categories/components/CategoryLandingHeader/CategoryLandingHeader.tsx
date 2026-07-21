@@ -1,4 +1,7 @@
+"use client";
+
 import { StorefrontBreadcrumb } from "@/features/storefront/components/StorefrontBreadcrumb";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius } from "@/shared/design/tokens";
 
@@ -21,18 +24,21 @@ export function CategoryLandingHeader({
   productCount,
   className,
 }: CategoryLandingHeaderProps) {
+  const t = useT();
   const hasImage = image.trim().length > 0;
   const countLabel =
-    productCount === 1 ? "1 product" : `${productCount} products`;
+    productCount === 1
+      ? t("categories.productOne")
+      : t("categories.productMany", { count: productCount });
   const subtitle =
-    description.trim() || `Browse products in ${name}.`;
+    description.trim() || t("categories.browseIn", { name });
 
   return (
     <div className={cn("mb-10 sm:mb-12", className)}>
       <StorefrontBreadcrumb
         items={[
-          { label: "Home", href: "/" },
-          { label: "Collections", href: "/#categories" },
+          { label: t("nav.home"), href: "/" },
+          { label: t("nav.collections"), href: "/#categories" },
           { label: name },
         ]}
       />
@@ -73,7 +79,7 @@ export function CategoryLandingHeader({
           )}
         >
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Collection
+            {t("categories.collection")}
           </p>
           <h1
             id="category-title"

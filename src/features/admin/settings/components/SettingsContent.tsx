@@ -6,6 +6,7 @@ import type {
   SettingsSectionId,
   SettingsSectionProps,
 } from "@/features/admin/settings/types/settings-section";
+import { useT } from "@/i18n";
 
 type SettingsContentProps = SettingsSectionProps & {
   flashSectionId?: SettingsSectionId | null;
@@ -20,6 +21,7 @@ export function SettingsContent({
   flashToken = 0,
   ...props
 }: SettingsContentProps) {
+  const t = useT();
   const sections = getSettingsSections();
 
   return (
@@ -31,8 +33,10 @@ export function SettingsContent({
           <SettingsSection
             key={section.id}
             id={section.id}
-            title={section.title}
-            description={section.description}
+            title={t(`admin.settings.sections.${section.id}.title`)}
+            description={t(
+              `admin.settings.sections.${section.id}.description`,
+            )}
             icon={section.icon}
             flashToken={flashSectionId === section.id ? flashToken : 0}
           >

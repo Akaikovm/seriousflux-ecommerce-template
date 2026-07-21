@@ -1,5 +1,8 @@
+"use client";
+
 import { ProductCard } from "@/features/products/components/ProductCard";
 import type { Product } from "@/features/products/types";
+import { useT } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 /**
@@ -22,12 +25,17 @@ export function ProductGrid({
   products,
   locale,
   currency,
-  emptyTitle = "No products yet",
-  emptyDescription = "Featured products will appear here once the catalog is published.",
+  emptyTitle,
+  emptyDescription,
 }: ProductGridProps) {
+  const t = useT();
+
   if (products.length === 0) {
     return (
-      <EmptyState title={emptyTitle} description={emptyDescription} />
+      <EmptyState
+        title={emptyTitle ?? t("products.emptyTitle")}
+        description={emptyDescription ?? t("products.emptyDescription")}
+      />
     );
   }
 

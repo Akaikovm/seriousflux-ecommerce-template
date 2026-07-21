@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
  */
 
 export type AdminNavItem = {
-  label: string;
+  /** i18n key under admin.nav.* */
+  labelKey: "dashboard" | "categories" | "products" | "orders" | "customers" | "settings";
   href: string;
   /** When true, item is visible but not navigable (future RFC placeholder). */
   disabled?: boolean;

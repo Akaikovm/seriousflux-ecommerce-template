@@ -7,6 +7,7 @@ import type {
   SettingsSectionId,
   SettingsSectionStatus,
 } from "@/features/admin/settings/types/settings-section";
+import { useT } from "@/i18n";
 
 type SettingsSidebarProps = {
   activeId: SettingsSectionId;
@@ -37,6 +38,7 @@ function StatusDot({
 }: {
   status: SettingsSectionStatus | undefined;
 }) {
+  const t = useT();
   const kind = statusKind(status);
   if (!kind) {
     return null;
@@ -44,10 +46,10 @@ function StatusDot({
 
   const label =
     kind === "error"
-      ? "Has validation errors"
+      ? t("admin.settings.statusHasErrors")
       : kind === "dirty"
-        ? "Unsaved changes"
-        : "Warning";
+        ? t("admin.settings.statusUnsaved")
+        : t("admin.settings.statusWarning");
 
   return (
     <span
@@ -67,6 +69,7 @@ export function SettingsSidebar({
   onNavigate,
   sectionStatuses,
 }: SettingsSidebarProps) {
+  const t = useT();
   const sections = getSettingsSections();
   const chipsRef = useRef<HTMLDivElement>(null);
 
@@ -92,12 +95,13 @@ export function SettingsSidebar({
           ref={chipsRef}
           className="admin-settings-chips__scroller"
           role="navigation"
-          aria-label="Settings sections"
+          aria-label={t("admin.settings.sectionsAria")}
         >
           {sections.map((section) => {
             const Icon = section.icon;
             const active = section.id === activeId;
             const status = sectionStatuses?.[section.id];
+            const title = t(`admin.settings.sections.${section.id}.title`);
 
             return (
               <button
@@ -109,7 +113,7 @@ export function SettingsSidebar({
                 onClick={() => onNavigate(section.id)}
               >
                 <Icon className="size-3.5 shrink-0" aria-hidden />
-                {section.title}
+                {title}
                 <StatusDot status={status} />
               </button>
             );
@@ -117,14 +121,20 @@ export function SettingsSidebar({
         </div>
       </div>
 
-      <aside className="admin-settings-rail hidden lg:block" aria-label="Settings sections">
+      <aside
+        className="admin-settings-rail hidden lg:block"
+        aria-label={t("admin.settings.sectionsAria")}
+      >
         <div className="admin-settings-rail__panel">
-          <p className="admin-settings-rail__label">Sections</p>
+          <p className="admin-settings-rail__label">
+            {t("admin.settings.sectionsNav")}
+          </p>
           <nav className="admin-settings-rail__nav">
             {sections.map((section) => {
               const Icon = section.icon;
               const active = section.id === activeId;
               const status = sectionStatuses?.[section.id];
+              const title = t(`admin.settings.sections.${section.id}.title`);
 
               return (
                 <button
@@ -137,9 +147,7 @@ export function SettingsSidebar({
                   <span className="admin-settings-rail__icon" aria-hidden>
                     <Icon className="size-3.5" />
                   </span>
-                  <span className="admin-settings-rail__title">
-                    {section.title}
-                  </span>
+                  <span className="admin-settings-rail__title">{title}</span>
                   <StatusDot status={status} />
                 </button>
               );

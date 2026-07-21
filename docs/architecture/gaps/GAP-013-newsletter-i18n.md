@@ -14,19 +14,23 @@ Newsletter UI fakes success locally. `locale` formats money but UI copy is hardc
 - Persist newsletter emails (collection or provider) with consent notes
 - Lightweight copy strategy (dictionaries or later CMS) — not full i18n framework unless needed
 
+## Language approach (shipped)
+
+UI chrome uses `src/i18n` dictionaries (`en` / `es`) selected by `StoreSettings.language`.
+`StoreSettings.locale` remains for number/date formatting only.
+Agency sets language per client install in Admin → Settings → General.
+
+Still open: newsletter persistence (below).
+
 ## Scope
 
 - Newsletter service + Admin export or list
-- Decide ES/EN strategy for starter kit
-
-## Out of scope
-
-- Full CMS / translation vendor
+- ~~Decide ES/EN strategy for starter kit~~ (done: dictionaries + settings.language)
 
 ## Acceptance criteria
 
 - [ ] Newsletter submissions stored or sent to provider
-- [ ] Documented language approach for client rebrands
+- [x] Documented language approach for client rebrands
 
 ## When done
 

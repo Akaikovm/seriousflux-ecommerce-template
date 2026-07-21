@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton";
 import type { StorefrontAvailability } from "@/features/inventory/lib";
+import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 import { spacing, typography } from "@/shared/design/tokens";
@@ -47,10 +50,17 @@ export function ProductInfo({
   availability,
   className,
 }: ProductInfoProps) {
+  const t = useT();
   const formattedPrice = formatPrice(price, currency, locale);
   const categoryLabel = categoryName?.trim() ?? "";
   const canPurchase = availability?.canPurchase ?? true;
   const hideAddToCart = availability?.hideAddToCart ?? false;
+
+  const fulfillmentCopy = shippingEnabled
+    ? t("products.shippingAtCheckout")
+    : storeName.trim()
+      ? t("products.fulfillmentByStore", { storeName: storeName.trim() })
+      : t("products.fulfillmentGeneric");
 
   return (
     <div
@@ -122,25 +132,19 @@ export function ProductInfo({
             canPurchase={canPurchase}
             maxQuantity={availability?.maxQuantity ?? null}
             unavailableLabel={
-              availability?.availabilityLabel === "Available on backorder"
-                ? "Out of stock"
-                : (availability?.availabilityLabel ?? "Out of stock")
+              availability?.isBackorder
+                ? t("products.outOfStock")
+                : (availability?.availabilityLabel ?? t("products.outOfStock"))
             }
             className="w-full sm:w-auto sm:min-w-[14rem]"
           />
         ) : (
           <p className="text-sm text-muted-foreground">
-            This product is currently unavailable.
+            {t("products.unavailable")}
           </p>
         )}
 
-        <p className="text-sm text-muted-foreground">
-          {shippingEnabled
-            ? "Shipping available at checkout."
-            : storeName.trim()
-              ? `${storeName} will confirm fulfillment after your order.`
-              : "Fulfillment details are confirmed after your order."}
-        </p>
+        <p className="text-sm text-muted-foreground">{fulfillmentCopy}</p>
       </div>
 
       {/* Future: reviews summary */}

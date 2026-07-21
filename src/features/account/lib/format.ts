@@ -1,3 +1,5 @@
+import type { TranslateFn } from "@/i18n";
+
 /**
  * Format a Firestore Timestamp or Date for Account UI.
  */
@@ -50,7 +52,11 @@ export function formatAccountDateTime(
   }
 }
 
-function providerLabel(provider: string): string {
+function providerLabel(provider: string, t?: TranslateFn): string {
+  if (t) {
+    return t(`payments.providers.${provider}`);
+  }
+
   switch (provider) {
     case "mercadopago":
       return "Mercado Pago";

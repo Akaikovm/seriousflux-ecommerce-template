@@ -8,11 +8,13 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Users,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { ADMIN_NAV_ITEMS } from "@/features/admin/config/nav";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
@@ -21,6 +23,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/categories": FolderTree,
   "/admin/settings": Settings,
   "/admin/orders": ShoppingBag,
+  "/admin/customers": Users,
 };
 
 type AdminSidebarProps = {
@@ -41,6 +44,7 @@ function isActivePath(pathname: string, href: string): boolean {
  * Admin sidebar navigation — desktop persistent, mobile off-canvas (RFC-011).
  */
 export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
+  const t = useT();
   const pathname = usePathname();
 
   return (
@@ -49,7 +53,7 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
         <button
           type="button"
           className="admin-sidebar-backdrop lg:hidden"
-          aria-label="Close navigation"
+          aria-label={t("admin.common.closeNav")}
           onClick={onClose}
         />
       ) : null}
@@ -57,29 +61,35 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
       <aside
         className="admin-sidebar flex h-full flex-col"
         data-open={open ? "true" : "false"}
-        aria-label="Admin navigation"
+        aria-label={t("admin.common.adminNav")}
       >
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">
-              {storeName || "Store Admin"}
+              {storeName || t("admin.common.storeAdmin")}
             </p>
-            <p className="text-xs text-muted-foreground">Admin</p>
+            <p className="text-xs text-muted-foreground">
+              {t("admin.common.adminLabel")}
+            </p>
           </div>
           <button
             type="button"
             className="cursor-pointer rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden"
-            aria-label="Close navigation"
+            aria-label={t("admin.common.closeNav")}
             onClick={onClose}
           >
             <X className="size-4" aria-hidden />
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Primary">
+        <nav
+          className="flex flex-1 flex-col gap-1 p-3"
+          aria-label={t("admin.common.primaryNav")}
+        >
           {ADMIN_NAV_ITEMS.map((item) => {
             const Icon = NAV_ICONS[item.href] ?? LayoutDashboard;
             const active = isActivePath(pathname, item.href);
+            const label = t(`admin.nav.${item.labelKey}`);
 
             if (item.disabled) {
               return (
@@ -88,12 +98,12 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
                   className={cn("admin-nav-link")}
                   data-disabled="true"
                   aria-disabled="true"
-                  title="Coming soon"
+                  title={t("admin.common.comingSoon")}
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
-                  <span>{item.label}</span>
+                  <span>{label}</span>
                   <span className="ml-auto text-[10px] uppercase tracking-wide">
-                    Soon
+                    {t("admin.common.soon")}
                   </span>
                 </span>
               );
@@ -110,7 +120,7 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
                 onClick={onClose}
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
-                <span>{item.label}</span>
+                <span>{label}</span>
               </Link>
             );
           })}

@@ -1,8 +1,11 @@
+"use client";
+
 import { Heart, Package, Shield, Sparkles, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Section } from "@/features/storefront/components/Section";
 import type { BrandValueItem } from "@/features/storefront/types/storefront";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { typography } from "@/shared/design/tokens";
 
@@ -25,11 +28,14 @@ type BrandValuesProps = {
  * Brand value / trust section — configurable props, no hardcoded store name.
  */
 export function BrandValues({
-  title = "Why shop with us",
+  title,
   subtitle,
   items,
   className,
 }: BrandValuesProps) {
+  const t = useT();
+  const resolvedTitle = title ?? t("brandValues.title");
+
   if (items.length === 0) {
     return null;
   }
@@ -45,7 +51,7 @@ export function BrandValues({
             id="brand-values-title"
             className="storefront-heading text-[clamp(1.75rem,4vw,2.5rem)] text-foreground"
           >
-            {title}
+            {resolvedTitle}
           </h2>
           {subtitle ? (
             <p
@@ -91,42 +97,4 @@ export function BrandValues({
       </div>
     </Section>
   );
-}
-
-/**
- * Default value props derived from store capability flags — not brand identity.
- */
-export function buildDefaultBrandValues(shippingEnabled: boolean): BrandValueItem[] {
-  const items: BrandValueItem[] = [
-    {
-      icon: "sparkles",
-      title: "Curated quality",
-      description:
-        "Every product is selected to meet a consistent standard of craft and finish.",
-    },
-    {
-      icon: "shield",
-      title: "Secure shopping",
-      description:
-        "Your order details stay protected with modern checkout practices.",
-    },
-  ];
-
-  if (shippingEnabled) {
-    items.unshift({
-      icon: "truck",
-      title: "Reliable delivery",
-      description:
-        "Clear shipping options so you know when your order will arrive.",
-    });
-  } else {
-    items.unshift({
-      icon: "package",
-      title: "Careful fulfillment",
-      description:
-        "Orders are prepared with attention so products arrive ready to enjoy.",
-    });
-  }
-
-  return items.slice(0, 3);
 }

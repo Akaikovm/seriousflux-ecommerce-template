@@ -1,23 +1,28 @@
+"use client";
+
 import { CategoryCard } from "@/features/categories/components/CategoryCard";
-import type { Category } from "@/features/categories/types";
+import type { StorefrontCategory } from "@/features/categories/lib/to-storefront-category";
+import { useT } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 /**
  * Presentational grid of category cards.
  *
- * Receives already-fetched categories. Never imports Firebase (ADR-002).
+ * Receives already-fetched, serializable categories. Never imports Firebase (ADR-002).
  */
 
 export type CategoryGridProps = {
-  categories: Category[];
+  categories: StorefrontCategory[];
 };
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
+  const t = useT();
+
   if (categories.length === 0) {
     return (
       <EmptyState
-        title="No categories yet"
-        description="Featured collections will appear here once categories are published."
+        title={t("categories.emptyTitle")}
+        description={t("categories.emptyDescription")}
       />
     );
   }

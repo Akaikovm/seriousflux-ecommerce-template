@@ -4,6 +4,7 @@ import {
   AdminStatCard,
   AdminSurface,
 } from "@/features/admin/ui";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 
 type DashboardOverviewProps = {
@@ -13,6 +14,7 @@ type DashboardOverviewProps = {
   outOfStockCount: number;
   storeName: string;
   maintenanceMode: boolean;
+  language?: string;
 };
 
 /**
@@ -26,47 +28,53 @@ export function DashboardOverview({
   outOfStockCount,
   storeName,
   maintenanceMode,
+  language,
 }: DashboardOverviewProps) {
+  const t = createT(getDictionary(resolveLanguage(language)));
+  const storeLabel = storeName || t("admin.dashboard.descriptionFallback");
+
   return (
     <AdminPage>
       <AdminPageHeader
-        eyebrow="Dashboard"
-        title="Overview"
-        description={`Snapshot of catalog and store status for ${storeName || "your store"}.`}
+        eyebrow={t("admin.dashboard.eyebrow")}
+        title={t("admin.dashboard.title")}
+        description={t("admin.dashboard.description", { storeName: storeLabel })}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <AdminStatCard
-          label="Products"
+          label={t("admin.dashboard.products")}
           value={productCount}
-          hint="Active and inactive"
+          hint={t("admin.dashboard.activeInactiveHint")}
         />
         <AdminStatCard
-          label="Categories"
+          label={t("admin.dashboard.categories")}
           value={categoryCount}
-          hint="Active and inactive"
+          hint={t("admin.dashboard.activeInactiveHint")}
         />
         <AdminStatCard
-          label="Low stock"
+          label={t("admin.dashboard.lowStock")}
           value={lowStockCount}
-          hint="Tracked products at or below threshold"
+          hint={t("admin.dashboard.lowStockHint")}
         />
         <AdminStatCard
-          label="Out of stock"
+          label={t("admin.dashboard.outOfStock")}
           value={outOfStockCount}
-          hint="Tracked products with zero quantity"
+          hint={t("admin.dashboard.outOfStockHint")}
         />
         <AdminSurface compact>
-          <p className="admin-stat-card__label">Store status</p>
+          <p className="admin-stat-card__label">{t("admin.dashboard.storeStatus")}</p>
           <div className="mt-3 flex items-center gap-2">
             <Badge variant={maintenanceMode ? "secondary" : "primary"}>
-              {maintenanceMode ? "Maintenance" : "Live"}
+              {maintenanceMode
+                ? t("admin.dashboard.maintenance")
+                : t("admin.dashboard.live")}
             </Badge>
           </div>
           <p className="admin-stat-card__hint mt-2">
             {maintenanceMode
-              ? "Storefront is showing the maintenance screen."
-              : "Storefront is publicly available."}
+              ? t("admin.dashboard.maintenanceHint")
+              : t("admin.dashboard.liveHint")}
           </p>
         </AdminSurface>
       </div>

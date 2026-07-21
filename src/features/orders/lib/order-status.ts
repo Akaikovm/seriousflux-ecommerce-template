@@ -3,6 +3,7 @@ import type {
   OrderStatus,
   OrderWritableStatus,
 } from "@/features/orders/types";
+import type { TranslateFn } from "@/i18n/create-t";
 
 /**
  * Canonical fulfillment statuses used for transition checks and Admin filters.
@@ -78,12 +79,25 @@ export function normalizeOrderStatus(status: OrderStatus): OrderCanonicalStatus 
 }
 
 /** Human-readable fulfillment label (legacy values display as their canonical form). */
-export function getOrderStatusLabel(status: OrderStatus): string {
-  return ORDER_STATUS_LABELS[normalizeOrderStatus(status)];
+export function getOrderStatusLabel(
+  status: OrderStatus,
+  t?: TranslateFn,
+): string {
+  const canonical = normalizeOrderStatus(status);
+  if (t) {
+    return t(`orders.status.${canonical}`);
+  }
+  return ORDER_STATUS_LABELS[canonical];
 }
 
 /** Human-readable payment label. */
-export function getPaymentStatusLabel(status: OrderPaymentStatus): string {
+export function getPaymentStatusLabel(
+  status: OrderPaymentStatus,
+  t?: TranslateFn,
+): string {
+  if (t) {
+    return t(`orders.paymentStatus.${status}`);
+  }
   return PAYMENT_STATUS_LABELS[status];
 }
 
@@ -110,17 +124,20 @@ export function canTransitionOrderStatus(
 }
 
 /** Filter options for Admin list (canonical only). */
-export function getOrderStatusFilterOptions(): {
+export function getOrderStatusFilterOptions(t?: TranslateFn): {
   value: OrderCanonicalStatus;
   label: string;
 }[] {
   return (Object.keys(ORDER_STATUS_LABELS) as OrderCanonicalStatus[]).map(
-    (value) => ({ value, label: ORDER_STATUS_LABELS[value] }),
+    (value) => ({
+      value,
+      label: t ? t(`orders.status.${value}`) : ORDER_STATUS_LABELS[value],
+    }),
   );
 }
 
 /** Payment statuses Admin may set manually (RFC-014; before Mercado Pago). */
-export function getAdminPaymentStatusOptions(): {
+export function getAdminPaymentStatusOptions(t?: TranslateFn): {
   value: OrderPaymentStatus;
   label: string;
 }[] {
@@ -128,14 +145,17 @@ export function getAdminPaymentStatusOptions(): {
     ["pending", "authorized", "paid", "failed", "refunded"] as const
   ).map((value) => ({
     value,
-    label: PAYMENT_STATUS_LABELS[value],
+    label: t ? t(`orders.paymentStatus.${value}`) : PAYMENT_STATUS_LABELS[value],
   }));
 }
 
 /**
  * Select options for the next fulfillment status (current + allowed targets).
  */
-export function getOrderStatusSelectOptions(current: OrderStatus): {
+export function getOrderStatusSelectOptions(
+  current: OrderStatus,
+  t?: TranslateFn,
+): {
   value: OrderWritableStatus;
   label: string;
 }[] {
@@ -147,6 +167,6 @@ export function getOrderStatusSelectOptions(current: OrderStatus): {
 
   return Array.from(targets).map((value) => ({
     value,
-    label: ORDER_STATUS_LABELS[value],
+    label: t ? t(`orders.status.${value}`) : ORDER_STATUS_LABELS[value],
   }));
 }

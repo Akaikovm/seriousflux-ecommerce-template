@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 
 import { CheckoutConfirmation } from "@/features/checkout/components/CheckoutConfirmation";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 
-export const metadata: Metadata = {
-  title: "Order confirmation",
-  description: "Your order has been received.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStoreSettings();
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
+  return {
+    title: t("checkout.confirmationPageTitle"),
+    description: t("checkout.confirmationPageDescription"),
+  };
+}
 
 type ConfirmationPageProps = {
   searchParams: Promise<{ order?: string; ref?: string }>;
@@ -23,6 +28,7 @@ export default async function CheckoutConfirmationPage({
   searchParams,
 }: ConfirmationPageProps) {
   const settings = await getStoreSettings();
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
   const params = await searchParams;
   const orderId = params.order?.trim() || null;
   const orderNumber = params.ref?.trim() || null;
@@ -30,7 +36,7 @@ export default async function CheckoutConfirmationPage({
   return (
     <section
       className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
-      aria-label="Order confirmation"
+      aria-label={t("checkout.confirmationPageAria")}
     >
       <div className="storefront-container">
         <CheckoutConfirmation

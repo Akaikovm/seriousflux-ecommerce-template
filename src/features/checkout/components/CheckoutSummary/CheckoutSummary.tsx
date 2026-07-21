@@ -1,7 +1,10 @@
+"use client";
+
 import type { CartItem } from "@/features/cart/types";
 import { formatPrice } from "@/lib/format-price";
 import { cn } from "@/lib/utils";
 import { StorefrontSummaryPanel } from "@/features/storefront/components/StorefrontSummaryPanel";
+import { useT } from "@/i18n";
 import { radius } from "@/shared/design/tokens";
 
 /**
@@ -26,15 +29,17 @@ export function CheckoutSummary({
   locale,
   className,
 }: CheckoutSummaryProps) {
+  const t = useT();
   const total = subtotal + shippingCost;
 
   return (
     <StorefrontSummaryPanel
-      title="Order summary"
+      title={t("checkout.summary")}
       className={cn(
         "lg:sticky lg:top-[calc(var(--storefront-navbar-height)+1.5rem)]",
         className,
       )}
+      aria-label={t("checkout.summaryAria")}
     >
       <ul className="list-none space-y-4 p-0">
         {items.map((item) => {
@@ -82,21 +87,23 @@ export function CheckoutSummary({
 
       <div className="space-y-2 border-t border-border/70 pt-4 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
+          <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
           <span className="font-medium text-foreground">
             {formatPrice(subtotal, currency, locale)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Shipping</span>
+          <span className="text-muted-foreground">{t("checkout.shipping")}</span>
           <span className="font-medium text-foreground">
             {shippingCost === 0
-              ? "Free"
+              ? t("checkout.free")
               : formatPrice(shippingCost, currency, locale)}
           </span>
         </div>
         <div className="flex items-center justify-between pt-2 text-base">
-          <span className="font-semibold text-foreground">Total</span>
+          <span className="font-semibold text-foreground">
+            {t("checkout.total")}
+          </span>
           <span className="font-semibold text-foreground">
             {formatPrice(total, currency, locale)}
           </span>

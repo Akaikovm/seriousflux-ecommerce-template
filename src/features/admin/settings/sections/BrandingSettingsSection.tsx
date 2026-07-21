@@ -3,6 +3,7 @@
 import type { SettingsSectionProps } from "@/features/admin/settings/types/settings-section";
 import { AdminSectionDivider } from "@/features/admin/ui/AdminSection";
 import { ImageUpload } from "@/features/media/components/ImageUpload";
+import { useT } from "@/i18n";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 
@@ -16,10 +17,12 @@ export function BrandingSettingsSection({
   setField,
   setHeroField,
 }: SettingsSectionProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ImageUpload
-        label="Logo"
+        label={t("admin.settings.branding.logo")}
         folder="branding"
         value={values.logo}
         error={fieldErrors.logo}
@@ -28,7 +31,7 @@ export function BrandingSettingsSection({
       />
 
       <ImageUpload
-        label="Favicon"
+        label={t("admin.settings.branding.favicon")}
         folder="branding"
         value={values.favicon}
         error={fieldErrors.favicon}
@@ -39,21 +42,21 @@ export function BrandingSettingsSection({
       <div className="grid gap-5 sm:grid-cols-2">
         <Input
           name="primaryColor"
-          label="Primary color"
+          label={t("admin.settings.branding.primaryColor")}
           type="text"
           value={values.primaryColor}
           error={fieldErrors.primaryColor}
-          helperText="Hex format, e.g. #0A0A0A"
+          helperText={t("admin.settings.branding.hexHelper")}
           disabled={disabled}
           onChange={(event) => setField("primaryColor", event.target.value)}
         />
         <Input
           name="secondaryColor"
-          label="Secondary color"
+          label={t("admin.settings.branding.secondaryColor")}
           type="text"
           value={values.secondaryColor}
           error={fieldErrors.secondaryColor}
-          helperText="Hex format, e.g. #E10600"
+          helperText={t("admin.settings.branding.secondaryHexHelper")}
           disabled={disabled}
           onChange={(event) => setField("secondaryColor", event.target.value)}
         />
@@ -68,7 +71,7 @@ export function BrandingSettingsSection({
           />
           <Input
             name="primaryColorPicker"
-            label="Primary preview"
+            label={t("admin.settings.branding.primaryPreview")}
             type="color"
             value={
               /^#([0-9A-Fa-f]{6})$/.test(values.primaryColor)
@@ -89,7 +92,7 @@ export function BrandingSettingsSection({
           />
           <Input
             name="secondaryColorPicker"
-            label="Secondary preview"
+            label={t("admin.settings.branding.secondaryPreview")}
             type="color"
             value={
               /^#([0-9A-Fa-f]{6})$/.test(values.secondaryColor)
@@ -105,13 +108,13 @@ export function BrandingSettingsSection({
       </div>
 
       <AdminSectionDivider
-        title="Homepage hero"
-        hint="Full-bleed storefront hero content."
+        title={t("admin.settings.branding.homepageHero")}
+        hint={t("admin.settings.branding.homepageHeroHint")}
       />
 
       <Input
         name="heroTitle"
-        label="Hero title"
+        label={t("admin.settings.branding.heroTitle")}
         value={values.hero.title}
         error={fieldErrors.hero?.title}
         disabled={disabled}
@@ -120,7 +123,7 @@ export function BrandingSettingsSection({
 
       <Textarea
         name="heroSubtitle"
-        label="Hero subtitle"
+        label={t("admin.settings.branding.heroSubtitle")}
         value={values.hero.subtitle}
         error={fieldErrors.hero?.subtitle}
         disabled={disabled}
@@ -128,7 +131,7 @@ export function BrandingSettingsSection({
       />
 
       <ImageUpload
-        label="Hero image"
+        label={t("admin.settings.branding.heroImage")}
         folder="branding"
         value={values.hero.image}
         error={fieldErrors.hero?.image}
@@ -139,7 +142,7 @@ export function BrandingSettingsSection({
       <div className="grid gap-5 sm:grid-cols-2">
         <Input
           name="heroCtaText"
-          label="CTA text"
+          label={t("admin.settings.branding.heroCtaLabel")}
           value={values.hero.ctaText}
           error={fieldErrors.hero?.ctaText}
           disabled={disabled}
@@ -147,10 +150,10 @@ export function BrandingSettingsSection({
         />
         <Input
           name="heroCtaHref"
-          label="CTA link"
+          label={t("admin.settings.branding.heroCtaHref")}
           value={values.hero.ctaHref}
           error={fieldErrors.hero?.ctaHref}
-          helperText="Internal path, e.g. /#featured"
+          helperText={t("admin.settings.branding.ctaHrefHelper")}
           disabled={disabled}
           onChange={(event) => setHeroField("ctaHref", event.target.value)}
         />

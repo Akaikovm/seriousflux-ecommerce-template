@@ -8,14 +8,15 @@ import { GoogleAuthButton } from "@/features/auth/components/GoogleAuthButton";
 import { buildSignupHref } from "@/features/auth/lib/safe-redirect";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
+import { translateAuthError, useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 
 type LoginFormProps = {
-  /** Page heading. */
+  /** Page heading. Defaults to localized auth.signInTitle. */
   title?: string;
-  /** Supporting copy under the title. */
+  /** Supporting copy under the title. Defaults to localized auth.signInDescription. */
   description?: string;
   /** Where to navigate after a successful sign-in. Defaults to `/account`. */
   redirectTo?: string;
@@ -28,11 +29,12 @@ type LoginFormProps = {
  * Uses AuthProvider only — never Firebase Auth directly.
  */
 export function LoginForm({
-  title = "Sign in",
-  description = "Sign in to your account.",
+  title,
+  description,
   redirectTo = "/account",
   showAccountLinks = true,
 }: LoginFormProps) {
+  const t = useT();
   const { signIn } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -50,9 +52,9 @@ export function LoginForm({
       router.replace(redirectTo);
     } catch (err) {
       if (err instanceof AuthError) {
-        setError(err.message);
+        setError(translateAuthError(err, t));
       } else {
-        setError("Unable to sign in. Please try again.");
+        setError(t("auth.signInFailed"));
       }
     } finally {
       setLoading(false);
@@ -65,25 +67,25 @@ export function LoginForm({
     <Card className="w-full max-w-md" padding="lg">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <h1 className="text-xl font-semibold text-foreground">
+            {title ?? t("auth.signInTitle")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {description ?? t("auth.signInDescription")}
+          </p>
         </div>
 
-        <GoogleAuthButton
-          label="Continue with Google"
-          redirectTo={redirectTo}
-          onError={setError}
-        />
+        <GoogleAuthButton redirectTo={redirectTo} onError={setError} />
 
         <div className="flex items-center gap-3 text-xs uppercase tracking-[0.12em] text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
-          or
+          {t("common.or")}
           <span className="h-px flex-1 bg-border" />
         </div>
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           <Input
-            label="Email"
+            label={t("common.email")}
             name="email"
             type="email"
             autoComplete="email"
@@ -93,7 +95,7 @@ export function LoginForm({
           />
 
           <Input
-            label="Password"
+            label={t("common.password")}
             name="password"
             type="password"
             autoComplete="current-password"
@@ -104,7 +106,7 @@ export function LoginForm({
           />
 
           <Button type="submit" loading={loading} fullWidth>
-            Sign in
+            {t("auth.signInCta")}
           </Button>
         </form>
 
@@ -114,15 +116,15 @@ export function LoginForm({
               href="/forgot-password"
               className="text-foreground underline-offset-4 hover:underline"
             >
-              Forgot password?
+              {t("auth.forgotPassword")}
             </Link>
             <p>
-              No account?{" "}
+              {t("auth.noAccount")}{" "}
               <Link
                 href={signupHref}
                 className="font-medium text-foreground underline-offset-4 hover:underline"
               >
-                Create one
+                {t("auth.createOne")}
               </Link>
             </p>
           </div>

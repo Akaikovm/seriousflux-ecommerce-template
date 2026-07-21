@@ -4,6 +4,17 @@ import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
 import { transition } from "@/shared/design/tokens";
 
+export type FooterLabels = {
+  shop: string;
+  contact: string;
+  follow: string;
+  shippingAvailable: string;
+  contactComingSoon: string;
+  socialComingSoon: string;
+  whatsapp: string;
+  copyright: string;
+};
+
 type FooterProps = {
   storeName: string;
   logo?: string;
@@ -18,7 +29,8 @@ type FooterProps = {
   tiktok: string;
   youtube: string;
   shippingEnabled: boolean;
-  shopLinks?: StorefrontNavLink[];
+  shopLinks: StorefrontNavLink[];
+  labels: FooterLabels;
 };
 
 type SocialLink = {
@@ -32,6 +44,7 @@ function collectSocialLinks(links: {
   tiktok: string;
   youtube: string;
 }): SocialLink[] {
+  // Proper nouns — keep brand names untranslated.
   const entries: Array<[string, string]> = [
     ["Instagram", links.instagram],
     ["Facebook", links.facebook],
@@ -54,16 +67,9 @@ function whatsappHref(whatsapp: string): string {
   return digits ? `https://wa.me/${digits}` : value;
 }
 
-const DEFAULT_SHOP_LINKS: StorefrontNavLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Collections", href: "/#categories" },
-  { label: "Featured", href: "/#featured" },
-  { label: "About", href: "/#about" },
-];
-
 /**
  * Multi-column storefront footer — identity, shop links, contact, socials.
- * Presentational: settings fields passed from AppLayout.
+ * Presentational: settings fields + i18n labels passed from AppLayout.
  */
 export function Footer({
   storeName,
@@ -79,9 +85,9 @@ export function Footer({
   tiktok,
   youtube,
   shippingEnabled,
-  shopLinks = DEFAULT_SHOP_LINKS,
+  shopLinks,
+  labels,
 }: FooterProps) {
-  const year = new Date().getFullYear();
   const socials = collectSocialLinks({ instagram, facebook, tiktok, youtube });
   const location = [address.trim(), country.trim()]
     .filter(Boolean)
@@ -125,13 +131,15 @@ export function Footer({
             <p className="text-sm text-muted-foreground">{location}</p>
           ) : null}
           {shippingEnabled ? (
-            <p className="text-sm text-muted-foreground">Shipping available</p>
+            <p className="text-sm text-muted-foreground">
+              {labels.shippingAvailable}
+            </p>
           ) : null}
         </div>
 
         <div className="space-y-4">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Shop
+            {labels.shop}
           </p>
           <ul className="space-y-2.5">
             {shopLinks.map((link) => (
@@ -150,7 +158,7 @@ export function Footer({
 
         <div className="space-y-4">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Contact
+            {labels.contact}
           </p>
           <div className="flex flex-col gap-2.5 text-sm text-foreground/80">
             {email.trim() ? (
@@ -179,18 +187,18 @@ export function Footer({
                 className="transition-colors hover:text-brand-accent"
                 style={{ transitionDuration: transition.fast }}
               >
-                WhatsApp
+                {labels.whatsapp}
               </a>
             ) : null}
             {!email.trim() && !phone.trim() && !whatsapp.trim() ? (
-              <p className="text-muted-foreground">Contact details coming soon</p>
+              <p className="text-muted-foreground">{labels.contactComingSoon}</p>
             ) : null}
           </div>
         </div>
 
         <div className="space-y-4">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Follow
+            {labels.follow}
           </p>
           {socials.length > 0 ? (
             <ul className="flex flex-wrap gap-x-5 gap-y-2">
@@ -210,16 +218,14 @@ export function Footer({
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Social links coming soon
+              {labels.socialComingSoon}
             </p>
           )}
         </div>
       </div>
 
       <div className="storefront-container relative border-t border-border/60 py-7">
-        <p className="text-sm text-muted-foreground">
-          © {year} {storeName}
-        </p>
+        <p className="text-sm text-muted-foreground">{labels.copyright}</p>
       </div>
     </footer>
   );

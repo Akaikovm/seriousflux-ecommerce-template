@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/features/auth/hooks";
 import { CartLink } from "@/features/cart/components/CartLink";
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
 import type { StorefrontNavLink } from "@/features/storefront/types/storefront";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius, spacing, transition, zIndex } from "@/shared/design/tokens";
 import { LoadingState } from "@/shared/ui/LoadingState";
@@ -24,11 +25,12 @@ type NavbarProps = {
  * Client island for mobile menu + auth-aware account link. No Firebase.
  */
 export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const { isAuthenticated, loading } = useCurrentUser();
 
   const accountHref = isAuthenticated ? "/account" : "/login";
-  const accountLabel = isAuthenticated ? "Account" : "Login";
+  const accountLabel = isAuthenticated ? t("nav.account") : t("nav.login");
 
   return (
     <header
@@ -50,7 +52,7 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
             }}
             aria-expanded={open}
             aria-controls="storefront-mobile-nav"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
             onClick={() => setOpen((value) => !value)}
           >
             {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
@@ -68,7 +70,7 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
 
         <nav
           className="hidden items-center gap-9 lg:flex"
-          aria-label="Primary"
+          aria-label={t("nav.primary")}
         >
           {navLinks.map((link) => (
             <Link
@@ -111,7 +113,7 @@ export function Navbar({ storeName, logo, navLinks }: NavbarProps) {
         <nav
           className="storefront-container flex flex-col py-5"
           style={{ gap: spacing.xs }}
-          aria-label="Mobile"
+          aria-label={t("nav.mobile")}
         >
           {navLinks.map((link) => (
             <Link

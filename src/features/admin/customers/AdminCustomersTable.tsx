@@ -21,6 +21,7 @@ import {
 } from "@/features/admin/ui";
 import type { PersistedRole } from "@/features/auth/types";
 import type { CustomerAdminListSort } from "@/features/customers/types";
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
@@ -97,6 +98,7 @@ export function AdminCustomersTable({
   pageSize,
   query,
 }: AdminCustomersTableProps) {
+  const t = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isPending, push } = useAdminRouterTransition();
@@ -121,29 +123,29 @@ export function AdminCustomersTable({
   }
 
   const statusOptions = [
-    { value: "", label: "All statuses" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
+    { value: "", label: t("admin.customers.allStatuses") },
+    { value: "active", label: t("admin.customers.status.active") },
+    { value: "inactive", label: t("admin.customers.status.inactive") },
   ];
 
   const roleOptions = [
-    { value: "", label: "All roles" },
-    { value: "customer", label: "Customer" },
-    { value: "staff", label: "Staff" },
-    { value: "admin", label: "Admin" },
+    { value: "", label: t("admin.customers.allRoles") },
+    { value: "customer", label: t("admin.customers.role.customer") },
+    { value: "staff", label: t("admin.customers.role.staff") },
+    { value: "admin", label: t("admin.customers.role.admin") },
   ];
 
   const sortOptions = [
-    { value: "newest", label: "Newest" },
-    { value: "oldest", label: "Oldest" },
-    { value: "name_asc", label: "Name A–Z" },
-    { value: "name_desc", label: "Name Z–A" },
+    { value: "newest", label: t("admin.customers.sort.newest") },
+    { value: "oldest", label: t("admin.customers.sort.oldest") },
+    { value: "name_asc", label: t("admin.customers.sort.nameAsc") },
+    { value: "name_desc", label: t("admin.customers.sort.nameDesc") },
   ];
 
   const columns: AdminDataTableColumn<AdminCustomerView>[] = [
     {
       id: "customer",
-      header: "Customer",
+      header: t("admin.customers.columns.customer"),
       cell: (customer) => (
         <div className="flex items-center gap-3">
           <CustomerAvatar
@@ -166,17 +168,17 @@ export function AdminCustomersTable({
     },
     {
       id: "role",
-      header: "Role",
+      header: t("admin.customers.columns.role"),
       cell: (customer) => <CustomerRoleBadge role={customer.role} />,
     },
     {
       id: "status",
-      header: "Status",
+      header: t("admin.customers.columns.status"),
       cell: (customer) => <CustomerStatusBadge status={customer.status} />,
     },
     {
       id: "created",
-      header: "Created",
+      header: t("admin.customers.columns.created"),
       cell: (customer) => (
         <span className="text-muted-foreground">
           {formatDate(customer.createdAt, locale)}
@@ -185,7 +187,7 @@ export function AdminCustomersTable({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("common.actions"),
       className: "text-right",
       cell: (customer) => (
         <AdminRowActions>
@@ -194,7 +196,7 @@ export function AdminCustomersTable({
             className="inline-flex"
           >
             <Button type="button" className="admin-action-btn admin-btn-ghost">
-              View
+              {t("admin.common.view")}
             </Button>
           </Link>
         </AdminRowActions>
@@ -220,24 +222,36 @@ export function AdminCustomersTable({
 
   const hasCursor = Boolean(searchParams.get("cursor"));
 
+  const pageFooterLabel = [
+    t("admin.customers.pageFooter", {
+      filtered: filtered.length,
+      total: customers.length,
+    }),
+    pageSize
+      ? t("admin.customers.perPage", { count: pageSize })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <AdminPage>
       <AdminPageHeader
-        eyebrow="People"
-        title="Customers"
-        description="Manage customer profiles, roles, and account status."
+        eyebrow={t("admin.customers.eyebrow")}
+        title={t("admin.customers.title")}
+        description={t("admin.customers.description")}
       />
 
       <AdminTableToolbar>
         <Input
-          label="Search this page"
+          label={t("admin.customers.searchThisPage")}
           name="customer-search"
-          placeholder="Name or email"
+          placeholder={t("admin.customers.searchPlaceholder")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
         <Select
-          label="Status"
+          label={t("common.status")}
           name="customer-status-filter"
           options={statusOptions}
           value={query.status}
@@ -249,7 +263,7 @@ export function AdminCustomersTable({
           }}
         />
         <Select
-          label="Role"
+          label={t("admin.customers.fields.role")}
           name="customer-role-filter"
           options={roleOptions}
           value={query.role}
@@ -263,7 +277,7 @@ export function AdminCustomersTable({
           }}
         />
         <Select
-          label="Sort"
+          label={t("admin.customers.sortLabel")}
           name="customer-sort"
           options={sortOptions}
           value={query.sort}
@@ -275,8 +289,7 @@ export function AdminCustomersTable({
       </AdminTableToolbar>
 
       <p className="mb-3 text-xs text-muted-foreground">
-        Search filters the current page only. Use status, role, and sort for
-        server-side results.
+        {t("admin.customers.searchPageHint")}
       </p>
 
       <AdminTable
@@ -284,18 +297,15 @@ export function AdminCustomersTable({
         rows={filtered}
         getRowId={(customer) => customer.id}
         pending={isPending}
-        emptyTitle="No customers found"
+        emptyTitle={t("admin.customers.emptyTitle")}
         emptyDescription={
           customers.length === 0
-            ? "Customers appear here after storefront signup or Google sign-in."
-            : "Try a different search on this page, or clear filters."
+            ? t("admin.customers.emptyDescription")
+            : t("admin.customers.emptyFilteredDescription")
         }
         footer={
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span>
-              {filtered.length} of {customers.length} on this page
-              {pageSize ? ` · up to ${pageSize} per page` : ""}
-            </span>
+            <span>{pageFooterLabel}</span>
             <div className="flex items-center gap-2">
               {hasCursor ? (
                 <Button
@@ -303,7 +313,7 @@ export function AdminCustomersTable({
                   className="admin-action-btn admin-btn-ghost"
                   onClick={() => push(firstPageHref)}
                 >
-                  First page
+                  {t("admin.customers.firstPage")}
                 </Button>
               ) : null}
               {nextPageHref ? (
@@ -312,7 +322,7 @@ export function AdminCustomersTable({
                   className="admin-action-btn admin-btn-ghost"
                   onClick={() => push(nextPageHref)}
                 >
-                  Next
+                  {t("admin.customers.nextPage")}
                 </Button>
               ) : null}
             </div>

@@ -113,6 +113,7 @@ export default async function AdminDashboardPage() {
       outOfStockCount={inventoryCounts.outOfStockCount}
       storeName={settings.storeName}
       maintenanceMode={settings.maintenanceMode}
+      language={settings.language}
     />
   );
 }

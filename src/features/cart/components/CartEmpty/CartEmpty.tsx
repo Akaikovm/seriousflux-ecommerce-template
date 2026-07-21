@@ -1,4 +1,7 @@
+"use client";
+
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { useT } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 /**
@@ -12,14 +15,16 @@ export type CartEmptyProps = {
 };
 
 export function CartEmpty({ className }: CartEmptyProps) {
+  const t = useT();
+
   return (
     <div className={className}>
       <EmptyState
-        title="Your cart is empty"
-        description="Browse the store and add products to get started."
+        title={t("cart.emptyTitle")}
+        description={t("cart.emptyDescription")}
         action={
           <StorefrontPrimaryLink href="/#featured">
-            Continue shopping
+            {t("cart.continueShopping")}
           </StorefrontPrimaryLink>
         }
       />

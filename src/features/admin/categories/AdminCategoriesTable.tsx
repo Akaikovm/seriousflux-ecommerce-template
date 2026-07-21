@@ -16,6 +16,7 @@ import {
   CategoryError,
   CategoryService,
 } from "@/features/categories/services";
+import { useT } from "@/i18n";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -31,6 +32,7 @@ type AdminCategoriesTableProps = {
  * DataTable remains presentational.
  */
 export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const [pendingDelete, setPendingDelete] = useState<CategoryFormData | null>(
@@ -47,14 +49,14 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
     setDeleting(true);
     try {
       await new CategoryService().delete(pendingDelete.id);
-      toast.success("Category deleted.");
+      toast.success(t("admin.categories.deleted"));
       setPendingDelete(null);
       router.refresh();
     } catch (err) {
       const message =
         err instanceof CategoryError
           ? err.message
-          : "Unable to delete category.";
+          : t("admin.categories.deleteFailed");
       toast.error(message);
     } finally {
       setDeleting(false);
@@ -72,14 +74,16 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
         active: !category.active,
       });
       toast.success(
-        category.active ? "Category disabled." : "Category enabled.",
+        category.active
+          ? t("admin.categories.disabled")
+          : t("admin.categories.enabled"),
       );
       router.refresh();
     } catch (err) {
       const message =
         err instanceof CategoryError
           ? err.message
-          : "Unable to update category.";
+          : t("admin.categories.updateFailed");
       toast.error(message);
     } finally {
       setTogglingId(null);
@@ -89,7 +93,7 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
   const columns: AdminDataTableColumn<CategoryFormData>[] = [
     {
       id: "image",
-      header: "Image",
+      header: t("admin.categories.columns.image"),
       className: "w-16",
       cell: (category) =>
         category.image ? (
@@ -105,44 +109,44 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
     },
     {
       id: "name",
-      header: "Name",
+      header: t("admin.categories.columns.name"),
       cell: (category) => (
         <p className="font-medium text-foreground">{category.name}</p>
       ),
     },
     {
       id: "slug",
-      header: "Slug",
+      header: t("admin.categories.columns.slug"),
       cell: (category) => (
         <span className="text-muted-foreground">{category.slug}</span>
       ),
     },
     {
       id: "featured",
-      header: "Featured",
+      header: t("admin.categories.columns.featured"),
       cell: (category) => (
         <Badge variant={category.featured ? "primary" : "secondary"}>
-          {category.featured ? "Yes" : "No"}
+          {category.featured ? t("common.yes") : t("common.no")}
         </Badge>
       ),
     },
     {
       id: "active",
-      header: "Active",
+      header: t("admin.categories.fields.active"),
       cell: (category) => (
         <Badge variant={category.active ? "primary" : "secondary"}>
-          {category.active ? "Active" : "Inactive"}
+          {category.active ? t("common.active") : t("common.inactive")}
         </Badge>
       ),
     },
     {
       id: "order",
-      header: "Order",
+      header: t("admin.categories.columns.order"),
       cell: (category) => category.order,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("admin.categories.columns.actions"),
       className: "text-right",
       cell: (category) => (
         <AdminRowActions>
@@ -152,14 +156,14 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
             loading={togglingId === category.id}
             onClick={() => void handleToggleActive(category)}
           >
-            {category.active ? "Disable" : "Enable"}
+            {category.active ? t("common.disable") : t("common.enable")}
           </Button>
           <Link
             href={`/admin/categories/${category.id}/edit`}
             className="inline-flex"
           >
             <Button type="button" className="admin-action-btn admin-btn-ghost">
-              Edit
+              {t("common.edit")}
             </Button>
           </Link>
           <Button
@@ -167,7 +171,7 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
             className="admin-action-btn bg-destructive text-white hover:bg-destructive/90"
             onClick={() => setPendingDelete(category)}
           >
-            Delete
+            {t("common.delete")}
           </Button>
         </AdminRowActions>
       ),
@@ -177,13 +181,13 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
   return (
     <AdminPage>
       <AdminPageHeader
-        eyebrow="Catalog"
-        title="Categories"
-        description="Create, edit, and organize catalog categories."
+        eyebrow={t("admin.categories.eyebrow")}
+        title={t("admin.categories.title")}
+        description={t("admin.categories.description")}
         actions={
           <Link href="/admin/categories/new" className="block sm:inline-flex">
             <Button type="button" className="admin-btn-accent w-full sm:w-auto">
-              Create category
+              {t("admin.categories.create")}
             </Button>
           </Link>
         }
@@ -193,28 +197,26 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
         columns={columns}
         rows={categories}
         getRowId={(category) => category.id}
-        emptyTitle="No categories yet"
-        emptyDescription="Create the first category to organize your catalog."
+        emptyTitle={t("admin.categories.emptyTitle")}
+        emptyDescription={t("admin.categories.emptyDescription")}
         emptyAction={
           <Link href="/admin/categories/new">
             <Button type="button" className="admin-btn-accent">
-              Create category
+              {t("admin.categories.create")}
             </Button>
           </Link>
         }
-        footer={`${categories.length} categor${categories.length === 1 ? "y" : "ies"}`}
+        footer={t("admin.categories.footerCount", { count: categories.length })}
       />
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}
-        title="Delete category?"
+        title={t("admin.categories.deleteTitle")}
         description={
-          pendingDelete
-            ? `“${pendingDelete.name}” will be permanently removed. This cannot be undone.`
-            : undefined
+          pendingDelete ? t("admin.categories.deleteDescription") : undefined
         }
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        confirmLabel={t("admin.common.confirmDelete")}
+        cancelLabel={t("admin.common.cancel")}
         loading={deleting}
         destructive
         onCancel={() => {

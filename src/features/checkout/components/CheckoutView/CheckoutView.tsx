@@ -14,6 +14,7 @@ import { CheckoutSummary } from "@/features/checkout/components/CheckoutSummary"
 import { STANDARD_SHIPPING_METHOD } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutSettingsProps } from "@/features/checkout/types";
 import { StorefrontPageHeader } from "@/features/storefront/components/StorefrontPageHeader";
+import { useT } from "@/i18n";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
 /**
@@ -30,6 +31,7 @@ export function CheckoutView({
   shippingEnabled,
   paymentOptions,
 }: CheckoutViewProps) {
+  const t = useT();
   const hydrated = useCartHydrated();
   const items = useCartStore((state) => state.items);
   const subtotal = useCartStore(selectCartSubtotal);
@@ -62,7 +64,7 @@ export function CheckoutView({
         <LoadingState width="12rem" height="2.75rem" />
         <LoadingState width="100%" height="6rem" />
         <p className="text-sm text-muted-foreground">
-          Finalizing your order…
+          {t("checkout.finalizing")}
         </p>
       </div>
     );
@@ -82,19 +84,23 @@ export function CheckoutView({
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-14">
       <div>
         <StorefrontPageHeader
-          title="Checkout"
-          subtitle="Enter your details to complete the order."
+          title={t("checkout.title")}
+          subtitle={t("checkout.subtitle")}
           meta={
             <ol className="flex flex-wrap gap-x-3 gap-y-1 text-xs uppercase tracking-[0.12em]">
-              <li className="text-muted-foreground">Cart</li>
+              <li className="text-muted-foreground">{t("cart.title")}</li>
               <li aria-hidden className="text-border">
                 /
               </li>
-              <li className="font-medium text-foreground">Checkout</li>
+              <li className="font-medium text-foreground">
+                {t("checkout.title")}
+              </li>
               <li aria-hidden className="text-border">
                 /
               </li>
-              <li className="text-muted-foreground">Confirmation</li>
+              <li className="text-muted-foreground">
+                {t("checkout.confirmation")}
+              </li>
             </ol>
           }
         />

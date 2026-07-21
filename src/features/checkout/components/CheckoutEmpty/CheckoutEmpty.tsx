@@ -1,4 +1,7 @@
+"use client";
+
 import { StorefrontPrimaryLink } from "@/features/storefront/components/StorefrontPrimaryLink";
+import { useT } from "@/i18n";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 /**
@@ -14,15 +17,17 @@ export function CheckoutEmpty({
   variant = "empty-cart",
   className,
 }: CheckoutEmptyProps) {
+  const t = useT();
+
   if (variant === "shipping-disabled") {
     return (
       <div className={className}>
         <EmptyState
-          title="Shipping is currently unavailable"
-          description="This store is not accepting shipments right now. Please check back later or contact the store for help."
+          title={t("checkout.shippingDisabledTitle")}
+          description={t("checkout.shippingDisabledDescription")}
           action={
             <StorefrontPrimaryLink href="/cart">
-              Back to cart
+              {t("checkout.backToCart")}
             </StorefrontPrimaryLink>
           }
         />
@@ -33,11 +38,11 @@ export function CheckoutEmpty({
   return (
     <div className={className}>
       <EmptyState
-        title="Your cart is empty"
-        description="Add products to your cart before checking out."
+        title={t("checkout.emptyCartTitle")}
+        description={t("checkout.emptyCartDescription")}
         action={
           <StorefrontPrimaryLink href="/#featured">
-            Continue shopping
+            {t("checkout.continueShopping")}
           </StorefrontPrimaryLink>
         }
       />

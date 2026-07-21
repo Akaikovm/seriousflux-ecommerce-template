@@ -34,20 +34,28 @@ import {
 } from "@/features/customers/services";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/features/orders/components/PaymentStatusBadge";
+import { useT, type TranslateFn } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { useToast } from "@/shared/ui/Toast";
 
-const customerAdminFormSchema = z.object({
-  displayName: z.string().trim().min(1, "Display name is required."),
-  phone: z.string(),
-  photoURL: z.string(),
-  role: z.enum(["customer", "staff", "admin"]),
-  status: z.enum(["active", "inactive"]),
-});
+function createCustomerAdminFormSchema(t: TranslateFn) {
+  return z.object({
+    displayName: z
+      .string()
+      .trim()
+      .min(1, t("admin.customers.validation.displayNameRequired")),
+    phone: z.string(),
+    photoURL: z.string(),
+    role: z.enum(["customer", "staff", "admin"]),
+    status: z.enum(["active", "inactive"]),
+  });
+}
 
-type CustomerAdminFormValues = z.infer<typeof customerAdminFormSchema>;
+type CustomerAdminFormValues = z.infer<
+  ReturnType<typeof createCustomerAdminFormSchema>
+>;
 type FieldErrors = Partial<Record<keyof CustomerAdminFormValues, string>>;
 
 type AdminCustomerDetailProps = {
@@ -90,6 +98,7 @@ export function AdminCustomerDetail({
   locale,
   currency,
 }: AdminCustomerDetailProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const { user, role } = useCurrentUser();
@@ -107,14 +116,14 @@ export function AdminCustomerDetail({
   const isDirty = JSON.stringify(values) !== JSON.stringify(snapshot);
 
   const roleOptions = [
-    { value: "customer", label: "Customer" },
-    { value: "staff", label: "Staff (reserved — no Admin access yet)" },
-    { value: "admin", label: "Admin" },
+    { value: "customer", label: t("admin.customers.role.customer") },
+    { value: "staff", label: t("admin.customers.role.staffReserved") },
+    { value: "admin", label: t("admin.customers.role.admin") },
   ];
 
   const statusOptions = [
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
+    { value: "active", label: t("admin.customers.status.active") },
+    { value: "inactive", label: t("admin.customers.status.inactive") },
   ];
 
   function setField<K extends keyof CustomerAdminFormValues>(
@@ -138,12 +147,12 @@ export function AdminCustomerDetail({
     }
 
     if (!user || role !== "admin") {
-      setFormError("You must be signed in as an admin to save.");
+      setFormError(t("admin.customers.mustBeAdmin"));
       return;
     }
 
     setFormError(null);
-    const parsed = customerAdminFormSchema.safeParse(values);
+    const parsed = createCustomerAdminFormSchema(t).safeParse(values);
     if (!parsed.success) {
       const nextErrors: FieldErrors = {};
       for (const issue of parsed.error.issues) {
@@ -171,7 +180,7 @@ export function AdminCustomerDetail({
         { uid: user.uid, role: role as PersistedRole },
       );
 
-      toast.success("Customer updated.");
+      toast.success(t("admin.customers.updated"));
       setSnapshot({ ...parsed.data });
       setValues({ ...parsed.data });
       router.refresh();
@@ -179,7 +188,7 @@ export function AdminCustomerDetail({
       const message =
         err instanceof CustomerAdminError
           ? err.message
-          : "Unable to save customer. Please try again.";
+          : t("admin.customers.saveFailed");
       setFormError(message);
       toast.error(message);
     } finally {
@@ -191,7 +200,7 @@ export function AdminCustomerDetail({
     () => [
       {
         id: "orderNumber",
-        header: "Order",
+        header: t("admin.orders.columns.order"),
         cell: (order) => (
           <Link
             href={`/admin/orders/${order.id}`}
@@ -203,7 +212,7 @@ export function AdminCustomerDetail({
       },
       {
         id: "date",
-        header: "Date",
+        header: t("admin.orders.columns.date"),
         cell: (order) => (
           <span className="text-muted-foreground">
             {formatDate(order.createdAt, locale)}
@@ -212,37 +221,44 @@ export function AdminCustomerDetail({
       },
       {
         id: "total",
-        header: "Total",
+        header: t("admin.orders.columns.total"),
         cell: (order) =>
           formatPrice(order.totals.total, order.currency || currency, locale),
       },
       {
         id: "payment",
-        header: "Payment",
+        header: t("admin.orders.columns.payment"),
         cell: (order) => <PaymentStatusBadge status={order.payment.status} />,
       },
       {
         id: "fulfillment",
-        header: "Fulfillment",
+        header: t("admin.orders.columns.fulfillment"),
         cell: (order) => <OrderStatusBadge status={order.status} />,
       },
     ],
-    [currency, locale],
+    [currency, locale, t],
   );
 
   return (
     <AdminPage>
       <AdminBreadcrumb
         items={[
-          { label: "Customers", href: "/admin/customers" },
-          { label: customer.displayName || customer.email || "Customer" },
+          { label: t("admin.customers.title"), href: "/admin/customers" },
+          {
+            label:
+              customer.displayName ||
+              customer.email ||
+              t("admin.customers.role.customer"),
+          },
         ]}
       />
-      <AdminBackLink href="/admin/customers">Back to customers</AdminBackLink>
+      <AdminBackLink href="/admin/customers">
+        {t("admin.customers.backToCustomers")}
+      </AdminBackLink>
 
       <AdminPageHeader
-        eyebrow="People"
-        title={customer.displayName || "Customer"}
+        eyebrow={t("admin.customers.eyebrow")}
+        title={customer.displayName || t("admin.customers.role.customer")}
         description={customer.email}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -259,20 +275,29 @@ export function AdminCustomerDetail({
           size="md"
         />
         <div className="min-w-0 text-sm text-muted-foreground">
-          <p>Customer since {formatDate(customer.createdAt, locale)}</p>
-          <p className="mt-1 break-all font-mono text-xs">ID: {customer.id}</p>
+          <p>
+            {t("admin.customers.customerSince", {
+              date: formatDate(customer.createdAt, locale),
+            })}
+          </p>
+          <p className="mt-1 break-all font-mono text-xs">
+            {t("admin.customers.customerId", { id: customer.id })}
+          </p>
         </div>
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <AdminStatCard label="Orders" value={summary.orderCount} />
         <AdminStatCard
-          label="Total spent"
-          value={formatPrice(summary.totalSpent, currency, locale)}
-          hint="Paid orders only"
+          label={t("admin.customers.orderCount")}
+          value={summary.orderCount}
         />
         <AdminStatCard
-          label="Customer since"
+          label={t("admin.customers.totalSpent")}
+          value={formatPrice(summary.totalSpent, currency, locale)}
+          hint={t("admin.customers.paidOrdersOnly")}
+        />
+        <AdminStatCard
+          label={t("admin.customers.customerSinceLabel")}
           value={formatDate(customer.createdAt, locale)}
         />
       </div>
@@ -285,13 +310,13 @@ export function AdminCustomerDetail({
         ) : null}
 
         <AdminSection
-          title="Profile"
-          description="Display name, phone, and photo URL. Email cannot be changed here."
+          title={t("admin.customers.sections.profile")}
+          description={t("admin.customers.profileDescription")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               name="displayName"
-              label="Display name"
+              label={t("admin.customers.fields.displayName")}
               value={values.displayName}
               error={fieldErrors.displayName}
               disabled={loading}
@@ -299,13 +324,13 @@ export function AdminCustomerDetail({
             />
             <Input
               name="email"
-              label="Email"
+              label={t("admin.customers.fields.email")}
               value={customer.email}
               disabled
             />
             <Input
               name="phone"
-              label="Phone"
+              label={t("admin.customers.fields.phone")}
               value={values.phone}
               error={fieldErrors.phone}
               disabled={loading}
@@ -313,7 +338,7 @@ export function AdminCustomerDetail({
             />
             <Input
               name="photoURL"
-              label="Photo URL"
+              label={t("admin.customers.fields.photoURL")}
               value={values.photoURL}
               error={fieldErrors.photoURL}
               disabled={loading}
@@ -324,12 +349,12 @@ export function AdminCustomerDetail({
         </AdminSection>
 
         <AdminSection
-          title="Access"
-          description="Role and status control Admin access. Inactive admins cannot sign in to Admin. Storefront soft-block for inactive customers is not enforced yet."
+          title={t("admin.customers.sections.access")}
+          description={t("admin.customers.accessDescription")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
-              label="Role"
+              label={t("admin.customers.fields.role")}
               name="role"
               options={roleOptions}
               value={values.role}
@@ -340,7 +365,7 @@ export function AdminCustomerDetail({
               }
             />
             <Select
-              label="Status"
+              label={t("admin.customers.fields.status")}
               name="status"
               options={statusOptions}
               value={values.status}
@@ -355,8 +380,7 @@ export function AdminCustomerDetail({
             />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            The last active admin cannot be demoted or deactivated. You may
-            demote yourself only when another active admin exists.
+            {t("admin.customers.accessHint")}
           </p>
         </AdminSection>
 
@@ -364,23 +388,30 @@ export function AdminCustomerDetail({
           dirty={isDirty}
           loading={loading}
           onDiscard={handleDiscard}
+          saveLabel={t("admin.common.saveChanges")}
+          discardLabel={t("admin.common.discard")}
+          statusLabel={t("admin.common.unsavedChanges")}
         />
       </form>
 
       <div className="mt-8">
         <AdminSection
-          title="Order history"
-          description="Orders linked to this customer id. Guest checkouts without a customer id are not listed."
+          title={t("admin.customers.orderHistory")}
+          description={t("admin.customers.orderHistoryDescription")}
         >
           <AdminTable
             columns={orderColumns}
             rows={orders}
             getRowId={(order) => order.id}
-            emptyTitle="No orders"
-            emptyDescription="This customer has not placed any authenticated orders yet."
+            emptyTitle={t("admin.customers.noOrdersTitle")}
+            emptyDescription={t("admin.customers.noOrdersDescription")}
             footer={
               orders.length > 0
-                ? `${orders.length} order${orders.length === 1 ? "" : "s"}`
+                ? orders.length === 1
+                  ? t("admin.customers.footerCount", { count: orders.length })
+                  : t("admin.customers.footerCountPlural", {
+                      count: orders.length,
+                    })
                 : undefined
             }
           />

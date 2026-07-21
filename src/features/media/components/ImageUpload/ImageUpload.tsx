@@ -16,6 +16,7 @@ import {
   MEDIA_ALLOWED_MIME_TYPES,
   MEDIA_MAX_FILE_SIZE_BYTES,
 } from "@/features/media/services";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius, spacing, typography } from "@/shared/design/tokens";
 
@@ -41,11 +42,12 @@ export function ImageUpload({
   value = "",
   onChange,
   folder = "general",
-  label = "Image",
+  label,
   helperText,
   error,
   disabled = false,
 }: ImageUploadProps) {
+  const t = useT();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -53,6 +55,7 @@ export function ImageUpload({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const resolvedLabel = label ?? t("media.imageLabel");
   const accept = MEDIA_ALLOWED_MIME_TYPES.join(",");
   const maxMb = MEDIA_MAX_FILE_SIZE_BYTES / (1024 * 1024);
   const displayError = error ?? uploadError;
@@ -74,14 +77,14 @@ export function ImageUpload({
         if (err instanceof MediaError) {
           setUploadError(err.message);
         } else {
-          setUploadError("Upload failed. Please try again.");
+          setUploadError(t("media.failed"));
         }
         setProgress(null);
       } finally {
         setUploading(false);
       }
     },
-    [folder, onChange],
+    [folder, onChange, t],
   );
 
   function handleFiles(files: FileList | null) {
@@ -107,7 +110,7 @@ export function ImageUpload({
 
   return (
     <div className="flex w-full flex-col" style={{ gap: spacing.sm }}>
-      {label ? (
+      {resolvedLabel ? (
         <span
           className="text-foreground"
           style={{
@@ -116,7 +119,7 @@ export function ImageUpload({
             lineHeight: typography.lineHeight.tight,
           }}
         >
-          {label}
+          {resolvedLabel}
         </span>
       ) : null}
 
@@ -194,16 +197,16 @@ export function ImageUpload({
           }}
         >
           {uploading
-            ? `Uploading… ${progress ?? 0}%`
+            ? t("media.uploadingProgress", { progress: progress ?? 0 })
             : value
-              ? "Drop a new image or click to replace"
-              : "Drag & drop an image, or click to upload"}
+              ? t("media.dropReplace")
+              : t("media.dropUpload")}
         </p>
         <p
           className="text-muted-foreground"
           style={{ fontSize: typography.fontSize.xs }}
         >
-          JPEG, PNG, WebP, or GIF · max {maxMb} MB
+          {t("media.formatsHint", { maxMb })}
         </p>
 
         {uploading && progress !== null ? (
@@ -233,7 +236,7 @@ export function ImageUpload({
           className="cursor-pointer self-start text-sm text-muted-foreground underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => onChange("")}
         >
-          Remove image
+          {t("media.remove")}
         </button>
       ) : null}
 

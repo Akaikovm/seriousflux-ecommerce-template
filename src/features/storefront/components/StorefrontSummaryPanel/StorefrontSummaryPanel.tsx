@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius, spacing } from "@/shared/design/tokens";
 
@@ -19,8 +22,10 @@ export function StorefrontSummaryPanel({
   title,
   children,
   className,
-  "aria-label": ariaLabel = "Order summary",
+  "aria-label": ariaLabel,
 }: StorefrontSummaryPanelProps) {
+  const t = useT();
+
   return (
     <aside
       className={cn(
@@ -28,7 +33,7 @@ export function StorefrontSummaryPanel({
         className,
       )}
       style={{ borderRadius: radius.xl }}
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t("checkout.summaryAria")}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-1"

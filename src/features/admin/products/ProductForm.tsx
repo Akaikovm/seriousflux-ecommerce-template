@@ -21,6 +21,7 @@ import {
   ProductService,
 } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
+import { useT, type TranslateFn } from "@/i18n";
 import { slugify } from "@/lib/slugify";
 import { Input } from "@/shared/ui/Input";
 import { LabelWithHint } from "@/shared/ui/Tooltip";
@@ -29,36 +30,55 @@ import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import { useToast } from "@/shared/ui/Toast";
 
-const productFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
-  slug: z
-    .string()
-    .trim()
-    .min(1, "Slug is required.")
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Use lowercase letters, numbers, and hyphens only.",
-    ),
-  description: z.string().trim().min(1, "Description is required."),
-  image: z.string(),
-  price: z.coerce.number().min(0, "Price must be 0 or greater."),
-  currency: z.string().trim().min(1, "Currency is required."),
-  categoryId: z.string().trim().min(1, "Category is required."),
-  featured: z.boolean(),
-  active: z.boolean(),
-  order: z.coerce.number().int().min(0, "Order must be 0 or greater."),
-  sku: z.string().trim(),
-  trackInventory: z.boolean(),
-  stockQuantity: z.coerce.number().int().min(0, "Stock must be 0 or greater."),
-  lowStockThreshold: z.coerce
-    .number()
-    .int()
-    .min(0, "Threshold must be 0 or greater."),
-  allowBackorders: z.boolean(),
-  visibilityWhenOutOfStock: z.enum(["visible", "hidden"]),
-});
+function createProductFormSchema(t: TranslateFn) {
+  return z.object({
+    name: z.string().trim().min(1, t("admin.products.validation.nameRequired")),
+    slug: z
+      .string()
+      .trim()
+      .min(1, t("admin.products.validation.slugRequired"))
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        t("admin.products.validation.slugFormat"),
+      ),
+    description: z
+      .string()
+      .trim()
+      .min(1, t("admin.products.validation.descriptionRequired")),
+    image: z.string(),
+    price: z.coerce
+      .number()
+      .min(0, t("admin.products.validation.priceMin")),
+    currency: z
+      .string()
+      .trim()
+      .min(1, t("admin.products.validation.currencyRequired")),
+    categoryId: z
+      .string()
+      .trim()
+      .min(1, t("admin.products.validation.categoryRequired")),
+    featured: z.boolean(),
+    active: z.boolean(),
+    order: z.coerce
+      .number()
+      .int()
+      .min(0, t("admin.products.validation.orderMin")),
+    sku: z.string().trim(),
+    trackInventory: z.boolean(),
+    stockQuantity: z.coerce
+      .number()
+      .int()
+      .min(0, t("admin.products.validation.stockMin")),
+    lowStockThreshold: z.coerce
+      .number()
+      .int()
+      .min(0, t("admin.products.validation.thresholdMin")),
+    allowBackorders: z.boolean(),
+    visibilityWhenOutOfStock: z.enum(["visible", "hidden"]),
+  });
+}
 
-type ProductFormValues = z.infer<typeof productFormSchema>;
+type ProductFormValues = z.infer<ReturnType<typeof createProductFormSchema>>;
 type FieldErrors = Partial<Record<keyof ProductFormValues, string>>;
 
 type CategoryOption = {
@@ -126,6 +146,7 @@ export function ProductForm({
     allowBackorders: false,
   },
 }: ProductFormProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const [values, setValues] = useState<ProductFormValues>(() =>
@@ -173,7 +194,7 @@ export function ProductForm({
     }
 
     setFormError(null);
-    const parsed = productFormSchema.safeParse(values);
+    const parsed = createProductFormSchema(t).safeParse(values);
 
     if (!parsed.success) {
       const nextErrors: FieldErrors = {};
@@ -218,7 +239,7 @@ export function ProductForm({
             quantity: parsed.data.stockQuantity,
           });
         }
-        toast.success("Product created.");
+        toast.success(t("admin.products.created"));
         router.push("/admin/products");
       } else if (product) {
         await new ProductService().update(product.id, input);
@@ -228,7 +249,7 @@ export function ProductForm({
             quantity: parsed.data.stockQuantity,
           });
         }
-        toast.success("Product updated.");
+        toast.success(t("admin.products.updated"));
         setSnapshot({ ...parsed.data });
         setValues({ ...parsed.data });
       }
@@ -239,7 +260,7 @@ export function ProductForm({
         setFormError(err.message);
         toast.error(err.message);
       } else {
-        const message = "Unable to save product. Please try again.";
+        const message = t("admin.products.saveFailed");
         setFormError(message);
         toast.error(message);
       }
@@ -250,11 +271,17 @@ export function ProductForm({
 
   return (
     <AdminPage narrow>
-      <AdminBackLink href="/admin/products">Back to products</AdminBackLink>
+      <AdminBackLink href="/admin/products">
+        {t("admin.products.backToProducts")}
+      </AdminBackLink>
       <AdminPageHeader
-        eyebrow="Catalog"
-        title={mode === "create" ? "Create product" : "Edit product"}
-        description="Catalog products appear on the storefront when active."
+        eyebrow={t("admin.products.eyebrow")}
+        title={
+          mode === "create"
+            ? t("admin.products.createTitle")
+            : t("admin.products.editTitle")
+        }
+        description={t("admin.products.formDescription")}
       />
 
       <form onSubmit={handleSubmit} noValidate>
@@ -270,13 +297,17 @@ export function ProductForm({
               dirty={isDirty}
               loading={loading}
               onDiscard={handleDiscard}
-              saveLabel={mode === "create" ? "Create product" : "Save changes"}
+              saveLabel={
+                mode === "create"
+                  ? t("admin.products.saveCreate")
+                  : t("admin.products.saveEdit")
+              }
             />
           }
         >
           <Input
             name="name"
-            label="Name"
+            label={t("admin.products.fields.name")}
             value={values.name}
             error={fieldErrors.name}
             disabled={loading}
@@ -291,10 +322,10 @@ export function ProductForm({
 
           <Input
             name="slug"
-            label="Slug"
+            label={t("admin.products.fields.slug")}
             value={values.slug}
             error={fieldErrors.slug}
-            helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
+            helperText={t("admin.products.fields.slugHelper")}
             disabled={loading}
             onChange={(event) => {
               setSlugTouched(true);
@@ -304,7 +335,7 @@ export function ProductForm({
 
           <Textarea
             name="description"
-            label="Description"
+            label={t("admin.products.fields.description")}
             value={values.description}
             error={fieldErrors.description}
             disabled={loading}
@@ -312,11 +343,11 @@ export function ProductForm({
           />
 
           <ImageUpload
-            label="Image"
+            label={t("admin.products.fields.image")}
             folder="products"
             value={values.image}
             error={fieldErrors.image}
-            helperText="Optional. You can add or update the image later."
+            helperText={t("admin.products.fields.imageHelper")}
             disabled={loading}
             onChange={(url) => setField("image", url)}
           />
@@ -324,7 +355,7 @@ export function ProductForm({
           <div className="grid gap-5 sm:grid-cols-2">
             <Input
               name="price"
-              label="Price"
+              label={t("admin.products.fields.price")}
               type="number"
               min={0}
               step="0.01"
@@ -337,7 +368,7 @@ export function ProductForm({
             />
             <Input
               name="currency"
-              label="Currency"
+              label={t("admin.products.fields.currency")}
               value={values.currency}
               error={fieldErrors.currency}
               disabled={loading}
@@ -347,11 +378,11 @@ export function ProductForm({
 
           <Select
             name="categoryId"
-            label="Category"
+            label={t("admin.products.fields.category")}
             value={values.categoryId}
             error={fieldErrors.categoryId}
             disabled={loading || categories.length === 0}
-            placeholder="Select a category"
+            placeholder={t("admin.products.fields.categoryPlaceholder")}
             options={categories.map((category) => ({
               value: category.id,
               label: category.name,
@@ -361,17 +392,17 @@ export function ProductForm({
 
           <Input
             name="sku"
-            label="SKU"
+            label={t("admin.products.fields.sku")}
             value={values.sku}
             error={fieldErrors.sku}
-            helperText="Optional commercial identifier."
+            helperText={t("admin.products.fields.skuHelper")}
             disabled={loading}
             onChange={(event) => setField("sku", event.target.value)}
           />
 
           <Input
             name="order"
-            label="Order"
+            label={t("admin.products.fields.order")}
             type="number"
             min={0}
             step={1}
@@ -385,7 +416,7 @@ export function ProductForm({
 
           <Switch
             name="featured"
-            label="Featured"
+            label={t("admin.products.fields.featured")}
             checked={values.featured}
             disabled={loading}
             onChange={(event) => setField("featured", event.target.checked)}
@@ -393,21 +424,25 @@ export function ProductForm({
 
           <Switch
             name="active"
-            label="Active"
+            label={t("admin.products.fields.active")}
             checked={values.active}
             disabled={loading}
             onChange={(event) => setField("active", event.target.checked)}
           />
 
           <div className="border-t border-border pt-5">
-            <p className="mb-4 text-sm font-medium text-foreground">Inventory</p>
+            <p className="mb-4 text-sm font-medium text-foreground">
+              {t("admin.products.fields.inventory")}
+            </p>
 
             <div className="flex flex-col gap-5">
               <Switch
                 name="trackInventory"
                 label={
-                  <LabelWithHint hint="Enforces available units at checkout. Turn off to keep the product always sellable.">
-                    Track inventory
+                  <LabelWithHint
+                    hint={t("admin.products.fields.trackInventoryHint")}
+                  >
+                    {t("admin.products.fields.trackInventory")}
                   </LabelWithHint>
                 }
                 checked={values.trackInventory}
@@ -422,8 +457,10 @@ export function ProductForm({
                   <Input
                     name="stockQuantity"
                     label={
-                      <LabelWithHint hint="Units available to sell. Goes down when an order is paid; restored on cancel or refund.">
-                        Stock quantity
+                      <LabelWithHint
+                        hint={t("admin.products.fields.stockQuantityHint")}
+                      >
+                        {t("admin.products.fields.stockQuantity")}
                       </LabelWithHint>
                     }
                     type="number"
@@ -443,8 +480,10 @@ export function ProductForm({
                   <Input
                     name="lowStockThreshold"
                     label={
-                      <LabelWithHint hint="At or below this quantity: Low stock in Admin, and optional “Only X left” on the storefront.">
-                        Low stock threshold
+                      <LabelWithHint
+                        hint={t("admin.products.fields.lowStockThresholdHint")}
+                      >
+                        {t("admin.products.fields.lowStockThreshold")}
                       </LabelWithHint>
                     }
                     type="number"
@@ -464,8 +503,10 @@ export function ProductForm({
                   <Switch
                     name="allowBackorders"
                     label={
-                      <LabelWithHint hint="Customers can still buy when quantity is 0. You fulfill after restocking.">
-                        Allow backorders
+                      <LabelWithHint
+                        hint={t("admin.products.fields.allowBackorderHint")}
+                      >
+                        {t("admin.products.fields.allowBackorder")}
                       </LabelWithHint>
                     }
                     checked={values.allowBackorders}
@@ -478,16 +519,24 @@ export function ProductForm({
                   <Select
                     name="visibilityWhenOutOfStock"
                     label={
-                      <LabelWithHint hint="Keep visible shows out of stock. Hide removes it from listings when stock is zero and backorders are off.">
-                        When out of stock
+                      <LabelWithHint
+                        hint={t("admin.products.fields.visibilityHint")}
+                      >
+                        {t("admin.products.fields.visibilityWhenOutOfStock")}
                       </LabelWithHint>
                     }
                     value={values.visibilityWhenOutOfStock}
                     error={fieldErrors.visibilityWhenOutOfStock}
                     disabled={loading}
                     options={[
-                      { value: "visible", label: "Keep visible" },
-                      { value: "hidden", label: "Hide from catalog" },
+                      {
+                        value: "visible",
+                        label: t("admin.products.fields.keepVisible"),
+                      },
+                      {
+                        value: "hidden",
+                        label: t("admin.products.fields.hideFromCatalog"),
+                      },
                     ]}
                     onChange={(event) =>
                       setField(

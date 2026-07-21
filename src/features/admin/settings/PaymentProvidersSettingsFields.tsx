@@ -6,6 +6,7 @@ import type {
   PaymentProviderSettingsKey,
   PaymentProvidersConfig,
 } from "@/features/settings/types";
+import { useT } from "@/i18n";
 import { Input } from "@/shared/ui/Input";
 import { Switch } from "@/shared/ui/Switch";
 
@@ -33,6 +34,7 @@ export function PaymentProvidersSettingsFields({
   disabled = false,
   onChange,
 }: PaymentProvidersSettingsFieldsProps) {
+  const t = useT();
   const entries = listAdminPaymentProviderEntries(value);
 
   function patchProvider(
@@ -51,7 +53,7 @@ export function PaymentProvidersSettingsFields({
   if (entries.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No payment methods are registered for this store yet.
+        {t("admin.settings.payments.empty")}
       </p>
     );
   }
@@ -59,8 +61,7 @@ export function PaymentProvidersSettingsFields({
   return (
     <div className="flex flex-col divide-y divide-border">
       <p className="pb-4 text-sm text-muted-foreground">
-        Choose which methods appear at checkout. Labels are customer-facing.
-        API keys stay in server environment variables.
+        {t("admin.settings.payments.intro")}
       </p>
 
       {entries.map(({ key, config }) => {
@@ -75,8 +76,8 @@ export function PaymentProvidersSettingsFields({
               label={config.displayName || key}
               helperText={
                 config.enabled
-                  ? "Visible at checkout"
-                  : "Hidden from checkout"
+                  ? t("admin.settings.payments.visibleAtCheckout")
+                  : t("admin.settings.payments.hiddenFromCheckout")
               }
               checked={config.enabled}
               disabled={disabled}
@@ -87,7 +88,7 @@ export function PaymentProvidersSettingsFields({
 
             <Input
               name={`paymentProviders.${key}.displayName`}
-              label="Display name"
+              label={t("admin.settings.payments.displayName")}
               value={config.displayName}
               error={fieldErrors?.displayName}
               disabled={disabled}
@@ -98,10 +99,10 @@ export function PaymentProvidersSettingsFields({
 
             <Input
               name={`paymentProviders.${key}.description`}
-              label="Description"
+              label={t("admin.settings.payments.description")}
               value={config.description}
               error={fieldErrors?.description}
-              helperText="Short hint under the method name at checkout."
+              helperText={t("admin.settings.payments.descriptionHelper")}
               disabled={disabled}
               onChange={(event) =>
                 patchProvider(key, { description: event.target.value })
@@ -110,11 +111,11 @@ export function PaymentProvidersSettingsFields({
 
             <Input
               name={`paymentProviders.${key}.sortOrder`}
-              label="Sort order"
+              label={t("admin.settings.payments.sortOrder")}
               type="number"
               value={String(config.sortOrder)}
               error={fieldErrors?.sortOrder}
-              helperText="Lower numbers appear first."
+              helperText={t("admin.settings.payments.sortOrderHelper")}
               disabled={disabled}
               onChange={(event) => {
                 const next = Number(event.target.value);

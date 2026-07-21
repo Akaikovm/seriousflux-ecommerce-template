@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 
 import { CartView } from "@/features/cart/components/CartView";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
+import { createT, getDictionary, resolveLanguage } from "@/i18n";
 
-export const metadata: Metadata = {
-  title: "Cart",
-  description: "Review the products in your shopping cart.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStoreSettings();
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
+  return {
+    title: t("cart.title"),
+    description: t("cart.pageDescription"),
+  };
+}
 
 /**
  * Cart route — `/cart`.
@@ -16,11 +21,12 @@ export const metadata: Metadata = {
  */
 export default async function CartPage() {
   const settings = await getStoreSettings();
+  const t = createT(getDictionary(resolveLanguage(settings.language)));
 
   return (
     <section
       className="storefront-section scroll-mt-[var(--storefront-navbar-height)]"
-      aria-label="Shopping cart"
+      aria-label={t("cart.pageAria")}
     >
       <div className="storefront-container">
         <CartView locale={settings.locale} currency={settings.currency} />

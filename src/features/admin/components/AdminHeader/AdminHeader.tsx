@@ -3,6 +3,7 @@
 import { LogOut, Menu } from "lucide-react";
 
 import { useAuth } from "@/features/auth/providers";
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 
 type AdminHeaderProps = {
@@ -14,6 +15,7 @@ type AdminHeaderProps = {
  * Admin top header with mobile menu trigger and sign-out (RFC-011).
  */
 export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
+  const t = useT();
   const { user, signOut } = useAuth();
 
   return (
@@ -22,7 +24,7 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
         <button
           type="button"
           className="cursor-pointer rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
-          aria-label="Open navigation"
+          aria-label={t("admin.common.openNav")}
           onClick={onMenuClick}
         >
           <Menu className="size-5" aria-hidden />
@@ -49,8 +51,8 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
           }}
         >
           <LogOut className="size-4 shrink-0" aria-hidden />
-          <span className="hidden sm:inline">Sign out</span>
-          <span className="sr-only sm:hidden">Sign out</span>
+          <span className="hidden sm:inline">{t("admin.common.signOut")}</span>
+          <span className="sr-only sm:hidden">{t("admin.common.signOut")}</span>
         </Button>
       </div>
     </header>

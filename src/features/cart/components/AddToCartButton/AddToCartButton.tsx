@@ -2,6 +2,7 @@
 
 import { useCartStore } from "@/features/cart/store";
 import type { AddToCartInput } from "@/features/cart/types";
+import { useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { useToast } from "@/shared/ui/Toast";
 
@@ -39,8 +40,9 @@ export function AddToCartButton({
   canPurchase = true,
   maxQuantity = null,
   hidden = false,
-  unavailableLabel = "Out of stock",
+  unavailableLabel,
 }: AddToCartButtonProps) {
+  const t = useT();
   const addItem = useCartStore((state) => state.addItem);
   const items = useCartStore((state) => state.items);
   const toast = useToast();
@@ -51,6 +53,8 @@ export function AddToCartButton({
 
   const inCart =
     items.find((item) => item.productId === productId)?.quantity ?? 0;
+
+  const disabledLabel = unavailableLabel ?? t("products.outOfStock");
 
   return (
     <Button
@@ -63,14 +67,11 @@ export function AddToCartButton({
           return;
         }
 
-        if (
-          maxQuantity !== null &&
-          inCart + quantity > maxQuantity
-        ) {
+        if (maxQuantity !== null && inCart + quantity > maxQuantity) {
           toast.error(
             maxQuantity === 0
-              ? `${name} is out of stock.`
-              : `Only ${maxQuantity} of ${name} available.`,
+              ? t("cart.outOfStockNamed", { name })
+              : t("cart.onlyAvailable", { max: maxQuantity, name }),
           );
           return;
         }
@@ -84,10 +85,10 @@ export function AddToCartButton({
           currency,
           quantity,
         });
-        toast.success(`${name} added to cart.`);
+        toast.success(t("cart.addedToast", { name }));
       }}
     >
-      {canPurchase ? "Add to cart" : unavailableLabel}
+      {canPurchase ? t("products.addToCart") : disabledLabel}
     </Button>
   );
 }

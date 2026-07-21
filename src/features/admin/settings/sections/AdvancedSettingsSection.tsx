@@ -2,6 +2,7 @@
 
 import type { SettingsSectionProps } from "@/features/admin/settings/types/settings-section";
 import { AdminSectionDivider } from "@/features/admin/ui/AdminSection";
+import { useT } from "@/i18n";
 import { Switch } from "@/shared/ui/Switch";
 
 /**
@@ -12,20 +13,22 @@ export function AdvancedSettingsSection({
   disabled,
   setField,
 }: SettingsSectionProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-5">
       <Switch
         name="maintenanceMode"
-        label="Maintenance mode"
-        helperText="When on, the storefront should show maintenance and block commerce."
+        label={t("admin.settings.advanced.maintenanceMode")}
+        helperText={t("admin.settings.advanced.maintenanceHelper")}
         checked={values.maintenanceMode}
         disabled={disabled}
         onChange={(event) => setField("maintenanceMode", event.target.checked)}
       />
 
       <AdminSectionDivider
-        title="Coming next"
-        hint="Analytics, SEO, integrations, and experimental options will land in this section."
+        title={t("admin.settings.comingNext")}
+        hint={t("admin.settings.advanced.comingNextHint")}
       />
     </div>
   );

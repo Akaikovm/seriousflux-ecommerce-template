@@ -17,30 +17,39 @@ import {
   CategoryService,
 } from "@/features/categories/services";
 import { ImageUpload } from "@/features/media/components/ImageUpload";
+import { useT, type TranslateFn } from "@/i18n";
 import { slugify } from "@/lib/slugify";
 import { Input } from "@/shared/ui/Input";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import { useToast } from "@/shared/ui/Toast";
 
-const categoryFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
-  slug: z
-    .string()
-    .trim()
-    .min(1, "Slug is required.")
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Use lowercase letters, numbers, and hyphens only.",
-    ),
-  description: z.string().trim(),
-  image: z.string(),
-  featured: z.boolean(),
-  active: z.boolean(),
-  order: z.coerce.number().int().min(0, "Order must be 0 or greater."),
-});
+function createCategoryFormSchema(t: TranslateFn) {
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("admin.categories.validation.nameRequired")),
+    slug: z
+      .string()
+      .trim()
+      .min(1, t("admin.categories.validation.slugRequired"))
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        t("admin.categories.validation.slugFormat"),
+      ),
+    description: z.string().trim(),
+    image: z.string(),
+    featured: z.boolean(),
+    active: z.boolean(),
+    order: z.coerce
+      .number()
+      .int()
+      .min(0, t("admin.categories.validation.orderMin")),
+  });
+}
 
-type CategoryFormValues = z.infer<typeof categoryFormSchema>;
+type CategoryFormValues = z.infer<ReturnType<typeof createCategoryFormSchema>>;
 type FieldErrors = Partial<Record<keyof CategoryFormValues, string>>;
 
 type CategoryFormProps = {
@@ -64,6 +73,7 @@ function toInitialValues(category?: CategoryFormData): CategoryFormValues {
  * Controlled create/edit form for categories (ADR-021).
  */
 export function CategoryForm({ mode, category }: CategoryFormProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
   const [values, setValues] = useState<CategoryFormValues>(() =>
@@ -101,7 +111,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
     }
 
     setFormError(null);
-    const parsed = categoryFormSchema.safeParse(values);
+    const parsed = createCategoryFormSchema(t).safeParse(values);
 
     if (!parsed.success) {
       const nextErrors: FieldErrors = {};
@@ -130,11 +140,11 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
       if (mode === "create") {
         await new CategoryService().create(input);
-        toast.success("Category created.");
+        toast.success(t("admin.categories.created"));
         router.push("/admin/categories");
       } else if (category) {
         await new CategoryService().update(category.id, input);
-        toast.success("Category updated.");
+        toast.success(t("admin.categories.updated"));
         setSnapshot({ ...parsed.data });
         setValues({ ...parsed.data });
       }
@@ -145,7 +155,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
         setFormError(err.message);
         toast.error(err.message);
       } else {
-        const message = "Unable to save category. Please try again.";
+        const message = t("admin.categories.saveFailed");
         setFormError(message);
         toast.error(message);
       }
@@ -156,11 +166,17 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
   return (
     <AdminPage narrow>
-      <AdminBackLink href="/admin/categories">Back to categories</AdminBackLink>
+      <AdminBackLink href="/admin/categories">
+        {t("admin.categories.backToCategories")}
+      </AdminBackLink>
       <AdminPageHeader
-        eyebrow="Catalog"
-        title={mode === "create" ? "Create category" : "Edit category"}
-        description="Catalog categories power storefront navigation and product grouping."
+        eyebrow={t("admin.categories.eyebrow")}
+        title={
+          mode === "create"
+            ? t("admin.categories.createTitle")
+            : t("admin.categories.editTitle")
+        }
+        description={t("admin.categories.formDescription")}
       />
 
       <form onSubmit={handleSubmit} noValidate>
@@ -177,14 +193,16 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
               loading={loading}
               onDiscard={handleDiscard}
               saveLabel={
-                mode === "create" ? "Create category" : "Save changes"
+                mode === "create"
+                  ? t("admin.categories.saveCreate")
+                  : t("admin.categories.saveEdit")
               }
             />
           }
         >
           <Input
             name="name"
-            label="Name"
+            label={t("admin.categories.fields.name")}
             value={values.name}
             error={fieldErrors.name}
             disabled={loading}
@@ -199,10 +217,10 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
           <Input
             name="slug"
-            label="Slug"
+            label={t("admin.categories.fields.slug")}
             value={values.slug}
             error={fieldErrors.slug}
-            helperText="URL-safe identifier. Lowercase letters, numbers, hyphens."
+            helperText={t("admin.categories.fields.slugHelper")}
             disabled={loading}
             onChange={(event) => {
               setSlugTouched(true);
@@ -212,7 +230,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
           <Textarea
             name="description"
-            label="Description"
+            label={t("admin.categories.fields.description")}
             value={values.description}
             error={fieldErrors.description}
             disabled={loading}
@@ -220,7 +238,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
           />
 
           <ImageUpload
-            label="Image"
+            label={t("admin.categories.fields.image")}
             folder="categories"
             value={values.image}
             error={fieldErrors.image}
@@ -230,7 +248,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
           <Input
             name="order"
-            label="Order"
+            label={t("admin.categories.fields.order")}
             type="number"
             min={0}
             step={1}
@@ -244,7 +262,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
           <Switch
             name="featured"
-            label="Featured"
+            label={t("admin.categories.fields.featured")}
             checked={values.featured}
             disabled={loading}
             onChange={(event) => setField("featured", event.target.checked)}
@@ -252,7 +270,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
           <Switch
             name="active"
-            label="Active"
+            label={t("admin.categories.fields.active")}
             checked={values.active}
             disabled={loading}
             onChange={(event) => setField("active", event.target.checked)}

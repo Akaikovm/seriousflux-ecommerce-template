@@ -18,6 +18,7 @@ import type { PaymentProvidersConfig } from "@/features/settings/types";
 
 /**
  * Stable section ids — also used as URL hash fragments (`#payments`).
+ * Titles/descriptions resolve via `admin.settings.sections.{id}.*`.
  */
 export type SettingsSectionId =
   | "general"
@@ -65,8 +66,6 @@ export type SettingsSectionProps = {
 
 export type SettingsSectionDefinition = {
   id: SettingsSectionId;
-  title: string;
-  description: string;
   icon: LucideIcon;
   order: number;
   /** Top-level form keys owned by this section (error routing / future badges). */

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { GoogleAuthButton } from "@/features/auth/components";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { buildLoginHref } from "@/features/auth/lib/safe-redirect";
+import { useT } from "@/i18n";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
 /**
@@ -13,6 +14,7 @@ import { LoadingState } from "@/shared/ui/LoadingState";
  * Guest checkout remains fully supported — this never blocks purchase.
  */
 export function CheckoutAuthPrompt() {
+  const t = useT();
   const { user, loading, isAuthenticated } = useCurrentUser();
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +30,9 @@ export function CheckoutAuthPrompt() {
     return (
       <div className="mb-8 border-b border-border/70 pb-6">
         <p className="text-sm text-muted-foreground">
-          Signed in as{" "}
-          <span className="font-medium text-foreground">
-            {user.displayName || user.email}
-          </span>
-          . This order will be saved to your account.
+          {t("checkout.signedInAs", {
+            name: user.displayName || user.email || "",
+          })}
         </p>
       </div>
     );
@@ -43,11 +43,10 @@ export function CheckoutAuthPrompt() {
   return (
     <div className="mb-8 border-b border-border/70 pb-6">
       <p className="text-sm font-medium text-foreground">
-        Already have an account?
+        {t("auth.haveAccount")}
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:max-w-xs">
         <GoogleAuthButton
-          label="Continue with Google"
           redirectTo="/checkout"
           navigate={false}
           onError={setError}
@@ -56,7 +55,7 @@ export function CheckoutAuthPrompt() {
           href={loginHref}
           className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-muted"
         >
-          Sign in
+          {t("checkout.authPromptSignIn")}
         </Link>
       </div>
       {error ? (
@@ -65,7 +64,7 @@ export function CheckoutAuthPrompt() {
         </p>
       ) : null}
       <p className="mt-4 text-sm text-muted-foreground">
-        or continue as guest
+        {t("checkout.authPromptOrGuest")}
       </p>
     </div>
   );

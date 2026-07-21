@@ -9,6 +9,7 @@ import {
 import type { AccountProfileUpdateInput } from "@/features/account/types";
 import { useCurrentUser } from "@/features/auth/hooks";
 import type { CustomerProfile } from "@/features/customers/types";
+import { useT } from "@/i18n";
 
 type UseAccountProfileResult = {
   profile: CustomerProfile | null;
@@ -22,6 +23,7 @@ type UseAccountProfileResult = {
  * Loads and updates the signed-in customer's profile via AccountService.
  */
 export function useAccountProfile(): UseAccountProfileResult {
+  const t = useT();
   const { customerId, loading: authLoading } = useCurrentUser();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ export function useAccountProfile(): UseAccountProfileResult {
           setError(
             err instanceof AccountError
               ? err.message
-              : "Unable to load your profile.",
+              : t("account.loadFailed"),
           );
         }
       } finally {
@@ -72,12 +74,12 @@ export function useAccountProfile(): UseAccountProfileResult {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, customerId]);
+  }, [authLoading, customerId, t]);
 
   const updateProfile = useCallback(
     async (input: AccountProfileUpdateInput): Promise<boolean> => {
       if (!customerId) {
-        setError("You must be signed in to update your profile.");
+        setError(t("account.mustSignIn"));
         return false;
       }
 
@@ -94,14 +96,14 @@ export function useAccountProfile(): UseAccountProfileResult {
         setError(
           err instanceof AccountError
             ? err.message
-            : "Unable to save your profile.",
+            : t("account.saveFailed"),
         );
         return false;
       } finally {
         setSaving(false);
       }
     },
-    [customerId],
+    [customerId, t],
   );
 
   return {

@@ -1,7 +1,8 @@
 /**
  * Full-storefront maintenance surface when `maintenanceMode` is on.
  *
- * Presentational: copy comes from StoreSettings (storeName / tagline / logo).
+ * Presentational: copy comes from StoreSettings (storeName / tagline / logo)
+ * plus i18n fallback when tagline is empty.
  */
 
 import { BrandLockup } from "@/features/storefront/components/BrandLockup";
@@ -10,12 +11,15 @@ type MaintenanceScreenProps = {
   storeName: string;
   tagline: string;
   logo?: string;
+  /** i18n fallback when tagline is empty. */
+  fallbackMessage: string;
 };
 
 export function MaintenanceScreen({
   storeName,
   tagline,
   logo = "",
+  fallbackMessage,
 }: MaintenanceScreenProps) {
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-4 py-24 text-center">
@@ -43,8 +47,7 @@ export function MaintenanceScreen({
           {storeName}
         </h1>
         <p className="max-w-md text-base text-muted-foreground sm:text-lg">
-          {tagline.trim() ||
-            "We are temporarily closed for maintenance. Please check back soon."}
+          {tagline.trim() || fallbackMessage}
         </p>
       </div>
     </div>

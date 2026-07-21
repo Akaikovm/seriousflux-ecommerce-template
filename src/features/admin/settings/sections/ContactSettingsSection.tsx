@@ -2,6 +2,7 @@
 
 import type { SettingsSectionProps } from "@/features/admin/settings/types/settings-section";
 import { AdminSectionDivider } from "@/features/admin/ui/AdminSection";
+import { useT } from "@/i18n";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 
@@ -14,11 +15,13 @@ export function ContactSettingsSection({
   disabled,
   setField,
 }: SettingsSectionProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <Input
         name="email"
-        label="Email"
+        label={t("admin.settings.contact.email")}
         type="email"
         value={values.email}
         error={fieldErrors.email}
@@ -28,7 +31,7 @@ export function ContactSettingsSection({
 
       <Input
         name="phone"
-        label="Phone"
+        label={t("admin.settings.contact.phone")}
         value={values.phone}
         error={fieldErrors.phone}
         disabled={disabled}
@@ -37,7 +40,7 @@ export function ContactSettingsSection({
 
       <Input
         name="whatsapp"
-        label="WhatsApp"
+        label={t("admin.settings.contact.whatsapp")}
         value={values.whatsapp}
         error={fieldErrors.whatsapp}
         disabled={disabled}
@@ -46,7 +49,7 @@ export function ContactSettingsSection({
 
       <Textarea
         name="address"
-        label="Address"
+        label={t("admin.settings.contact.address")}
         value={values.address}
         error={fieldErrors.address}
         disabled={disabled}
@@ -54,13 +57,13 @@ export function ContactSettingsSection({
       />
 
       <AdminSectionDivider
-        title="Social links"
-        hint="Profile URLs shown on the storefront where configured."
+        title={t("admin.settings.contact.socialLinks")}
+        hint={t("admin.settings.contact.socialLinksHint")}
       />
 
       <Input
         name="instagram"
-        label="Instagram"
+        label={t("admin.settings.contact.instagram")}
         value={values.instagram}
         error={fieldErrors.instagram}
         disabled={disabled}
@@ -69,7 +72,7 @@ export function ContactSettingsSection({
 
       <Input
         name="facebook"
-        label="Facebook"
+        label={t("admin.settings.contact.facebook")}
         value={values.facebook}
         error={fieldErrors.facebook}
         disabled={disabled}
@@ -78,7 +81,7 @@ export function ContactSettingsSection({
 
       <Input
         name="tiktok"
-        label="TikTok"
+        label={t("admin.settings.contact.tiktok")}
         value={values.tiktok}
         error={fieldErrors.tiktok}
         disabled={disabled}
@@ -87,7 +90,7 @@ export function ContactSettingsSection({
 
       <Input
         name="youtube"
-        label="YouTube"
+        label={t("admin.settings.contact.youtube")}
         value={values.youtube}
         error={fieldErrors.youtube}
         disabled={disabled}

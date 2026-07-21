@@ -30,7 +30,7 @@ import {
   type StoreSettingsFormData,
 } from "@/features/admin/settings/store-settings-form-data";
 import {
-  storeSettingsFormSchema,
+  createStoreSettingsFormSchema,
   type StoreSettingsFieldErrors,
   type StoreSettingsFormValues,
 } from "@/features/admin/settings/store-settings-form-schema";
@@ -51,6 +51,7 @@ import type {
   PaymentProviderSettingsKey,
   PaymentProvidersConfig,
 } from "@/features/settings/types";
+import { useT } from "@/i18n";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { useToast } from "@/shared/ui/Toast";
 
@@ -104,8 +105,13 @@ function scrollToSection(id: SettingsSectionId, behavior: ScrollBehavior = "smoo
  * One values object, one Zod pipeline, one updateGeneralSettings save.
  */
 export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
+  const storeSettingsFormSchema = useMemo(
+    () => createStoreSettingsFormSchema(t),
+    [t],
+  );
 
   const [values, setValues] = useState<StoreSettingsFormValues>(() =>
     cloneStoreSettingsFormValues(settings),
@@ -496,14 +502,14 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
       setValues(nextSnapshot);
       setSnapshot(nextSnapshot);
       setFieldErrors({});
-      toast.success("Store settings saved.");
+      toast.success(t("admin.settings.saved"));
       router.refresh();
     } catch (err) {
       if (err instanceof StoreSettingsError) {
         setFormError(err.message);
         toast.error(err.message);
       } else {
-        const message = "Unable to save settings. Please try again.";
+        const message = t("admin.settings.saveFailed");
         setFormError(message);
         toast.error(message);
       }
@@ -531,9 +537,9 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
   return (
     <AdminPage flush className="admin-settings">
       <AdminPageHeader
-        eyebrow="Store configuration"
-        title="Settings"
-        description="Identity, branding, contact, shipping, payments, notifications, and inventory — one place for everything that shapes this store."
+        eyebrow={t("admin.settings.eyebrow")}
+        title={t("admin.settings.title")}
+        description={t("admin.settings.description")}
       />
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
@@ -552,6 +558,9 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
               dirty={isDirty}
               loading={loading}
               onDiscard={handleCancel}
+              saveLabel={t("admin.common.saveChanges")}
+              discardLabel={t("admin.common.discard")}
+              statusLabel={t("admin.ui.saveBarUnsaved")}
             />
           }
         >
@@ -572,10 +581,10 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 
       <ConfirmDialog
         open={leaveDialogOpen}
-        title="Discard unsaved changes?"
-        description="You have unsaved settings changes. Leave this page and lose them?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t("admin.settings.discardTitle")}
+        description={t("admin.settings.discardDescription")}
+        confirmLabel={t("admin.settings.discardConfirm")}
+        cancelLabel={t("admin.settings.discardCancel")}
         destructive
         onConfirm={confirmLeave}
         onCancel={cancelLeave}

@@ -12,6 +12,7 @@ import { CartEmpty } from "@/features/cart/components/CartEmpty";
 import { CartItem } from "@/features/cart/components/CartItem";
 import { CartSummary } from "@/features/cart/components/CartSummary";
 import { StorefrontPageHeader } from "@/features/storefront/components/StorefrontPageHeader";
+import { useT } from "@/i18n";
 import { LoadingState } from "@/shared/ui/LoadingState";
 import { useToast } from "@/shared/ui/Toast";
 import { transition } from "@/shared/design/tokens";
@@ -31,6 +32,7 @@ export type CartViewProps = {
 };
 
 export function CartView({ locale, currency }: CartViewProps) {
+  const t = useT();
   const hydrated = useCartHydrated();
   const toast = useToast();
   const items = useCartStore((state) => state.items);
@@ -43,7 +45,7 @@ export function CartView({ locale, currency }: CartViewProps) {
     const item = items.find((entry) => entry.productId === productId);
     removeItem(productId);
     if (item) {
-      toast.success(`${item.name} removed from cart.`);
+      toast.success(t("cart.removedToast", { name: item.name }));
     }
   }
 
@@ -62,13 +64,16 @@ export function CartView({ locale, currency }: CartViewProps) {
   }
 
   const summaryCurrency = items[0]?.currency || currency;
-  const itemLabel = itemCount === 1 ? "1 item" : `${itemCount} items`;
+  const itemLabel =
+    itemCount === 1
+      ? t("cart.itemOne")
+      : t("cart.itemMany", { count: itemCount });
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-14">
       <div>
         <StorefrontPageHeader
-          title="Cart"
+          title={t("cart.title")}
           meta={<span>{itemLabel}</span>}
           actions={
             <Link
@@ -76,7 +81,7 @@ export function CartView({ locale, currency }: CartViewProps) {
               className="text-sm text-muted-foreground transition-colors hover:text-brand-accent"
               style={{ transitionDuration: transition.fast }}
             >
-              Continue shopping
+              {t("cart.continueShopping")}
             </Link>
           }
         />

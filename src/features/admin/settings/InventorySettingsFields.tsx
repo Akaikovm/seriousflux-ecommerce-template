@@ -4,6 +4,7 @@ import { LabelWithHint } from "@/shared/ui/Tooltip";
 import { Input } from "@/shared/ui/Input";
 import { Switch } from "@/shared/ui/Switch";
 import type { InventorySettings } from "@/features/settings/types";
+import { useT } from "@/i18n";
 
 export type InventoryFormValues = InventorySettings;
 
@@ -27,6 +28,8 @@ export function InventorySettingsFields({
   disabled,
   onChange,
 }: InventorySettingsFieldsProps) {
+  const t = useT();
+
   function patch<K extends keyof InventoryFormValues>(
     key: K,
     next: InventoryFormValues[K],
@@ -39,8 +42,10 @@ export function InventorySettingsFields({
       <Switch
         name="defaultTrackInventory"
         label={
-          <LabelWithHint hint="New products start with stock tracking on. Turn the store default off for digital or made-to-order catalogs.">
-            Track inventory on new products
+          <LabelWithHint
+            hint={t("admin.settings.inventory.trackOnNewProductsHelper")}
+          >
+            {t("admin.settings.inventory.trackOnNewProducts")}
           </LabelWithHint>
         }
         checked={value.defaultTrackInventory}
@@ -53,8 +58,10 @@ export function InventorySettingsFields({
       <Input
         name="defaultLowStockThreshold"
         label={
-          <LabelWithHint hint="At or below this quantity, Admin shows Low stock (list, filters, dashboard).">
-            Default low stock threshold
+          <LabelWithHint
+            hint={t("admin.settings.inventory.defaultLowStockThresholdHelper")}
+          >
+            {t("admin.settings.inventory.defaultLowStockThreshold")}
           </LabelWithHint>
         }
         type="number"
@@ -74,8 +81,10 @@ export function InventorySettingsFields({
       <Switch
         name="defaultAllowBackorders"
         label={
-          <LabelWithHint hint="New products can still be bought when stock is 0. You fulfill after restocking.">
-            Allow backorders by default
+          <LabelWithHint
+            hint={t("admin.settings.inventory.allowBackordersByDefaultHelper")}
+          >
+            {t("admin.settings.inventory.allowBackordersByDefault")}
           </LabelWithHint>
         }
         checked={value.defaultAllowBackorders}
@@ -88,8 +97,10 @@ export function InventorySettingsFields({
       <Switch
         name="hideOutOfStockProducts"
         label={
-          <LabelWithHint hint="Hide tracked products with zero stock (and no backorders) from catalog listings.">
-            Hide out-of-stock products in catalog
+          <LabelWithHint
+            hint={t("admin.settings.inventory.hideOutOfStockInCatalogHelper")}
+          >
+            {t("admin.settings.inventory.hideOutOfStockInCatalog")}
           </LabelWithHint>
         }
         checked={value.hideOutOfStockProducts}
@@ -102,8 +113,10 @@ export function InventorySettingsFields({
       <Switch
         name="showRemainingStock"
         label={
-          <LabelWithHint hint='When stock is low, product pages can show “Only X left”.'>
-            Show remaining stock on storefront
+          <LabelWithHint
+            hint={t("admin.settings.inventory.showRemainingStockHelper")}
+          >
+            {t("admin.settings.inventory.showRemainingStock")}
           </LabelWithHint>
         }
         checked={value.showRemainingStock}

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { Section } from "@/features/storefront/components/Section";
 import type { NewsletterCopy } from "@/features/storefront/types/storefront";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { radius, spacing, typography } from "@/shared/design/tokens";
 import { Button } from "@/shared/ui/Button";
@@ -13,36 +14,35 @@ type NewsletterProps = Partial<NewsletterCopy> & {
   className?: string;
 };
 
-const DEFAULTS: NewsletterCopy = {
-  title: "Stay in the loop",
-  subtitle: "New arrivals and exclusive offers, delivered to your inbox.",
-  placeholder: "you@example.com",
-  ctaText: "Subscribe",
-  successMessage: "Thanks — you're on the list.",
-};
-
 /**
  * Presentational newsletter block.
  * No email backend — local success state only (RFC-010).
  */
 export function Newsletter({
-  title = DEFAULTS.title,
-  subtitle = DEFAULTS.subtitle,
-  placeholder = DEFAULTS.placeholder,
-  ctaText = DEFAULTS.ctaText,
-  successMessage = DEFAULTS.successMessage,
+  title,
+  subtitle,
+  placeholder,
+  ctaText,
+  successMessage,
   className,
 }: NewsletterProps) {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+
+  const resolvedTitle = title ?? t("newsletter.title");
+  const resolvedSubtitle = subtitle ?? t("newsletter.subtitle");
+  const resolvedPlaceholder = placeholder ?? t("newsletter.emailPlaceholder");
+  const resolvedCta = ctaText ?? t("newsletter.cta");
+  const resolvedSuccess = successMessage ?? t("newsletter.success");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = email.trim();
 
     if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      setError("Enter a valid email address.");
+      setError(t("newsletter.invalidEmail"));
       setSubmitted(false);
       return;
     }
@@ -87,9 +87,9 @@ export function Newsletter({
             id="newsletter-title"
             className="storefront-heading text-[clamp(1.75rem,4vw,2.5rem)]"
           >
-            {title}
+            {resolvedTitle}
           </h2>
-          {subtitle ? (
+          {resolvedSubtitle ? (
             <p
               className="mt-3 max-w-md opacity-90"
               style={{
@@ -97,7 +97,7 @@ export function Newsletter({
                 lineHeight: typography.lineHeight.relaxed,
               }}
             >
-              {subtitle}
+              {resolvedSubtitle}
             </p>
           ) : null}
 
@@ -111,7 +111,7 @@ export function Newsletter({
                 name="newsletter-email"
                 type="email"
                 autoComplete="email"
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 value={email}
                 onChange={(event) => {
                   setEmail(event.target.value);
@@ -119,7 +119,7 @@ export function Newsletter({
                   if (error) setError(null);
                 }}
                 error={error ?? undefined}
-                aria-label="Email address"
+                aria-label={t("newsletter.emailAriaLabel")}
                 className="border-transparent bg-white/95 shadow-none"
                 style={{ borderRadius: radius.md }}
               />
@@ -132,13 +132,13 @@ export function Newsletter({
                 whiteSpace: "nowrap",
               }}
             >
-              {ctaText}
+              {resolvedCta}
             </Button>
           </form>
 
           {submitted ? (
             <p className="mt-4 text-sm opacity-90" role="status">
-              {successMessage}
+              {resolvedSuccess}
             </p>
           ) : null}
         </div>

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { OrderError, OrderService } from "@/features/orders/services";
 import type { Order } from "@/features/orders/types";
+import { useT } from "@/i18n";
 
 type UseCustomerOrderResult = {
   order: Order | null;
@@ -17,6 +18,7 @@ type UseCustomerOrderResult = {
  * Loads a single order with ownership verification via OrderService.getForCustomer.
  */
 export function useCustomerOrder(orderId: string): UseCustomerOrderResult {
+  const t = useT();
   const { customerId, loading: authLoading } = useCurrentUser();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export function useCustomerOrder(orderId: string): UseCustomerOrderResult {
           setError(
             err instanceof OrderError
               ? err.message
-              : "Unable to load this order.",
+              : t("account.orderLoadFailed"),
           );
         }
       } finally {
@@ -79,7 +81,7 @@ export function useCustomerOrder(orderId: string): UseCustomerOrderResult {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, customerId, orderId]);
+  }, [authLoading, customerId, orderId, t]);
 
   return {
     order,

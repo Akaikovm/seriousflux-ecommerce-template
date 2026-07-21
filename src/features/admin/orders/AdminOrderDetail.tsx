@@ -28,6 +28,7 @@ import {
   restoreSaleSafely,
 } from "@/features/inventory/lib/inventory-order-hooks";
 import { requestNotification } from "@/features/notifications";
+import { useT, type TranslateFn } from "@/i18n";
 import { formatPrice } from "@/lib/format-price";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
@@ -55,21 +56,10 @@ function formatDate(iso: string | undefined, locale: string): string {
   }
 }
 
-function providerLabel(provider: string): string {
-  switch (provider) {
-    case "mercadopago":
-      return "Mercado Pago";
-    case "cash_on_delivery":
-      return "Cash on Delivery";
-    case "stripe":
-      return "Stripe";
-    case "paypal":
-      return "PayPal";
-    case "bank_transfer":
-      return "Bank Transfer";
-    default:
-      return provider;
-  }
+function providerLabel(provider: string, t: TranslateFn): string {
+  const key = `payments.providers.${provider}`;
+  const label = t(key);
+  return label === key ? provider : label;
 }
 
 /**
@@ -81,6 +71,7 @@ export function AdminOrderDetail({
   locale,
   currency,
 }: AdminOrderDetailProps) {
+  const t = useT();
   const router = useRouter();
   const toast = useToast();
 
@@ -121,13 +112,13 @@ export function AdminOrderDetail({
         await restoreSaleSafely(order.id);
         requestNotification({ event: "order.cancelled", orderId: order.id });
       }
-      toast.success("Fulfillment status updated.");
+      toast.success(t("admin.orders.statusUpdated"));
       router.refresh();
     } catch (err) {
       const message =
         err instanceof OrderError
           ? err.message
-          : "Unable to update fulfillment status.";
+          : t("admin.orders.statusFailed");
       toast.error(message);
     } finally {
       setSavingStatus(false);
@@ -160,13 +151,13 @@ export function AdminOrderDetail({
       ) {
         await restoreSaleSafely(order.id);
       }
-      toast.success("Payment status updated.");
+      toast.success(t("admin.orders.paymentUpdated"));
       router.refresh();
     } catch (err) {
       const message =
         err instanceof OrderError
           ? err.message
-          : "Unable to update payment status.";
+          : t("admin.orders.paymentFailed");
       toast.error(message);
     } finally {
       setSavingPayment(false);
@@ -181,11 +172,11 @@ export function AdminOrderDetail({
     setSavingNotes(true);
     try {
       await new OrderService().updateNotes(order.id, notes);
-      toast.success("Admin notes saved.");
+      toast.success(t("admin.orders.notesSaved"));
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof OrderError ? err.message : "Unable to save notes.";
+        err instanceof OrderError ? err.message : t("admin.orders.notesFailed");
       toast.error(message);
     } finally {
       setSavingNotes(false);
@@ -198,93 +189,110 @@ export function AdminOrderDetail({
     <AdminPage>
       <AdminBreadcrumb
         items={[
-          { label: "Orders", href: "/admin/orders" },
+          { label: t("admin.orders.title"), href: "/admin/orders" },
           { label: order.orderNumber },
         ]}
       />
       <AdminPageHeader
-        eyebrow="Commerce"
-        title="Order detail"
-        description="Review customer, payment, and fulfillment for this order."
+        eyebrow={t("admin.orders.detailEyebrow")}
+        title={t("admin.orders.detailTitle")}
+        description={t("admin.orders.detailDescription")}
       />
 
       {order.inventoryCommitStatus === "shortfall" ? (
         <AdminSection
-          title="Inventory shortfall"
-          description="Payment succeeded but stock was insufficient at commit. Do not auto-refund — review and resolve manually."
+          title={t("admin.orders.inventoryShortfallTitle")}
+          description={t("admin.orders.inventoryShortfallDescription")}
         >
-          <Badge variant="secondary">Needs manual review</Badge>
+          <Badge variant="secondary">{t("admin.orders.needsManualReview")}</Badge>
           <p className="mt-2 text-sm text-muted-foreground">
-            Inventory was not decreased. Use notes, restock, contact the customer,
-            or refund via payment tools when appropriate.
+            {t("admin.orders.inventoryShortfallHint")}
           </p>
         </AdminSection>
       ) : null}
 
-      <AdminSection title="Order summary">
+      <AdminSection title={t("admin.orders.orderSummary")}>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="text-xs text-muted-foreground">Order number</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.fields.orderNumber")}
+            </dt>
             <dd className="mt-1 text-sm font-medium text-foreground">
               {order.orderNumber}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Fulfillment</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.sections.fulfillment")}
+            </dt>
             <dd className="mt-1">
               <OrderStatusBadge status={order.status} />
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Payment</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.sections.payment")}
+            </dt>
             <dd className="mt-1">
               <PaymentStatusBadge status={order.payment.status} />
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Total</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.fields.total")}
+            </dt>
             <dd className="mt-1 text-sm font-medium text-foreground">
               {formatPrice(order.totals.total, moneyCurrency, locale)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Created at</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.fields.createdAt")}
+            </dt>
             <dd className="mt-1 text-sm text-foreground">
               {formatDate(order.createdAt, locale)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Updated at</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t("admin.orders.fields.updatedAt")}
+            </dt>
             <dd className="mt-1 text-sm text-foreground">
               {formatDate(order.updatedAt, locale)}
             </dd>
           </div>
         </dl>
         <p className="text-xs text-muted-foreground">
-          Firestore id:{" "}
+          {t("admin.orders.firestoreId")}{" "}
           <span className="font-mono text-foreground">{order.id}</span>
         </p>
       </AdminSection>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AdminSection title="Customer">
+        <AdminSection title={t("admin.orders.sections.customer")}>
           <dl className="flex flex-col gap-2 text-sm">
             <div>
-              <dt className="text-xs text-muted-foreground">Name</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.name")}
+              </dt>
               <dd className="text-foreground">{order.customerName}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Email</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.email")}
+              </dt>
               <dd className="text-foreground">{order.customerEmail}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Phone</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.phone")}
+              </dt>
               <dd className="text-foreground">{order.customerPhone || "—"}</dd>
             </div>
           </dl>
         </AdminSection>
 
-        <AdminSection title="Shipping address">
+        <AdminSection title={t("admin.orders.shippingAddress")}>
           <address className="text-sm not-italic text-foreground">
             <p>{address.fullName}</p>
             <p>{address.line1}</p>
@@ -296,13 +304,19 @@ export function AdminOrderDetail({
             {address.phone ? <p className="mt-2">{address.phone}</p> : null}
           </address>
           <p className="text-sm text-muted-foreground">
-            Method: {order.shippingMethod.label} (
-            {formatPrice(order.shippingMethod.cost, moneyCurrency, locale)})
+            {t("admin.orders.shippingMethod", {
+              label: order.shippingMethod.label,
+              cost: formatPrice(
+                order.shippingMethod.cost,
+                moneyCurrency,
+                locale,
+              ),
+            })}
           </p>
         </AdminSection>
       </div>
 
-      <AdminSection title="Products">
+      <AdminSection title={t("admin.orders.products")}>
         <ul className="divide-y divide-border">
           {order.items.map((item) => (
             <li
@@ -324,8 +338,10 @@ export function AdminOrderDetail({
                   {item.productName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Qty {item.quantity} ·{" "}
-                  {formatPrice(item.unitPrice, moneyCurrency, locale)} each
+                  {t("admin.orders.itemQtyEach", {
+                    quantity: item.quantity,
+                    price: formatPrice(item.unitPrice, moneyCurrency, locale),
+                  })}
                 </p>
               </div>
               <p className="shrink-0 text-sm font-medium text-foreground">
@@ -340,23 +356,29 @@ export function AdminOrderDetail({
         </ul>
       </AdminSection>
 
-      <AdminSection title="Totals">
+      <AdminSection title={t("admin.orders.sections.totals")}>
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Subtotal</dt>
+            <dt className="text-muted-foreground">
+              {t("admin.orders.fields.subtotal")}
+            </dt>
             <dd>
               {formatPrice(order.totals.subtotal, moneyCurrency, locale)}
             </dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Shipping</dt>
+            <dt className="text-muted-foreground">
+              {t("admin.orders.fields.shipping")}
+            </dt>
             <dd>
               {formatPrice(order.totals.shipping, moneyCurrency, locale)}
             </dd>
           </div>
           {order.totals.discount > 0 ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Discount</dt>
+              <dt className="text-muted-foreground">
+                {t("admin.orders.fields.discount")}
+              </dt>
               <dd>
                 −{formatPrice(order.totals.discount, moneyCurrency, locale)}
               </dd>
@@ -364,12 +386,14 @@ export function AdminOrderDetail({
           ) : null}
           {order.totals.tax > 0 ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Tax</dt>
+              <dt className="text-muted-foreground">
+                {t("admin.orders.fields.tax")}
+              </dt>
               <dd>{formatPrice(order.totals.tax, moneyCurrency, locale)}</dd>
             </div>
           ) : null}
           <div className="flex justify-between gap-4 border-t border-border pt-2 font-medium">
-            <dt>Total</dt>
+            <dt>{t("admin.orders.fields.total")}</dt>
             <dd>{formatPrice(order.totals.total, moneyCurrency, locale)}</dd>
           </div>
         </dl>
@@ -377,30 +401,38 @@ export function AdminOrderDetail({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AdminSection
-          title="Payment information"
-          description="Provider fields completed during Mercado Pago integration."
+          title={t("admin.orders.sections.paymentInfo")}
+          description={t("admin.orders.paymentInfoDescription")}
         >
           <dl className="flex flex-col gap-2 text-sm">
             <div>
-              <dt className="text-xs text-muted-foreground">Provider</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.provider")}
+              </dt>
               <dd className="text-foreground">
-                {providerLabel(order.payment.provider)}
+                {providerLabel(order.payment.provider, t)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Payment status</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.paymentStatus")}
+              </dt>
               <dd className="mt-1">
                 <PaymentStatusBadge status={order.payment.status} />
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Transaction ID</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.transactionId")}
+              </dt>
               <dd className="font-mono text-foreground">
                 {order.payment.transactionId || "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Paid at</dt>
+              <dt className="text-xs text-muted-foreground">
+                {t("admin.orders.fields.paidAt")}
+              </dt>
               <dd className="text-foreground">
                 {formatDate(order.payment.paidAt, locale)}
               </dd>
@@ -410,9 +442,9 @@ export function AdminOrderDetail({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <Select
-                label="Update payment status"
+                label={t("admin.orders.updatePaymentStatus")}
                 name="payment-status"
-                options={getAdminPaymentStatusOptions()}
+                options={getAdminPaymentStatusOptions(t)}
                 value={paymentStatus}
                 onChange={(event) =>
                   setPaymentStatus(event.target.value as OrderPaymentStatus)
@@ -425,21 +457,21 @@ export function AdminOrderDetail({
               loading={savingPayment}
               onClick={() => void handleUpdatePayment()}
             >
-              Save payment
+              {t("admin.orders.savePayment")}
             </Button>
           </div>
         </AdminSection>
 
         <AdminSection
-          title="Fulfillment status"
-          description="Only allowed transitions are available. Cancellation is allowed from pending payment and paid."
+          title={t("admin.orders.sections.fulfillmentStatus")}
+          description={t("admin.orders.fulfillmentDescription")}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <Select
-                label="Status"
+                label={t("common.status")}
                 name="fulfillment-status"
-                options={getOrderStatusSelectOptions(order.status)}
+                options={getOrderStatusSelectOptions(order.status, t)}
                 value={fulfillmentStatus}
                 onChange={(event) =>
                   setFulfillmentStatus(
@@ -454,28 +486,28 @@ export function AdminOrderDetail({
               loading={savingStatus}
               onClick={() => void handleUpdateStatus()}
             >
-              Update status
+              {t("admin.orders.updateStatus")}
             </Button>
           </div>
         </AdminSection>
       </div>
 
-      <AdminSection title="Order timeline">
+      <AdminSection title={t("admin.orders.orderTimeline")}>
         <OrderTimeline order={order} locale={locale} />
       </AdminSection>
 
       <AdminSection
-        title="Admin notes"
-        description="Internal only — not shown to customers on confirmation."
+        title={t("admin.orders.adminNotes")}
+        description={t("admin.orders.adminNotesDescription")}
       >
         <div className="flex flex-col gap-3">
           <Textarea
-            label="Notes"
+            label={t("admin.orders.notesLabel")}
             name="admin-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             rows={4}
-            placeholder="Internal notes about this order…"
+            placeholder={t("admin.orders.notesPlaceholder")}
           />
           <div>
             <Button
@@ -484,7 +516,7 @@ export function AdminOrderDetail({
               loading={savingNotes}
               onClick={() => void handleSaveNotes()}
             >
-              Save notes
+              {t("admin.orders.saveNotes")}
             </Button>
           </div>
         </div>

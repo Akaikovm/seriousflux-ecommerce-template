@@ -2,13 +2,13 @@ import type { AdminNavItem } from "@/features/admin/types";
 
 /**
  * Primary admin sidebar navigation (RFC-011 / RFC-014).
+ * Labels resolved via i18n `admin.nav.*` in AdminSidebar.
  */
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { label: "Dashboard", href: "/admin" },
-  { label: "Categories", href: "/admin/categories" },
-  { label: "Products", href: "/admin/products" },
-  { label: "Orders", href: "/admin/orders" },
-  { label: "Customers", href: "/admin/customers" },
-  { label: "Settings", href: "/admin/settings" },
+  { labelKey: "dashboard", href: "/admin" },
+  { labelKey: "categories", href: "/admin/categories" },
+  { labelKey: "products", href: "/admin/products" },
+  { labelKey: "orders", href: "/admin/orders" },
+  { labelKey: "customers", href: "/admin/customers" },
+  { labelKey: "settings", href: "/admin/settings" },
 ];
-

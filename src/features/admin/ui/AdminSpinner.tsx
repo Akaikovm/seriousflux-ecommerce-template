@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 
+import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 type AdminSpinnerProps = {
@@ -16,8 +17,11 @@ type AdminSpinnerProps = {
 export function AdminSpinner({
   className,
   size = "md",
-  label = "Loading",
+  label,
 }: AdminSpinnerProps) {
+  const t = useT();
+  const resolvedLabel = label ?? t("admin.common.loading");
+
   return (
     <span
       className={cn(
@@ -27,10 +31,10 @@ export function AdminSpinner({
       )}
       role="status"
       aria-live="polite"
-      aria-label={label}
+      aria-label={resolvedLabel}
     >
       <Loader2 className="admin-spinner__icon" aria-hidden />
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{resolvedLabel}</span>
     </span>
   );
 }

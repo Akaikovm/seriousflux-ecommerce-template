@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { AppProviders } from "@/app/providers";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 import { buildStoreMetadata } from "@/features/settings/lib/store-metadata";
+import { getDictionary, resolveLanguage } from "@/i18n";
 
 import "./globals.css";
 
@@ -50,14 +51,19 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const settings = await getStoreSettings();
+  const language = resolveLanguage(settings.language);
+  const dictionary = getDictionary(language);
 
   return (
     <html
-      lang={settings.language || "en"}
+      lang={language}
       className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col">
-        <AppProviders>{children}</AppProviders>
+      <body className="flex min-h-full flex-col" suppressHydrationWarning>
+        <AppProviders language={language} dictionary={dictionary}>
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

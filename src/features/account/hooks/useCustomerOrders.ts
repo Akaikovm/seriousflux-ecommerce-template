@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { OrderError, OrderService } from "@/features/orders/services";
 import type { Order } from "@/features/orders/types";
+import { useT } from "@/i18n";
 
 type UseCustomerOrdersResult = {
   orders: Order[];
@@ -16,6 +17,7 @@ type UseCustomerOrdersResult = {
  * Lists orders for the signed-in customer via OrderService.
  */
 export function useCustomerOrders(): UseCustomerOrdersResult {
+  const t = useT();
   const { customerId, loading: authLoading } = useCurrentUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export function useCustomerOrders(): UseCustomerOrdersResult {
           setError(
             err instanceof OrderError
               ? err.message
-              : "Unable to load your orders.",
+              : t("account.ordersLoadFailed"),
           );
         }
       } finally {
@@ -65,7 +67,7 @@ export function useCustomerOrders(): UseCustomerOrdersResult {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, customerId]);
+  }, [authLoading, customerId, t]);
 
   return {
     orders,

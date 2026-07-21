@@ -1,8 +1,11 @@
+"use client";
+
 import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import {
   getOrderStatusLabel,
   getPaymentStatusLabel,
 } from "@/features/orders/lib/order-status";
+import { useT } from "@/i18n";
 
 type OrderTimelineProps = {
   order: AdminOrderView;
@@ -31,23 +34,27 @@ function formatDate(iso: string, locale: string): string {
  * Derived order timeline (RFC-014) — no persisted event subcollection.
  */
 export function OrderTimeline({ order, locale }: OrderTimelineProps) {
+  const t = useT();
+
   const entries: TimelineEntry[] = [
     {
       id: "created",
-      title: "Order created",
-      detail: `Reference ${order.orderNumber}`,
+      title: t("admin.orders.timeline.orderCreated"),
+      detail: t("admin.orders.timeline.reference", {
+        orderNumber: order.orderNumber,
+      }),
       at: order.createdAt,
     },
     {
       id: "payment",
-      title: "Payment status",
-      detail: getPaymentStatusLabel(order.payment.status),
+      title: t("admin.orders.timeline.paymentStatus"),
+      detail: getPaymentStatusLabel(order.payment.status, t),
       at: order.payment.paidAt ?? order.updatedAt,
     },
     {
       id: "fulfillment",
-      title: "Fulfillment status",
-      detail: getOrderStatusLabel(order.status),
+      title: t("admin.orders.timeline.fulfillmentStatus"),
+      detail: getOrderStatusLabel(order.status, t),
       at: order.updatedAt,
     },
   ];
