@@ -638,8 +638,32 @@ These appear in the long-term kit vision (`AGENTS.md`) but are **out of scope fo
 | Multi-currency                    | Prices map or `prices: Record<currency, number>`; `settings/general` gains `supportedCurrencies` |
 | Coupons / discounts               | New `coupons` collection; reference from `orders.totals.discount` |
 | Order audit trail                 | `orders/{id}/events` subcollection |
-| Custom claims for admin           | Deferred — Firestore `role` is source of truth (RFC-017); Claims later for Security Rules |
+| Custom claims for admin           | Deferred (GAP-002) — Firestore `role` is source of truth in rules today (ADR-024) |
 | Payment provider in settings      | Add on `settings/payments` (or `general`) when checkout RFC lands |
+
+---
+
+## Security rules (GAP-001)
+
+Committed files:
+
+| File | Purpose |
+|------|---------|
+| [`firestore.rules`](../firestore.rules) | Collection access model |
+| [`storage.rules`](../storage.rules) | `media/**` public read, admin write |
+| [`firebase.json`](../firebase.json) | Points the Firebase CLI at those files |
+
+Deploy:
+
+```bash
+firebase deploy --only firestore:rules,storage
+```
+
+**Posture:** public read for storefront needs (`settings`, active catalog, `inventory`); customers own their profile (no role escalation); order create limited to `pending_payment` / pending payment; admin writes via `customers/{uid}.role == admin`. Privileged server paths use the **Admin SDK** (GAP-004 / ADR-024) and bypass rules.
+
+**Local seeds** use the client SDK — keep open rules while seeding, or seed before locking production rules.
+
+Architecture: [`docs/architecture/ADR-024-firestore-rules-admin-sdk.md`](architecture/ADR-024-firestore-rules-admin-sdk.md).
 
 ---
 
@@ -667,7 +691,7 @@ Architecture: [`docs/architecture/ADR-023-inventory-stock-management.md`](archit
 ## Non-goals of RFC-001 / RFC-002
 
 - Seed scripts for local bootstrap (documented above; not part of RFC-001 scope)
-- No Firestore Security Rules (later RFC)
+- No Firestore Security Rules in early RFCs — **now shipped** (GAP-001 / ADR-024)
 - No composite index JSON commit (create when queries exist)
 - No settings write / admin CRUD (RFC-002 is read-only)
 - No React hooks, context, providers, or UI

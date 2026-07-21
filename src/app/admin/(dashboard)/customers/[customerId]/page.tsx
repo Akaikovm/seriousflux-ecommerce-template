@@ -8,10 +8,11 @@ import {
 } from "@/features/admin/customers";
 import { toAdminOrderView } from "@/features/admin/orders";
 import {
-  CustomerAdminError,
-  CustomerAdminService,
-} from "@/features/customers/services";
-import { OrderError, OrderService } from "@/features/orders/services";
+  adminGetCustomerById,
+  adminListOrdersByCustomerId,
+} from "@/features/admin/lib/admin-server-data";
+import { CustomerAdminError } from "@/features/customers/services";
+import { OrderError } from "@/features/orders/services";
 import type { Order } from "@/features/orders/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
@@ -24,7 +25,7 @@ export async function generateMetadata({
 }: AdminCustomerDetailPageProps): Promise<Metadata> {
   const { customerId } = await params;
   try {
-    const customer = await new CustomerAdminService().getById(customerId);
+    const customer = await adminGetCustomerById(customerId);
     if (!customer) {
       return { title: "Customer" };
     }
@@ -47,7 +48,7 @@ export default async function AdminCustomerDetailPage({
 
   let customer = null;
   try {
-    customer = await new CustomerAdminService().getById(customerId);
+    customer = await adminGetCustomerById(customerId);
   } catch (error) {
     if (error instanceof CustomerAdminError) {
       console.error(`[CustomerAdminService] ${error.code}: ${error.message}`);
@@ -65,7 +66,7 @@ export default async function AdminCustomerDetailPage({
 
   let orders: Order[] = [];
   try {
-    orders = await new OrderService().listByCustomerId(customer.id);
+    orders = await adminListOrdersByCustomerId(customer.id);
   } catch (error) {
     if (error instanceof OrderError) {
       console.error(`[OrderService] ${error.code}: ${error.message}`);

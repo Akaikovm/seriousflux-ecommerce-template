@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 
 import { CategoryForm } from "@/features/admin/categories/CategoryForm";
 import { toCategoryFormData } from "@/features/admin/categories/category-form-data";
-import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
+import { adminGetCategoryById } from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
 
 export const metadata: Metadata = {
   title: "Edit category",
@@ -26,7 +24,7 @@ export default async function AdminEditCategoryPage({
 
   let category = null;
   try {
-    category = await new CategoryService().getById(id);
+    category = await adminGetCategoryById(id);
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);

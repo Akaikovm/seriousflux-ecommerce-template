@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 
 import { ProductForm } from "@/features/admin/products";
-import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
+import { adminListCategories } from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
 import {
   DEFAULT_INVENTORY_SETTINGS,
@@ -17,7 +15,7 @@ export const metadata: Metadata = {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await new CategoryService().listAll();
+    return await adminListCategories();
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);

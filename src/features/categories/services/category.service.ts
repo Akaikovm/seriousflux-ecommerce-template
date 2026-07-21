@@ -26,6 +26,7 @@ import type {
   CategoryUpdateInput,
   CategoryWriteInput,
 } from "@/features/categories/types";
+import { toClientTimestamp } from "@/lib/firestore-timestamp";
 
 /** Firestore collection that holds catalog category documents. */
 export const CATEGORIES_COLLECTION = "categories";
@@ -61,11 +62,7 @@ function asNumber(value: unknown, fallback: number): number {
 }
 
 function asTimestamp(value: unknown, fallback: Timestamp): Timestamp {
-  if (value instanceof Timestamp) {
-    return value;
-  }
-
-  return fallback;
+  return toClientTimestamp(value, fallback);
 }
 
 /**

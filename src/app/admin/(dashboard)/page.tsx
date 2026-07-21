@@ -2,18 +2,15 @@ import type { Metadata } from "next";
 
 import { DashboardOverview } from "@/features/admin/dashboard";
 import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
-import {
-  InventoryError,
-  InventoryService,
-} from "@/features/inventory/services";
+  adminCountCategories,
+  adminCountProducts,
+  adminGetInventoryByProductIds,
+  adminListProducts,
+} from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
+import { InventoryError } from "@/features/inventory/services";
 import { resolveInventoryStatus } from "@/features/inventory/lib/stock-status";
-import {
-  ProductError,
-  ProductService,
-} from "@/features/products/services";
+import { ProductError } from "@/features/products/services";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
 export const metadata: Metadata = {
@@ -22,7 +19,7 @@ export const metadata: Metadata = {
 
 async function getProductCount(): Promise<number> {
   try {
-    return await new ProductService().countAll();
+    return await adminCountProducts();
   } catch (error) {
     if (error instanceof ProductError) {
       console.error(`[ProductService] ${error.code}: ${error.message}`);
@@ -35,7 +32,7 @@ async function getProductCount(): Promise<number> {
 
 async function getCategoryCount(): Promise<number> {
   try {
-    return await new CategoryService().countAll();
+    return await adminCountCategories();
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);
@@ -54,13 +51,13 @@ async function getInventoryWidgetCounts(): Promise<{
   outOfStockCount: number;
 }> {
   try {
-    const products = await new ProductService().listAll();
+    const products = await adminListProducts();
     const tracked = products.filter((product) => product.trackInventory);
     if (tracked.length === 0) {
       return { lowStockCount: 0, outOfStockCount: 0 };
     }
 
-    const inventoryMap = await new InventoryService().getInventoryByProductIds(
+    const inventoryMap = await adminGetInventoryByProductIds(
       tracked.map((product) => product.id),
     );
 

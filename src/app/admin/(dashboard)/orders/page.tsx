@@ -4,7 +4,8 @@ import {
   AdminOrdersTable,
   toAdminOrderView,
 } from "@/features/admin/orders";
-import { OrderError, OrderService } from "@/features/orders/services";
+import { adminListOrders } from "@/features/admin/lib/admin-server-data";
+import { OrderError } from "@/features/orders/services";
 import type { Order } from "@/features/orders/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
@@ -14,12 +15,12 @@ export const metadata: Metadata = {
 
 async function getOrders(): Promise<Order[]> {
   try {
-    return await new OrderService().listAll();
+    return await adminListOrders();
   } catch (error) {
     if (error instanceof OrderError) {
-      console.error(`[OrderService] ${error.code}: ${error.message}`);
+      console.error(`[AdminOrderService] ${error.code}: ${error.message}`);
     } else {
-      console.error("[OrderService] Unexpected error listing orders", error);
+      console.error("[AdminOrderService] Unexpected error listing orders", error);
     }
     return [];
   }

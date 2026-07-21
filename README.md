@@ -121,6 +121,8 @@ For Mercado Pago (optional locally; required for live redirect + auto-paid sync)
 
 For transactional email, set `RESEND_API_KEY`, then in **Admin → Settings → Notifications** set sender name/email and enable the toggles you need. The sender address must be verified in Resend. Admins do not choose email providers — Resend is the supported integration. Also set `NOTIFICATIONS_DISPATCH_SECRET` (long random string) so `POST /api/notifications/dispatch` stays locked for server-to-server use; the storefront/admin UI dispatches via an authorized server action instead.
 
+For production (and for Admin SSR / Mercado Pago webhooks once Security Rules are deployed), configure the Firebase Admin SDK — see `.env.example` (`FIREBASE_SERVICE_ACCOUNT_KEY`) and [ADR-024](docs/architecture/ADR-024-firestore-rules-admin-sdk.md).
+
 ### 3. Firebase setup (minimum)
 
 1. **Authentication** — enable Email/Password and Google.
@@ -143,8 +145,20 @@ For transactional email, set `RESEND_API_KEY`, then in **Admin → Settings → 
      }
      ```
 
-4. **Firestore** — create the database. For local development you may start with open rules; lock them down before production.
-5. **Storage** — enable Storage. Rules must allow authenticated admins to write under `media/` (or temporarily allow authenticated writes in development).
+4. **Firestore** — create the database. Commit rules live in [`firestore.rules`](firestore.rules) (see below). For a first local seed you may temporarily use open rules, then deploy the repo rules before production.
+5. **Storage** — enable Storage. Deploy [`storage.rules`](storage.rules) so only active admins can write under `media/` (public read for product images).
+
+**Deploy security rules (required before production):**
+
+```bash
+firebase deploy --only firestore:rules,storage
+```
+
+Requires the Firebase CLI and a project selected (`firebase use`). Full model: [`docs/firestore.md`](docs/firestore.md) and [ADR-024](docs/architecture/ADR-024-firestore-rules-admin-sdk.md).
+
+**Firebase Admin SDK (GAP-004)** — server-only. Set `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON) or `GOOGLE_APPLICATION_CREDENTIALS`, or rely on App Hosting ADC. Needed for Mercado Pago webhooks/preference writes and Admin SSR once rules are locked. Never put the service account in `NEXT_PUBLIC_*` vars.
+
+**Install / security handoff:** [`docs/architecture/INSTALL-SECURITY.md`](docs/architecture/INSTALL-SECURITY.md) (rules, Admin secrets, template vs client data).
 
 Collections used by the kit:
 
@@ -367,8 +381,7 @@ For a new store, prefer changing data — not code:
 **Deferred / not production-ready yet**
 - Stripe / PayPal providers (settings + env slots only)
 - `capturePayment` / `refund` on the payment interface (stubs)
-- Production-hardened Firestore & Storage security rules committed in-repo
-- Custom claims / Next.js middleware session cookies (client role gate today)
+- Custom claims / Next.js middleware session cookies (client role gate + Firestore role in rules today — GAP-002)
 - First admin still seeded manually in Firestore (app never auto-creates `admin`)
 - Wishlist / Addresses / customer Notifications center
 - Apple / Facebook OAuth (Google is supported)

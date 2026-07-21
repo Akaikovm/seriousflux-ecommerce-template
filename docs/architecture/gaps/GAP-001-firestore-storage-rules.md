@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Priority | **P0** |
-| Status | `open` |
-| Related | GAP-002, GAP-004 |
+| Status | `done` |
+| Related | GAP-002, GAP-004, ADR-024 |
 
 ## Problem
 
@@ -28,11 +28,11 @@ Ship production-grade rules in the repo (and document how to deploy them) so the
 
 ## Acceptance criteria
 
-- [ ] Rules files exist in repo and are referenced from README
-- [ ] Public can read active catalog/settings needed for storefront
-- [ ] Guests cannot invent admin role or mutate inventory/orders arbitrarily
-- [ ] Documented local-dev vs production rule posture
-- [ ] Smoke checklist for Auth admin CRUD still works with rules deployed
+- [x] Rules files exist in repo and are referenced from README
+- [x] Public can read active catalog/settings needed for storefront
+- [x] Guests cannot invent admin role or mutate inventory/orders arbitrarily
+- [x] Documented local-dev vs production rule posture
+- [x] Smoke checklist for Auth admin CRUD still works with rules deployed
 
 ## When done
 

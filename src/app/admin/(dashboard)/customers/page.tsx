@@ -5,12 +5,9 @@ import {
   AdminCustomersTable,
   toAdminCustomerView,
 } from "@/features/admin/customers";
+import { adminListCustomers } from "@/features/admin/lib/admin-server-data";
 import { AdminLoadingState } from "@/features/admin/ui";
 import type { PersistedRole, UserStatus } from "@/features/auth/types";
-import {
-  CustomerAdminError,
-  CustomerAdminService,
-} from "@/features/customers/services";
 import type { CustomerProfile } from "@/features/customers/types";
 import type { CustomerAdminListSort } from "@/features/customers/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
@@ -73,7 +70,7 @@ export default async function AdminCustomersPage({
   let pageSize = 25;
 
   try {
-    const result = await new CustomerAdminService().list({
+    const result = await adminListCustomers({
       ...(status ? { status } : {}),
       ...(role ? { role } : {}),
       sort,
@@ -83,14 +80,10 @@ export default async function AdminCustomersPage({
     nextCursor = result.nextCursor;
     pageSize = result.pageSize;
   } catch (error) {
-    if (error instanceof CustomerAdminError) {
-      console.error(`[CustomerAdminService] ${error.code}: ${error.message}`);
-    } else {
-      console.error(
-        "[CustomerAdminService] Unexpected error listing customers",
-        error,
-      );
-    }
+    console.error(
+      "[adminListCustomers] Unexpected error listing customers",
+      error,
+    );
   }
 
   return (

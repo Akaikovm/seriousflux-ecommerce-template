@@ -3,18 +3,14 @@ import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/features/admin/products";
 import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
+  adminGetInventory,
+  adminGetProductById,
+  adminListCategories,
+} from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
-import {
-  InventoryError,
-  InventoryService,
-} from "@/features/inventory/services";
-import {
-  ProductError,
-  ProductService,
-} from "@/features/products/services";
+import { InventoryError } from "@/features/inventory/services";
+import { ProductError } from "@/features/products/services";
 import {
   DEFAULT_INVENTORY_SETTINGS,
 } from "@/features/settings/types";
@@ -30,7 +26,7 @@ type AdminEditProductPageProps = {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await new CategoryService().listAll();
+    return await adminListCategories();
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);
@@ -57,7 +53,7 @@ export default async function AdminEditProductPage({
     getCategories(),
     (async () => {
       try {
-        return await new ProductService().getById(id);
+        return await adminGetProductById(id);
       } catch (error) {
         if (error instanceof ProductError) {
           console.error(`[ProductService] ${error.code}: ${error.message}`);
@@ -78,7 +74,7 @@ export default async function AdminEditProductPage({
 
   let initialStockQuantity = 0;
   try {
-    const inventory = await new InventoryService().getInventory(id);
+    const inventory = await adminGetInventory(id);
     initialStockQuantity = inventory?.quantity ?? 0;
   } catch (error) {
     if (error instanceof InventoryError) {

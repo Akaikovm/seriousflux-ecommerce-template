@@ -1,4 +1,7 @@
+import "server-only";
+
 import { OrderService } from "@/features/orders/services";
+import { AdminOrderService } from "@/features/orders/services/order.admin";
 import type { Order } from "@/features/orders/types";
 import { getNotificationProvider } from "@/features/notifications/providers";
 import { resolveNotificationsSettings } from "@/features/notifications/lib/default-notifications-settings";
@@ -21,6 +24,7 @@ import type {
 } from "@/features/notifications/types";
 import { StoreSettingsService } from "@/features/settings/services";
 import type { StoreSettings } from "@/features/settings/types";
+import { isFirebaseAdminConfigured } from "@/firebase/admin";
 
 export type NotificationDispatchResult = {
   event: NotificationEvent | NotificationTrigger["type"];
@@ -262,7 +266,16 @@ export class NotificationService {
     if (!id) {
       throw new NotificationError("Order id is required.", "invalid-input");
     }
-    const order = await this.orderService.getById(id);
+
+    // Prefer Admin SDK when configured (GAP-004) — dispatch runs without a
+    // Firebase Auth user, so client-SDK order reads fail under locked rules.
+    let order: Order | null = null;
+    if (isFirebaseAdminConfigured()) {
+      order = await new AdminOrderService().getById(id);
+    } else {
+      order = await this.orderService.getById(id);
+    }
+
     if (!order) {
       throw new NotificationError("Order not found.", "not-found");
     }

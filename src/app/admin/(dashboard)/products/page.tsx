@@ -3,19 +3,15 @@ import type { Metadata } from "next";
 import { AdminProductsTable } from "@/features/admin/products";
 import { toAdminProductRow } from "@/features/admin/products/admin-product-row";
 import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
+  adminGetInventoryByProductIds,
+  adminListCategories,
+  adminListProducts,
+} from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
 import type { InventoryRecord } from "@/features/inventory/types";
-import {
-  InventoryError,
-  InventoryService,
-} from "@/features/inventory/services";
-import {
-  ProductError,
-  ProductService,
-} from "@/features/products/services";
+import { InventoryError } from "@/features/inventory/services";
+import { ProductError } from "@/features/products/services";
 import type { Product } from "@/features/products/types";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
@@ -25,7 +21,7 @@ export const metadata: Metadata = {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    return await new ProductService().listAll();
+    return await adminListProducts();
   } catch (error) {
     if (error instanceof ProductError) {
       console.error(`[ProductService] ${error.code}: ${error.message}`);
@@ -38,7 +34,7 @@ async function getProducts(): Promise<Product[]> {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await new CategoryService().listAll();
+    return await adminListCategories();
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);
@@ -64,7 +60,7 @@ export default async function AdminProductsPage() {
 
   let inventoryMap = new Map<string, InventoryRecord>();
   try {
-    inventoryMap = await new InventoryService().getInventoryByProductIds(
+    inventoryMap = await adminGetInventoryByProductIds(
       products.map((product) => product.id),
     );
   } catch (error) {

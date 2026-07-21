@@ -5,6 +5,10 @@ import {
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
 
+import {
+  toClientTimestamp,
+  toOptionalClientTimestamp,
+} from "@/lib/firestore-timestamp";
 import type {
   Order,
   OrderItem,
@@ -26,17 +30,11 @@ function asFiniteNumber(value: unknown, fallback = 0): number {
 }
 
 function asTimestamp(value: unknown, fallback: Timestamp): Timestamp {
-  if (value instanceof Timestamp) {
-    return value;
-  }
-  return fallback;
+  return toClientTimestamp(value, fallback);
 }
 
 function asOptionalTimestamp(value: unknown): Timestamp | undefined {
-  if (value instanceof Timestamp) {
-    return value;
-  }
-  return undefined;
+  return toOptionalClientTimestamp(value);
 }
 
 const ORDER_STATUSES: ReadonlySet<string> = new Set([
@@ -229,10 +227,7 @@ function mapTotals(raw: unknown): OrderTotals {
  * Maps a Firestore order document onto the typed `Order` domain model.
  * Tolerates partial / legacy documents so Admin and Checkout stay resilient.
  */
-export function mapOrder(
-  snapshot: QueryDocumentSnapshot<DocumentData> | DocumentSnapshot<DocumentData>,
-): Order {
-  const data = snapshot.data() ?? {};
+export function mapOrderFromData(id: string, data: DocumentData): Order {
   const now = Timestamp.now();
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
@@ -241,8 +236,8 @@ export function mapOrder(
     .filter((item): item is OrderItem => item !== null);
 
   const order: Order = {
-    id: snapshot.id,
-    orderNumber: asString(data.orderNumber, snapshot.id),
+    id,
+    orderNumber: asString(data.orderNumber, id),
     customerEmail: asString(data.customerEmail),
     customerName: asString(data.customerName),
     customerPhone: asString(data.customerPhone),
@@ -275,4 +270,14 @@ export function mapOrder(
   }
 
   return order;
+}
+
+/**
+ * Maps a Firestore order document onto the typed `Order` domain model.
+ * Tolerates partial / legacy documents so Admin and Checkout stay resilient.
+ */
+export function mapOrder(
+  snapshot: QueryDocumentSnapshot<DocumentData> | DocumentSnapshot<DocumentData>,
+): Order {
+  return mapOrderFromData(snapshot.id, snapshot.data() ?? {});
 }

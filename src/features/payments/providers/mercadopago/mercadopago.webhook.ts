@@ -3,12 +3,13 @@ import {
   WebhookSignatureValidator,
 } from "mercadopago";
 
-import { OrderError, OrderService } from "@/features/orders/services";
 import {
-  commitSaleSafely,
-  restoreSaleSafely,
-} from "@/features/inventory/lib/inventory-order-hooks";
+  commitSaleSafelyWithAdmin,
+  restoreSaleSafelyWithAdmin,
+} from "@/features/inventory/services/inventory.admin";
 import { dispatchNotificationSafely } from "@/features/notifications/lib/dispatch-notification";
+import { OrderError } from "@/features/orders/services";
+import { AdminOrderService } from "@/features/orders/services/order.admin";
 import { PaymentError } from "@/features/payments/services/payment-error";
 import { getMercadoPagoConfig } from "./mercadopago.config";
 import { toMercadoPagoWebhookError } from "./mercadopago.errors";
@@ -82,13 +83,13 @@ function extractMercadoPagoPaymentId(input: {
 
 /**
  * Validates signature, verifies payment via Mercado Pago API, updates order
- * through OrderService. Idempotent for duplicate notifications.
+ * through AdminOrderService (GAP-004). Idempotent for duplicate notifications.
  */
 export async function processMercadoPagoWebhook(input: {
   headers: Headers;
   query: URLSearchParams;
   body: unknown;
-  orderService?: OrderService;
+  orderService?: AdminOrderService;
 }): Promise<MercadoPagoWebhookProcessResult> {
   try {
     const config = getMercadoPagoConfig();
@@ -146,7 +147,7 @@ export async function processMercadoPagoWebhook(input: {
       };
     }
 
-    const orderService = input.orderService ?? new OrderService();
+    const orderService = input.orderService ?? new AdminOrderService();
     const previous = await orderService.getById(orderId);
     const previousPaymentStatus = previous?.payment.status;
 
@@ -159,11 +160,9 @@ export async function processMercadoPagoWebhook(input: {
       provider: "mercadopago",
     });
 
-    // External email send only after successful persistence (RFC-019).
-    // Inventory commit after paid — validation #2 inside commitSale (RFC-023).
     if (previousPaymentStatus !== updated.payment.status) {
       if (updated.payment.status === "paid") {
-        await commitSaleSafely(updated.id);
+        await commitSaleSafelyWithAdmin(updated.id);
         await dispatchNotificationSafely({
           type: "payment.approved",
           orderId: updated.id,
@@ -174,7 +173,7 @@ export async function processMercadoPagoWebhook(input: {
           orderId: updated.id,
         });
       } else if (updated.payment.status === "refunded") {
-        await restoreSaleSafely(updated.id);
+        await restoreSaleSafelyWithAdmin(updated.id);
       }
     }
 
@@ -186,8 +185,6 @@ export async function processMercadoPagoWebhook(input: {
       orderStatus: updated.status,
     };
   } catch (error) {
-    // Preserve OrderError so the route can return 200 for unknown orders
-    // and 500 for Firestore failures — do not mask as signature 401.
     if (error instanceof OrderError || error instanceof PaymentError) {
       throw error;
     }

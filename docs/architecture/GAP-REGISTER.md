@@ -40,10 +40,10 @@
 
 | ID | Priority | Status | Title | Brief |
 |----|----------|--------|-------|-------|
-| GAP-001 | P0 | open | Firestore + Storage security rules in-repo | [gaps/GAP-001-firestore-storage-rules.md](./gaps/GAP-001-firestore-storage-rules.md) |
+| GAP-001 | P0 | done | Firestore + Storage security rules in-repo | [gaps/GAP-001-firestore-storage-rules.md](./gaps/GAP-001-firestore-storage-rules.md) |
 | GAP-002 | P0 | open | Server-side Admin auth (middleware / session / claims) | [gaps/GAP-002-server-admin-auth.md](./gaps/GAP-002-server-admin-auth.md) |
 | GAP-003 | P0 | done | Harden notifications dispatch API | [gaps/GAP-003-harden-notifications-api.md](./gaps/GAP-003-harden-notifications-api.md) |
-| GAP-004 | P1 | open | Firebase Admin SDK for privileged server paths | [gaps/GAP-004-firebase-admin-sdk.md](./gaps/GAP-004-firebase-admin-sdk.md) |
+| GAP-004 | P1 | done | Firebase Admin SDK for privileged server paths | [gaps/GAP-004-firebase-admin-sdk.md](./gaps/GAP-004-firebase-admin-sdk.md) |
 | GAP-005 | P1 | open | Minimal automated tests (inventory, payments, ownership) | [gaps/GAP-005-automated-tests.md](./gaps/GAP-005-automated-tests.md) |
 | GAP-006 | P1 | open | Checkout price & availability revalidation | [gaps/GAP-006-checkout-revalidation.md](./gaps/GAP-006-checkout-revalidation.md) |
 | GAP-007 | P2 | open | Real shipping methods from Settings | [gaps/GAP-007-shipping-methods.md](./gaps/GAP-007-shipping-methods.md) |
@@ -89,5 +89,6 @@ Security first (001–004), then quality (005–006), then product depth.
 
 | Date | Note |
 |------|------|
+| 2026-07-21 | GAP-001 + GAP-004 done — rules in-repo + Firebase Admin SDK |
 | 2026-07-21 | GAP-003 done — secret-gated HTTP dispatch + authorized server action |
 | 2026-07-19 | Initial register created from post-RFC-023 readiness review |

@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Priority | **P1** |
-| Status | `open` |
-| Related | GAP-001, GAP-002, GAP-003 |
+| Status | `done` |
+| Related | GAP-001, GAP-002, GAP-003, ADR-024 |
 
 ## Problem
 
@@ -27,9 +27,16 @@ Introduce `firebase-admin` (or equivalent) for server-only modules: webhooks, in
 
 ## Acceptance criteria
 
-- [ ] Webhook path does not depend on open client rules for order/inventory updates
-- [ ] Secrets never shipped to the browser
-- [ ] ADR note on Admin vs client boundary
+- [x] Webhook path does not depend on open client rules for order/inventory updates
+- [x] Secrets never shipped to the browser
+- [x] ADR note on Admin vs client boundary
+
+## Implementation notes (shipped)
+
+- `firebase-admin` + `getAdminDb()` credential chain
+- `AdminOrderService` + inventory admin helpers for webhook/preference
+- Admin SSR loaders under `src/features/admin/lib/admin-server-data.ts`
+- See [ADR-024](../ADR-024-firestore-rules-admin-sdk.md)
 
 ## When done
 

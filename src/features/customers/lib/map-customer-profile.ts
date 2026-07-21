@@ -2,6 +2,7 @@ import { Timestamp } from "firebase/firestore";
 
 import type { PersistedRole, UserStatus } from "@/features/auth/types";
 import type { CustomerProfile } from "@/features/customers/types";
+import { toClientTimestamp } from "@/lib/firestore-timestamp";
 
 /**
  * Maps a Firestore `customers/{id}` document onto `CustomerProfile`.
@@ -29,10 +30,8 @@ export function mapCustomerProfile(
     role: persistedRole,
     status: userStatus,
     addresses: [],
-    createdAt:
-      data.createdAt instanceof Timestamp ? data.createdAt : Timestamp.now(),
-    updatedAt:
-      data.updatedAt instanceof Timestamp ? data.updatedAt : Timestamp.now(),
+    createdAt: toClientTimestamp(data.createdAt, Timestamp.now()),
+    updatedAt: toClientTimestamp(data.updatedAt, Timestamp.now()),
   };
 
   if (typeof data.phone === "string" && data.phone.trim()) {

@@ -30,6 +30,7 @@ import {
   type StoreSettings,
   type StoreSettingsUpdateInput,
 } from "@/features/settings/types";
+import { toClientTimestamp } from "@/lib/firestore-timestamp";
 
 /** Firestore collection that holds store configuration documents. */
 export const SETTINGS_COLLECTION = "settings";
@@ -156,11 +157,7 @@ function resolveMappedPaymentProviders(data: DocumentData): {
 }
 
 function asTimestamp(value: unknown, fallback: Timestamp): Timestamp {
-  if (value instanceof Timestamp) {
-    return value;
-  }
-
-  return fallback;
+  return toClientTimestamp(value, fallback);
 }
 
 /**

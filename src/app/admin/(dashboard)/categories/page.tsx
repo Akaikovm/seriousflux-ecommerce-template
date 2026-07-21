@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 
 import { AdminCategoriesTable } from "@/features/admin/categories/AdminCategoriesTable";
 import { toCategoryFormData } from "@/features/admin/categories/category-form-data";
-import {
-  CategoryError,
-  CategoryService,
-} from "@/features/categories/services";
+import { adminListCategories } from "@/features/admin/lib/admin-server-data";
+import { CategoryError } from "@/features/categories/services";
 import type { Category } from "@/features/categories/types";
 
 export const metadata: Metadata = {
@@ -14,7 +12,7 @@ export const metadata: Metadata = {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await new CategoryService().listAll();
+    return await adminListCategories();
   } catch (error) {
     if (error instanceof CategoryError) {
       console.error(`[CategoryService] ${error.code}: ${error.message}`);

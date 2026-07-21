@@ -5,7 +5,8 @@ import {
   AdminOrderDetail,
   toAdminOrderView,
 } from "@/features/admin/orders";
-import { OrderError, OrderService } from "@/features/orders/services";
+import { adminGetOrderById } from "@/features/admin/lib/admin-server-data";
+import { OrderError } from "@/features/orders/services";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
 type AdminOrderDetailPageProps = {
@@ -17,7 +18,7 @@ export async function generateMetadata({
 }: AdminOrderDetailPageProps): Promise<Metadata> {
   const { id } = await params;
   try {
-    const order = await new OrderService().getById(id);
+    const order = await adminGetOrderById(id);
     if (!order) {
       return { title: "Order" };
     }
@@ -38,7 +39,7 @@ export default async function AdminOrderDetailPage({
 
   let order = null;
   try {
-    order = await new OrderService().getById(id);
+    order = await adminGetOrderById(id);
   } catch (error) {
     if (error instanceof OrderError) {
       console.error(`[OrderService] ${error.code}: ${error.message}`);
