@@ -56,7 +56,7 @@ export function AdminLayout({ storeName, children }: AdminLayoutProps) {
           title={title}
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="admin-main flex-1 p-3 sm:p-5 lg:p-6">{children}</main>
+        <main className="admin-main flex-1 p-3 sm:p-4 lg:p-5">{children}</main>
       </div>
     </div>
   );

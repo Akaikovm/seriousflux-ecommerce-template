@@ -1,8 +1,8 @@
 import Link from "next/link";
 
+import { AdminEmptyState } from "@/features/admin/ui";
 import { createT, getDictionary, resolveLanguage } from "@/i18n";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
-import { EmptyState } from "@/shared/ui/EmptyState";
 import { Button } from "@/shared/ui/Button";
 
 /**
@@ -13,12 +13,14 @@ export default async function AdminOrderNotFound() {
   const t = createT(getDictionary(resolveLanguage(settings.language)));
 
   return (
-    <EmptyState
+    <AdminEmptyState
       title={t("admin.orders.notFoundTitle")}
       description={t("admin.orders.notFoundDescription")}
       action={
         <Link href="/admin/orders">
-          <Button type="button">{t("admin.orders.backToOrders")}</Button>
+          <Button type="button" className="admin-btn-accent">
+            {t("admin.orders.backToOrders")}
+          </Button>
         </Link>
       }
     />

@@ -12,6 +12,7 @@ import {
 } from "@/features/admin/customers/CustomerBadges";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminList,
   AdminPage,
   AdminPageHeader,
   AdminRowActions,
@@ -147,21 +148,21 @@ export function AdminCustomersTable({
       id: "customer",
       header: t("admin.customers.columns.customer"),
       cell: (customer) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <CustomerAvatar
             name={customer.displayName || customer.email}
             photoURL={customer.photoURL}
           />
-          <div className="min-w-0">
+          <div className="admin-table__entity min-w-0">
             <Link
               href={`/admin/customers/${customer.id}`}
-              className="font-medium text-foreground underline-offset-2 hover:underline"
+              className="admin-table__entity-title underline-offset-2 hover:underline"
             >
               {customer.displayName || "—"}
             </Link>
-            <p className="truncate text-xs text-muted-foreground">
+            <span className="admin-table__entity-meta truncate">
               {customer.email}
-            </p>
+            </span>
           </div>
         </div>
       ),
@@ -180,7 +181,7 @@ export function AdminCustomersTable({
       id: "created",
       header: t("admin.customers.columns.created"),
       cell: (customer) => (
-        <span className="text-muted-foreground">
+        <span className="admin-table__entity-meta whitespace-nowrap">
           {formatDate(customer.createdAt, locale)}
         </span>
       ),
@@ -235,100 +236,100 @@ export function AdminCustomersTable({
     .join(" · ");
 
   return (
-    <AdminPage>
+    <AdminPage list>
       <AdminPageHeader
         eyebrow={t("admin.customers.eyebrow")}
         title={t("admin.customers.title")}
         description={t("admin.customers.description")}
       />
 
-      <AdminTableToolbar>
-        <Input
-          label={t("admin.customers.searchThisPage")}
-          name="customer-search"
-          placeholder={t("admin.customers.searchPlaceholder")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <Select
-          label={t("common.status")}
-          name="customer-status-filter"
-          options={statusOptions}
-          value={query.status}
-          onChange={(event) => {
-            const value = event.target.value;
-            replaceQuery({
-              status: value === "active" || value === "inactive" ? value : "",
-            });
-          }}
-        />
-        <Select
-          label={t("admin.customers.fields.role")}
-          name="customer-role-filter"
-          options={roleOptions}
-          value={query.role}
-          onChange={(event) => {
-            const value = event.target.value;
-            const role: PersistedRole | "" =
-              value === "customer" || value === "staff" || value === "admin"
-                ? value
-                : "";
-            replaceQuery({ role });
-          }}
-        />
-        <Select
-          label={t("admin.customers.sortLabel")}
-          name="customer-sort"
-          options={sortOptions}
-          value={query.sort}
-          onChange={(event) => {
-            const value = event.target.value as CustomerAdminListSort;
-            replaceQuery({ sort: value });
-          }}
-        />
-      </AdminTableToolbar>
+      <AdminList>
+        <AdminTableToolbar>
+          <Input
+            label={t("admin.customers.searchThisPage")}
+            name="customer-search"
+            placeholder={t("admin.customers.searchPlaceholder")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            label={t("common.status")}
+            name="customer-status-filter"
+            options={statusOptions}
+            value={query.status}
+            onChange={(event) => {
+              const value = event.target.value;
+              replaceQuery({
+                status: value === "active" || value === "inactive" ? value : "",
+              });
+            }}
+          />
+          <Select
+            label={t("admin.customers.fields.role")}
+            name="customer-role-filter"
+            options={roleOptions}
+            value={query.role}
+            onChange={(event) => {
+              const value = event.target.value;
+              const role: PersistedRole | "" =
+                value === "customer" || value === "staff" || value === "admin"
+                  ? value
+                  : "";
+              replaceQuery({ role });
+            }}
+          />
+          <Select
+            label={t("admin.customers.sortLabel")}
+            name="customer-sort"
+            options={sortOptions}
+            value={query.sort}
+            onChange={(event) => {
+              const value = event.target.value as CustomerAdminListSort;
+              replaceQuery({ sort: value });
+            }}
+          />
+        </AdminTableToolbar>
 
-      <p className="mb-3 text-xs text-muted-foreground">
-        {t("admin.customers.searchPageHint")}
-      </p>
+        <p className="admin-list__hint">{t("admin.customers.searchPageHint")}</p>
 
-      <AdminTable
-        columns={columns}
-        rows={filtered}
-        getRowId={(customer) => customer.id}
-        pending={isPending}
-        emptyTitle={t("admin.customers.emptyTitle")}
-        emptyDescription={
-          customers.length === 0
-            ? t("admin.customers.emptyDescription")
-            : t("admin.customers.emptyFilteredDescription")
-        }
-        footer={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span>{pageFooterLabel}</span>
-            <div className="flex items-center gap-2">
-              {hasCursor ? (
-                <Button
-                  type="button"
-                  className="admin-action-btn admin-btn-ghost"
-                  onClick={() => push(firstPageHref)}
-                >
-                  {t("admin.customers.firstPage")}
-                </Button>
-              ) : null}
-              {nextPageHref ? (
-                <Button
-                  type="button"
-                  className="admin-action-btn admin-btn-ghost"
-                  onClick={() => push(nextPageHref)}
-                >
-                  {t("admin.customers.nextPage")}
-                </Button>
-              ) : null}
+        <AdminTable
+          columns={columns}
+          rows={filtered}
+          getRowId={(customer) => customer.id}
+          pending={isPending}
+          emptyTitle={t("admin.customers.emptyTitle")}
+          emptyDescription={
+            customers.length === 0
+              ? t("admin.customers.emptyDescription")
+              : t("admin.customers.emptyFilteredDescription")
+          }
+          footer={
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>{pageFooterLabel}</span>
+              <div className="flex items-center gap-2">
+                {hasCursor ? (
+                  <Button
+                    type="button"
+                    className="admin-action-btn admin-btn-ghost"
+                    onClick={() => push(firstPageHref)}
+                  >
+                    {t("admin.customers.firstPage")}
+                  </Button>
+                ) : null}
+                {nextPageHref ? (
+                  <Button
+                    type="button"
+                    className="admin-action-btn admin-btn-ghost"
+                    onClick={() => push(nextPageHref)}
+                  >
+                    {t("admin.customers.nextPage")}
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        }
-      />
+          }
+        />
+      </AdminList>
     </AdminPage>
   );
 }

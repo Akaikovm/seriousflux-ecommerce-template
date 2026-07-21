@@ -18,7 +18,7 @@ export function ContactSettingsSection({
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5">
+    <div className="flex flex-col gap-4">
       <Input
         name="email"
         label={t("admin.settings.contact.email")}

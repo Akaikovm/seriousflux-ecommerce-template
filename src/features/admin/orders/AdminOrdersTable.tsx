@@ -7,6 +7,7 @@ import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import { DataTable } from "@/features/admin/components/DataTable";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminList,
   AdminPage,
   AdminPageHeader,
   AdminRowActions,
@@ -99,7 +100,7 @@ export function AdminOrdersTable({
       cell: (order) => (
         <Link
           href={`/admin/orders/${order.id}`}
-          className="font-medium text-foreground underline-offset-2 hover:underline"
+          className="admin-table__entity-title underline-offset-2 hover:underline"
         >
           {order.orderNumber}
         </Link>
@@ -109,9 +110,9 @@ export function AdminOrdersTable({
       id: "customer",
       header: t("admin.orders.columns.customer"),
       cell: (order) => (
-        <div>
-          <p className="font-medium text-foreground">{order.customerName}</p>
-          <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
+        <div className="admin-table__entity">
+          <span className="admin-table__entity-title">{order.customerName}</span>
+          <span className="admin-table__entity-meta">{order.customerEmail}</span>
         </div>
       ),
     },
@@ -119,7 +120,7 @@ export function AdminOrdersTable({
       id: "date",
       header: t("admin.orders.columns.date"),
       cell: (order) => (
-        <span className="text-muted-foreground">
+        <span className="admin-table__entity-meta whitespace-nowrap">
           {formatDate(order.createdAt, locale)}
         </span>
       ),
@@ -127,8 +128,11 @@ export function AdminOrdersTable({
     {
       id: "total",
       header: t("admin.orders.columns.total"),
-      cell: (order) =>
-        formatPrice(order.totals.total, order.currency || currency, locale),
+      cell: (order) => (
+        <span className="tabular-nums font-medium">
+          {formatPrice(order.totals.total, order.currency || currency, locale)}
+        </span>
+      ),
     },
     {
       id: "payment",
@@ -157,46 +161,48 @@ export function AdminOrdersTable({
   ];
 
   return (
-    <AdminPage>
+    <AdminPage list>
       <AdminPageHeader
         eyebrow={t("admin.orders.eyebrow")}
         title={t("admin.orders.title")}
         description={t("admin.orders.description")}
       />
 
-      <AdminTableToolbar>
-        <Input
-          label={t("common.search")}
-          name="order-search"
-          placeholder={t("admin.orders.searchPlaceholder")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <Select
-          label={t("admin.orders.fulfillmentStatusFilter")}
-          name="order-status-filter"
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-        />
-      </AdminTableToolbar>
+      <AdminList>
+        <AdminTableToolbar>
+          <Input
+            label={t("common.search")}
+            name="order-search"
+            placeholder={t("admin.orders.searchPlaceholder")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            label={t("admin.orders.fulfillmentStatusFilter")}
+            name="order-status-filter"
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          />
+        </AdminTableToolbar>
 
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        getRowId={(order) => order.id}
-        emptyTitle={t("admin.orders.emptyTitle")}
-        emptyDescription={
-          orders.length === 0
-            ? t("admin.orders.emptyDescription")
-            : t("admin.orders.emptyFilteredDescription")
-        }
-        footer={
-          filtered.length === 1
-            ? t("admin.orders.footerCount", { count: filtered.length })
-            : t("admin.orders.footerCountPlural", { count: filtered.length })
-        }
-      />
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          getRowId={(order) => order.id}
+          emptyTitle={t("admin.orders.emptyTitle")}
+          emptyDescription={
+            orders.length === 0
+              ? t("admin.orders.emptyDescription")
+              : t("admin.orders.emptyFilteredDescription")
+          }
+          footer={
+            filtered.length === 1
+              ? t("admin.orders.footerCount", { count: filtered.length })
+              : t("admin.orders.footerCountPlural", { count: filtered.length })
+          }
+        />
+      </AdminList>
     </AdminPage>
   );
 }

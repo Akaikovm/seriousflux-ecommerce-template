@@ -62,7 +62,15 @@
   --admin-sidebar-width: 16rem;
   --admin-header-height: 3.5rem;
   --admin-content-max: 56rem;
+  --admin-list-max: 80rem;
   --admin-form-max: 42rem;
+
+  /* Table density */
+  --admin-table-cell-y: 0.625rem;
+  --admin-table-cell-x: 1rem;
+  --admin-table-thumb: 2rem;
+  --admin-action-h: 1.75rem;
+  --admin-btn-h: 2.25rem;
 
   /* Motion */
   --admin-ease: cubic-bezier(0.22, 1, 0.36, 1);

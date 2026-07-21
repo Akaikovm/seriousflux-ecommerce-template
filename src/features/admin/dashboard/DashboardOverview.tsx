@@ -34,14 +34,14 @@ export function DashboardOverview({
   const storeLabel = storeName || t("admin.dashboard.descriptionFallback");
 
   return (
-    <AdminPage>
+    <AdminPage detail>
       <AdminPageHeader
         eyebrow={t("admin.dashboard.eyebrow")}
         title={t("admin.dashboard.title")}
         description={t("admin.dashboard.description", { storeName: storeLabel })}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <AdminStatCard
           label={t("admin.dashboard.products")}
           value={productCount}
@@ -64,14 +64,14 @@ export function DashboardOverview({
         />
         <AdminSurface compact>
           <p className="admin-stat-card__label">{t("admin.dashboard.storeStatus")}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <Badge variant={maintenanceMode ? "secondary" : "primary"}>
+          <div className="mt-2 flex items-center gap-2">
+            <Badge variant="secondary">
               {maintenanceMode
                 ? t("admin.dashboard.maintenance")
                 : t("admin.dashboard.live")}
             </Badge>
           </div>
-          <p className="admin-stat-card__hint mt-2">
+          <p className="admin-stat-card__hint">
             {maintenanceMode
               ? t("admin.dashboard.maintenanceHint")
               : t("admin.dashboard.liveHint")}

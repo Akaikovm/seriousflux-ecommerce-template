@@ -14,6 +14,10 @@ type AdminSectionProps = {
   flashToken?: number;
   children: ReactNode;
   className?: string;
+  /** Tighter head/body padding for detail density. */
+  compact?: boolean;
+  /** No body padding — for nested AdminTable / AdminList. */
+  flushBody?: boolean;
 };
 
 /**
@@ -27,6 +31,8 @@ export function AdminSection({
   flashToken = 0,
   children,
   className,
+  compact = false,
+  flushBody = false,
 }: AdminSectionProps) {
   const [flash, setFlash] = useState(false);
 
@@ -52,7 +58,12 @@ export function AdminSection({
     <section
       id={id}
       aria-labelledby={titleId}
-      className={cn("admin-section", className)}
+      className={cn(
+        "admin-section",
+        compact && "admin-section--compact",
+        flushBody && "admin-section--flush-body",
+        className,
+      )}
     >
       <AdminSurface flash={flash} padded={false}>
         <header className="admin-section__head">
@@ -70,7 +81,15 @@ export function AdminSection({
             ) : null}
           </div>
         </header>
-        <div className="admin-surface__body">{children}</div>
+        <div
+          className={cn(
+            "admin-surface__body",
+            flushBody && "admin-surface__body--flush",
+            compact && !flushBody && "admin-surface__body--compact",
+          )}
+        >
+          {children}
+        </div>
       </AdminSurface>
     </section>
   );

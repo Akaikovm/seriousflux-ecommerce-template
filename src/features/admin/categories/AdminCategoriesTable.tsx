@@ -8,6 +8,7 @@ import type { CategoryFormData } from "@/features/admin/categories/category-form
 import { DataTable } from "@/features/admin/components/DataTable";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminList,
   AdminPage,
   AdminPageHeader,
   AdminRowActions,
@@ -94,31 +95,31 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
     {
       id: "image",
       header: t("admin.categories.columns.image"),
-      className: "w-16",
+      className: "w-14",
       cell: (category) =>
         category.image ? (
           // eslint-disable-next-line @next/next/no-img-element -- remote hosts vary per client; next/image domains are not fixed yet
           <img
             src={category.image}
             alt=""
-            className="size-10 rounded-md object-cover bg-muted"
+            className="admin-table__thumb"
           />
         ) : (
-          <div className="size-10 rounded-md bg-muted" aria-hidden />
+          <span className="admin-table__thumb admin-table__thumb--empty" aria-hidden />
         ),
     },
     {
       id: "name",
       header: t("admin.categories.columns.name"),
       cell: (category) => (
-        <p className="font-medium text-foreground">{category.name}</p>
+        <span className="admin-table__entity-title">{category.name}</span>
       ),
     },
     {
       id: "slug",
       header: t("admin.categories.columns.slug"),
       cell: (category) => (
-        <span className="text-muted-foreground">{category.slug}</span>
+        <span className="admin-table__entity-meta">{category.slug}</span>
       ),
     },
     {
@@ -142,7 +143,9 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
     {
       id: "order",
       header: t("admin.categories.columns.order"),
-      cell: (category) => category.order,
+      cell: (category) => (
+        <span className="tabular-nums">{category.order}</span>
+      ),
     },
     {
       id: "actions",
@@ -179,7 +182,7 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
   ];
 
   return (
-    <AdminPage>
+    <AdminPage list>
       <AdminPageHeader
         eyebrow={t("admin.categories.eyebrow")}
         title={t("admin.categories.title")}
@@ -193,21 +196,23 @@ export function AdminCategoriesTable({ categories }: AdminCategoriesTableProps) 
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={categories}
-        getRowId={(category) => category.id}
-        emptyTitle={t("admin.categories.emptyTitle")}
-        emptyDescription={t("admin.categories.emptyDescription")}
-        emptyAction={
-          <Link href="/admin/categories/new">
-            <Button type="button" className="admin-btn-accent">
-              {t("admin.categories.create")}
-            </Button>
-          </Link>
-        }
-        footer={t("admin.categories.footerCount", { count: categories.length })}
-      />
+      <AdminList>
+        <DataTable
+          columns={columns}
+          rows={categories}
+          getRowId={(category) => category.id}
+          emptyTitle={t("admin.categories.emptyTitle")}
+          emptyDescription={t("admin.categories.emptyDescription")}
+          emptyAction={
+            <Link href="/admin/categories/new">
+              <Button type="button" className="admin-btn-accent">
+                {t("admin.categories.create")}
+              </Button>
+            </Link>
+          }
+          footer={t("admin.categories.footerCount", { count: categories.length })}
+        />
+      </AdminList>
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

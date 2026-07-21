@@ -352,7 +352,7 @@ export function ProductForm({
             onChange={(url) => setField("image", url)}
           />
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input
               name="price"
               label={t("admin.products.fields.price")}
@@ -430,12 +430,12 @@ export function ProductForm({
             onChange={(event) => setField("active", event.target.checked)}
           />
 
-          <div className="border-t border-border pt-5">
-            <p className="mb-4 text-sm font-medium text-foreground">
+          <div className="border-t border-[var(--admin-border-subtle)] pt-4">
+            <p className="mb-3 text-sm font-medium text-[var(--admin-fg)]">
               {t("admin.products.fields.inventory")}
             </p>
 
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <Switch
                 name="trackInventory"
                 label={

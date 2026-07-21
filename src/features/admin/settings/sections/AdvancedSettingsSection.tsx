@@ -16,7 +16,7 @@ export function AdvancedSettingsSection({
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <Switch
         name="maintenanceMode"
         label={t("admin.settings.advanced.maintenanceMode")}

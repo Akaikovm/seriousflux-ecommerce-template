@@ -18,7 +18,7 @@ export function GeneralSettingsSection({
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5">
+    <div className="flex flex-col gap-4">
       <Input
         name="storeName"
         label={t("admin.settings.general.storeName")}
@@ -47,7 +47,7 @@ export function GeneralSettingsSection({
         onChange={(event) => setField("description", event.target.value)}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="currency"
           label={t("admin.settings.general.currency")}
@@ -72,7 +72,7 @@ export function GeneralSettingsSection({
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="locale"
           label={t("admin.settings.general.locale")}

@@ -2,6 +2,7 @@ export { AdminBackLink } from "./AdminBackLink";
 export { AdminBreadcrumb } from "./AdminBreadcrumb";
 export { AdminEmptyState } from "./AdminEmptyState";
 export { AdminFormFooter, AdminFormLayout } from "./AdminFormLayout";
+export { AdminList } from "./AdminList";
 export { AdminLoadingState } from "./AdminLoadingState";
 export { AdminSpinner } from "./AdminSpinner";
 export { useAdminRouterTransition } from "./useAdminRouterTransition";

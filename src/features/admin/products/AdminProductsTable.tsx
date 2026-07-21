@@ -9,6 +9,7 @@ import type { AdminProductRow } from "@/features/admin/products/admin-product-ro
 import { StockStatusBadge } from "@/features/admin/products/StockStatusBadge";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
+  AdminList,
   AdminPage,
   AdminPageHeader,
   AdminRowActions,
@@ -154,26 +155,26 @@ export function AdminProductsTable({
     {
       id: "image",
       header: t("admin.products.columns.image"),
-      className: "w-16",
+      className: "w-14",
       cell: (product) =>
         product.image ? (
           // eslint-disable-next-line @next/next/no-img-element -- remote hosts vary per client; next/image domains are not fixed yet
           <img
             src={product.image}
             alt=""
-            className="size-10 rounded-md object-cover bg-muted"
+            className="admin-table__thumb"
           />
         ) : (
-          <div className="size-10 rounded-md bg-muted" aria-hidden />
+          <span className="admin-table__thumb admin-table__thumb--empty" aria-hidden />
         ),
     },
     {
       id: "name",
       header: t("admin.products.columns.name"),
       cell: (product) => (
-        <div>
-          <p className="font-medium text-foreground">{product.name}</p>
-          <p className="text-xs text-muted-foreground">{product.slug}</p>
+        <div className="admin-table__entity">
+          <span className="admin-table__entity-title">{product.name}</span>
+          <span className="admin-table__entity-meta">{product.slug}</span>
         </div>
       ),
     },
@@ -248,7 +249,7 @@ export function AdminProductsTable({
   ];
 
   return (
-    <AdminPage>
+    <AdminPage list>
       <AdminPageHeader
         eyebrow={t("admin.products.eyebrow")}
         title={t("admin.products.title")}
@@ -262,52 +263,54 @@ export function AdminProductsTable({
         }
       />
 
-      <AdminTableToolbar>
-        <Input
-          name="product-search"
-          label={t("common.search")}
-          value={search}
-          placeholder={t("admin.products.searchPlaceholder")}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <Select
-          name="stock-filter"
-          label={t("admin.products.columns.inventory")}
-          value={stockFilter}
-          options={[
-            { value: "all", label: t("admin.products.filter.stockAll") },
-            { value: "tracked", label: t("admin.products.filter.stockTracked") },
-            {
-              value: "not_tracked",
-              label: t("admin.products.filter.stockNotTracked"),
-            },
-            { value: "low_stock", label: t("inventory.status.low_stock") },
-            {
-              value: "out_of_stock",
-              label: t("inventory.status.out_of_stock"),
-            },
-          ]}
-          onChange={(event) =>
-            setStockFilter(event.target.value as StockFilter)
-          }
-        />
-      </AdminTableToolbar>
+      <AdminList>
+        <AdminTableToolbar>
+          <Input
+            name="product-search"
+            label={t("common.search")}
+            value={search}
+            placeholder={t("admin.products.searchPlaceholder")}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            name="stock-filter"
+            label={t("admin.products.columns.inventory")}
+            value={stockFilter}
+            options={[
+              { value: "all", label: t("admin.products.filter.stockAll") },
+              { value: "tracked", label: t("admin.products.filter.stockTracked") },
+              {
+                value: "not_tracked",
+                label: t("admin.products.filter.stockNotTracked"),
+              },
+              { value: "low_stock", label: t("inventory.status.low_stock") },
+              {
+                value: "out_of_stock",
+                label: t("inventory.status.out_of_stock"),
+              },
+            ]}
+            onChange={(event) =>
+              setStockFilter(event.target.value as StockFilter)
+            }
+          />
+        </AdminTableToolbar>
 
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        getRowId={(product) => product.id}
-        emptyTitle={t("admin.products.emptyTitle")}
-        emptyDescription={t("admin.products.emptyDescription")}
-        emptyAction={
-          <Link href="/admin/products/new">
-            <Button type="button" className="admin-btn-accent">
-              {t("admin.products.create")}
-            </Button>
-          </Link>
-        }
-        footer={t("admin.products.footerCount", { count: filtered.length })}
-      />
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          getRowId={(product) => product.id}
+          emptyTitle={t("admin.products.emptyTitle")}
+          emptyDescription={t("admin.products.emptyDescription")}
+          emptyAction={
+            <Link href="/admin/products/new">
+              <Button type="button" className="admin-btn-accent">
+                {t("admin.products.create")}
+              </Button>
+            </Link>
+          }
+          footer={t("admin.products.footerCount", { count: filtered.length })}
+        />
+      </AdminList>
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

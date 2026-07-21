@@ -18,7 +18,7 @@ export function AdminStatCard({
   className,
 }: AdminStatCardProps) {
   return (
-    <AdminSurface compact className={cn(className)} interactive>
+    <AdminSurface compact className={cn(className)}>
       <p className="admin-stat-card__label">{label}</p>
       <p className="admin-stat-card__value">{value}</p>
       {hint ? <p className="admin-stat-card__hint">{hint}</p> : null}

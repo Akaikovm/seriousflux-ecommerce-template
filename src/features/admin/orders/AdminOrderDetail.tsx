@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import { OrderTimeline } from "@/features/admin/orders/OrderTimeline";
 import {
+  AdminBackLink,
   AdminBreadcrumb,
   AdminPage,
   AdminPageHeader,
@@ -186,13 +187,16 @@ export function AdminOrderDetail({
   const address = order.shippingAddress;
 
   return (
-    <AdminPage>
+    <AdminPage detail>
       <AdminBreadcrumb
         items={[
           { label: t("admin.orders.title"), href: "/admin/orders" },
           { label: order.orderNumber },
         ]}
       />
+      <AdminBackLink href="/admin/orders">
+        {t("admin.orders.backToOrders")}
+      </AdminBackLink>
       <AdminPageHeader
         eyebrow={t("admin.orders.detailEyebrow")}
         title={t("admin.orders.detailTitle")}
@@ -201,99 +205,100 @@ export function AdminOrderDetail({
 
       {order.inventoryCommitStatus === "shortfall" ? (
         <AdminSection
+          compact
           title={t("admin.orders.inventoryShortfallTitle")}
           description={t("admin.orders.inventoryShortfallDescription")}
         >
           <Badge variant="secondary">{t("admin.orders.needsManualReview")}</Badge>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-[var(--admin-fg-muted)]">
             {t("admin.orders.inventoryShortfallHint")}
           </p>
         </AdminSection>
       ) : null}
 
-      <AdminSection title={t("admin.orders.orderSummary")}>
-        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">
+      <AdminSection compact title={t("admin.orders.orderSummary")}>
+        <dl className="admin-meta-grid sm:grid-cols-2 lg:grid-cols-3">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.fields.orderNumber")}
             </dt>
-            <dd className="mt-1 text-sm font-medium text-foreground">
-              {order.orderNumber}
-            </dd>
+            <dd className="admin-meta__value">{order.orderNumber}</dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.sections.fulfillment")}
             </dt>
-            <dd className="mt-1">
+            <dd className="admin-meta__value">
               <OrderStatusBadge status={order.status} />
             </dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.sections.payment")}
             </dt>
-            <dd className="mt-1">
+            <dd className="admin-meta__value">
               <PaymentStatusBadge status={order.payment.status} />
             </dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.fields.total")}
             </dt>
-            <dd className="mt-1 text-sm font-medium text-foreground">
+            <dd className="admin-meta__value tabular-nums">
               {formatPrice(order.totals.total, moneyCurrency, locale)}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.fields.createdAt")}
             </dt>
-            <dd className="mt-1 text-sm text-foreground">
+            <dd className="admin-meta__value admin-meta__value--muted">
               {formatDate(order.createdAt, locale)}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
+          <div className="admin-meta">
+            <dt className="admin-meta__label">
               {t("admin.orders.fields.updatedAt")}
             </dt>
-            <dd className="mt-1 text-sm text-foreground">
+            <dd className="admin-meta__value admin-meta__value--muted">
               {formatDate(order.updatedAt, locale)}
             </dd>
           </div>
         </dl>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[var(--admin-fg-muted)]">
           {t("admin.orders.firestoreId")}{" "}
-          <span className="font-mono text-foreground">{order.id}</span>
+          <span className="font-mono text-[var(--admin-fg)]">{order.id}</span>
         </p>
       </AdminSection>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <AdminSection title={t("admin.orders.sections.customer")}>
-          <dl className="flex flex-col gap-2 text-sm">
-            <div>
-              <dt className="text-xs text-muted-foreground">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AdminSection compact title={t("admin.orders.sections.customer")}>
+          <dl className="flex flex-col gap-3">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.name")}
               </dt>
-              <dd className="text-foreground">{order.customerName}</dd>
+              <dd className="admin-meta__value">{order.customerName}</dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.email")}
               </dt>
-              <dd className="text-foreground">{order.customerEmail}</dd>
+              <dd className="admin-meta__value">{order.customerEmail}</dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.phone")}
               </dt>
-              <dd className="text-foreground">{order.customerPhone || "—"}</dd>
+              <dd className="admin-meta__value">
+                {order.customerPhone || "—"}
+              </dd>
             </div>
           </dl>
         </AdminSection>
 
-        <AdminSection title={t("admin.orders.shippingAddress")}>
-          <address className="text-sm not-italic text-foreground">
+        <AdminSection compact title={t("admin.orders.shippingAddress")}>
+          <address className="admin-meta__value not-italic">
             <p>{address.fullName}</p>
             <p>{address.line1}</p>
             {address.line2 ? <p>{address.line2}</p> : null}
@@ -303,7 +308,7 @@ export function AdminOrderDetail({
             <p>{address.country}</p>
             {address.phone ? <p className="mt-2">{address.phone}</p> : null}
           </address>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[var(--admin-fg-muted)]">
             {t("admin.orders.shippingMethod", {
               label: order.shippingMethod.label,
               cost: formatPrice(
@@ -316,124 +321,132 @@ export function AdminOrderDetail({
         </AdminSection>
       </div>
 
-      <AdminSection title={t("admin.orders.products")}>
-        <ul className="divide-y divide-border">
+      <AdminSection compact title={t("admin.orders.products")}>
+        <ul className="admin-line-list">
           {order.items.map((item) => (
             <li
               key={`${item.productId}-${item.sku ?? item.productName}`}
-              className="flex gap-3 py-3 first:pt-0 last:pb-0"
+              className="admin-line-list__item"
             >
               {item.image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- snapshot URLs vary per client
                 <img
                   src={item.image}
                   alt=""
-                  className="size-12 shrink-0 rounded-md object-cover bg-muted"
+                  className="admin-table__thumb"
                 />
               ) : (
-                <div className="size-12 shrink-0 rounded-md bg-muted" aria-hidden />
+                <span
+                  className="admin-table__thumb admin-table__thumb--empty"
+                  aria-hidden
+                />
               )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
+              <div className="admin-table__entity min-w-0 flex-1">
+                <span className="admin-table__entity-title">
                   {item.productName}
-                </p>
-                <p className="text-xs text-muted-foreground">
+                </span>
+                <span className="admin-table__entity-meta">
                   {t("admin.orders.itemQtyEach", {
                     quantity: item.quantity,
                     price: formatPrice(item.unitPrice, moneyCurrency, locale),
                   })}
-                </p>
+                </span>
               </div>
-              <p className="shrink-0 text-sm font-medium text-foreground">
+              <span className="shrink-0 tabular-nums font-medium text-[var(--admin-fg)]">
                 {formatPrice(
                   item.unitPrice * item.quantity,
                   moneyCurrency,
                   locale,
                 )}
-              </p>
+              </span>
             </li>
           ))}
         </ul>
       </AdminSection>
 
-      <AdminSection title={t("admin.orders.sections.totals")}>
+      <AdminSection compact title={t("admin.orders.sections.totals")}>
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">
+            <dt className="text-[var(--admin-fg-muted)]">
               {t("admin.orders.fields.subtotal")}
             </dt>
-            <dd>
+            <dd className="tabular-nums">
               {formatPrice(order.totals.subtotal, moneyCurrency, locale)}
             </dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">
+            <dt className="text-[var(--admin-fg-muted)]">
               {t("admin.orders.fields.shipping")}
             </dt>
-            <dd>
+            <dd className="tabular-nums">
               {formatPrice(order.totals.shipping, moneyCurrency, locale)}
             </dd>
           </div>
           {order.totals.discount > 0 ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">
+              <dt className="text-[var(--admin-fg-muted)]">
                 {t("admin.orders.fields.discount")}
               </dt>
-              <dd>
+              <dd className="tabular-nums">
                 −{formatPrice(order.totals.discount, moneyCurrency, locale)}
               </dd>
             </div>
           ) : null}
           {order.totals.tax > 0 ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">
+              <dt className="text-[var(--admin-fg-muted)]">
                 {t("admin.orders.fields.tax")}
               </dt>
-              <dd>{formatPrice(order.totals.tax, moneyCurrency, locale)}</dd>
+              <dd className="tabular-nums">
+                {formatPrice(order.totals.tax, moneyCurrency, locale)}
+              </dd>
             </div>
           ) : null}
-          <div className="flex justify-between gap-4 border-t border-border pt-2 font-medium">
+          <div className="flex justify-between gap-4 border-t border-[var(--admin-border-subtle)] pt-2 font-medium">
             <dt>{t("admin.orders.fields.total")}</dt>
-            <dd>{formatPrice(order.totals.total, moneyCurrency, locale)}</dd>
+            <dd className="tabular-nums">
+              {formatPrice(order.totals.total, moneyCurrency, locale)}
+            </dd>
           </div>
         </dl>
       </AdminSection>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <AdminSection
+          compact
           title={t("admin.orders.sections.paymentInfo")}
           description={t("admin.orders.paymentInfoDescription")}
         >
-          <dl className="flex flex-col gap-2 text-sm">
-            <div>
-              <dt className="text-xs text-muted-foreground">
+          <dl className="flex flex-col gap-3">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.provider")}
               </dt>
-              <dd className="text-foreground">
+              <dd className="admin-meta__value">
                 {providerLabel(order.payment.provider, t)}
               </dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.paymentStatus")}
               </dt>
-              <dd className="mt-1">
+              <dd className="admin-meta__value">
                 <PaymentStatusBadge status={order.payment.status} />
               </dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.transactionId")}
               </dt>
-              <dd className="font-mono text-foreground">
+              <dd className="admin-meta__value font-mono">
                 {order.payment.transactionId || "—"}
               </dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">
+            <div className="admin-meta">
+              <dt className="admin-meta__label">
                 {t("admin.orders.fields.paidAt")}
               </dt>
-              <dd className="text-foreground">
+              <dd className="admin-meta__value admin-meta__value--muted">
                 {formatDate(order.payment.paidAt, locale)}
               </dd>
             </div>
@@ -463,6 +476,7 @@ export function AdminOrderDetail({
         </AdminSection>
 
         <AdminSection
+          compact
           title={t("admin.orders.sections.fulfillmentStatus")}
           description={t("admin.orders.fulfillmentDescription")}
         >
@@ -492,11 +506,12 @@ export function AdminOrderDetail({
         </AdminSection>
       </div>
 
-      <AdminSection title={t("admin.orders.orderTimeline")}>
+      <AdminSection compact title={t("admin.orders.orderTimeline")}>
         <OrderTimeline order={order} locale={locale} />
       </AdminSection>
 
       <AdminSection
+        compact
         title={t("admin.orders.adminNotes")}
         description={t("admin.orders.adminNotesDescription")}
       >

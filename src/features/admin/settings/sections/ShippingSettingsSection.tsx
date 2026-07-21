@@ -16,7 +16,7 @@ export function ShippingSettingsSection({
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <Switch
         name="shippingEnabled"
         label={t("admin.settings.shipping.enabled")}

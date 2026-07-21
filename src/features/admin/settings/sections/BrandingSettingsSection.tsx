@@ -20,7 +20,7 @@ export function BrandingSettingsSection({
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5">
+    <div className="flex flex-col gap-4">
       <ImageUpload
         label={t("admin.settings.branding.logo")}
         folder="branding"
@@ -39,7 +39,7 @@ export function BrandingSettingsSection({
         onChange={(url) => setField("favicon", url)}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="primaryColor"
           label={t("admin.settings.branding.primaryColor")}
@@ -62,7 +62,7 @@ export function BrandingSettingsSection({
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-end gap-2">
           <span
             className="mb-2 size-8 shrink-0 rounded-md border border-border"
@@ -139,7 +139,7 @@ export function BrandingSettingsSection({
         onChange={(url) => setHeroField("image", url)}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="heroCtaText"
           label={t("admin.settings.branding.heroCtaLabel")}

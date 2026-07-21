@@ -17,13 +17,13 @@ import {
 import type { AdminOrderView } from "@/features/admin/orders/admin-order-view";
 import type { AdminDataTableColumn } from "@/features/admin/types";
 import {
-  AdminBackLink,
   AdminBreadcrumb,
   AdminPage,
   AdminPageHeader,
   AdminSaveBar,
   AdminSection,
   AdminStatCard,
+  AdminSurface,
   AdminTable,
 } from "@/features/admin/ui";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -204,7 +204,7 @@ export function AdminCustomerDetail({
         cell: (order) => (
           <Link
             href={`/admin/orders/${order.id}`}
-            className="font-medium text-foreground underline-offset-2 hover:underline"
+            className="admin-table__entity-title underline-offset-2 hover:underline"
           >
             {order.orderNumber}
           </Link>
@@ -214,7 +214,7 @@ export function AdminCustomerDetail({
         id: "date",
         header: t("admin.orders.columns.date"),
         cell: (order) => (
-          <span className="text-muted-foreground">
+          <span className="admin-table__entity-meta whitespace-nowrap">
             {formatDate(order.createdAt, locale)}
           </span>
         ),
@@ -222,8 +222,11 @@ export function AdminCustomerDetail({
       {
         id: "total",
         header: t("admin.orders.columns.total"),
-        cell: (order) =>
-          formatPrice(order.totals.total, order.currency || currency, locale),
+        cell: (order) => (
+          <span className="tabular-nums font-medium">
+            {formatPrice(order.totals.total, order.currency || currency, locale)}
+          </span>
+        ),
       },
       {
         id: "payment",
@@ -240,7 +243,7 @@ export function AdminCustomerDetail({
   );
 
   return (
-    <AdminPage>
+    <AdminPage detail>
       <AdminBreadcrumb
         items={[
           { label: t("admin.customers.title"), href: "/admin/customers" },
@@ -252,9 +255,6 @@ export function AdminCustomerDetail({
           },
         ]}
       />
-      <AdminBackLink href="/admin/customers">
-        {t("admin.customers.backToCustomers")}
-      </AdminBackLink>
 
       <AdminPageHeader
         eyebrow={t("admin.customers.eyebrow")}
@@ -268,25 +268,26 @@ export function AdminCustomerDetail({
         }
       />
 
-      <div className="mb-6 flex items-center gap-4">
-        <CustomerAvatar
-          name={customer.displayName || customer.email}
-          photoURL={values.photoURL || customer.photoURL}
-          size="md"
-        />
-        <div className="min-w-0 text-sm text-muted-foreground">
-          <p>
-            {t("admin.customers.customerSince", {
-              date: formatDate(customer.createdAt, locale),
-            })}
-          </p>
-          <p className="mt-1 break-all font-mono text-xs">
-            {t("admin.customers.customerId", { id: customer.id })}
-          </p>
+      <AdminSurface compact>
+        <div className="admin-identity">
+          <CustomerAvatar
+            name={customer.displayName || customer.email}
+            photoURL={values.photoURL || customer.photoURL}
+          />
+          <div className="admin-identity__meta">
+            <p>
+              {t("admin.customers.customerSince", {
+                date: formatDate(customer.createdAt, locale),
+              })}
+            </p>
+            <p className="admin-identity__id">
+              {t("admin.customers.customerId", { id: customer.id })}
+            </p>
+          </div>
         </div>
-      </div>
+      </AdminSurface>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <AdminStatCard
           label={t("admin.customers.orderCount")}
           value={summary.orderCount}
@@ -302,7 +303,7 @@ export function AdminCustomerDetail({
         />
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         {formError ? (
           <p role="alert" className="text-sm text-destructive">
             {formError}
@@ -310,6 +311,7 @@ export function AdminCustomerDetail({
         ) : null}
 
         <AdminSection
+          compact
           title={t("admin.customers.sections.profile")}
           description={t("admin.customers.profileDescription")}
         >
@@ -349,6 +351,7 @@ export function AdminCustomerDetail({
         </AdminSection>
 
         <AdminSection
+          compact
           title={t("admin.customers.sections.access")}
           description={t("admin.customers.accessDescription")}
         >
@@ -379,7 +382,7 @@ export function AdminCustomerDetail({
               }
             />
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-[var(--admin-fg-muted)]">
             {t("admin.customers.accessHint")}
           </p>
         </AdminSection>
@@ -394,29 +397,29 @@ export function AdminCustomerDetail({
         />
       </form>
 
-      <div className="mt-8">
-        <AdminSection
-          title={t("admin.customers.orderHistory")}
-          description={t("admin.customers.orderHistoryDescription")}
-        >
-          <AdminTable
-            columns={orderColumns}
-            rows={orders}
-            getRowId={(order) => order.id}
-            emptyTitle={t("admin.customers.noOrdersTitle")}
-            emptyDescription={t("admin.customers.noOrdersDescription")}
-            footer={
-              orders.length > 0
-                ? orders.length === 1
-                  ? t("admin.customers.footerCount", { count: orders.length })
-                  : t("admin.customers.footerCountPlural", {
-                      count: orders.length,
-                    })
-                : undefined
-            }
-          />
-        </AdminSection>
-      </div>
+      <AdminSection
+        compact
+        flushBody
+        title={t("admin.customers.orderHistory")}
+        description={t("admin.customers.orderHistoryDescription")}
+      >
+        <AdminTable
+          columns={orderColumns}
+          rows={orders}
+          getRowId={(order) => order.id}
+          emptyTitle={t("admin.customers.noOrdersTitle")}
+          emptyDescription={t("admin.customers.noOrdersDescription")}
+          footer={
+            orders.length > 0
+              ? orders.length === 1
+                ? t("admin.customers.footerCount", { count: orders.length })
+                : t("admin.customers.footerCountPlural", {
+                    count: orders.length,
+                  })
+              : undefined
+          }
+        />
+      </AdminSection>
     </AdminPage>
   );
 }

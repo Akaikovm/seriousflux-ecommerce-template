@@ -27,7 +27,7 @@ export function CustomerAvatar({
   size = "sm",
   className,
 }: CustomerAvatarProps) {
-  const dimension = size === "md" ? "h-12 w-12 text-sm" : "h-9 w-9 text-xs";
+  const dimension = size === "md" ? "h-12 w-12 text-sm" : "h-8 w-8 text-[0.65rem]";
 
   if (photoURL) {
     return (

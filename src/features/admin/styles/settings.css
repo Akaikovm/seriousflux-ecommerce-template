@@ -7,7 +7,7 @@
 .admin-settings {
   --settings-rail-width: 15.5rem;
   --settings-content-max: var(--admin-form-max);
-  --settings-gap: var(--admin-space-8);
+  --settings-gap: var(--admin-space-6);
 }
 
 .admin-settings__shell {
@@ -104,14 +104,14 @@
 }
 
 .admin-settings-rail__item[data-active="true"] {
-  background: var(--admin-accent);
-  color: var(--admin-accent-fg);
-  box-shadow: var(--admin-shadow-md);
+  background: oklch(0.94 0.012 260);
+  color: var(--admin-fg);
+  box-shadow: inset 3px 0 0 var(--admin-accent);
 }
 
 .admin-settings-rail__item[data-active="true"]:hover {
-  background: var(--admin-accent-hover);
-  color: var(--admin-accent-fg);
+  background: oklch(0.94 0.012 260);
+  color: var(--admin-fg);
 }
 
 .admin-settings-rail__icon {
@@ -126,7 +126,7 @@
 }
 
 .admin-settings-rail__item[data-active="true"] .admin-settings-rail__icon {
-  background: oklch(1 0 0 / 0.12);
+  background: oklch(0.91 0.01 260);
 }
 
 .admin-settings-rail__title {
@@ -203,9 +203,9 @@
   gap: 0.375rem;
   flex-shrink: 0;
   scroll-snap-align: start;
-  padding: var(--admin-space-2) var(--admin-space-3);
+  padding: 0.4rem 0.75rem;
   border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius-pill);
+  border-radius: var(--admin-radius-sm);
   background: var(--admin-surface-solid);
   color: oklch(0.4 0.01 260);
   font-size: var(--admin-text-sm);
@@ -224,10 +224,10 @@
 }
 
 .admin-settings-chip[data-active="true"] {
-  border-color: transparent;
-  background: var(--admin-accent);
-  color: var(--admin-accent-fg);
-  box-shadow: 0 4px 12px oklch(0.2 0.02 260 / 0.16);
+  border-color: var(--admin-border);
+  background: oklch(0.94 0.012 260);
+  color: var(--admin-fg);
+  box-shadow: inset 0 -2px 0 var(--admin-accent);
 }
 
 .admin-settings-chip[data-active="true"]

@@ -63,18 +63,18 @@ export function AdminSidebar({ storeName, open, onClose }: AdminSidebarProps) {
         data-open={open ? "true" : "false"}
         aria-label={t("admin.common.adminNav")}
       >
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+        <div className="flex h-14 items-center justify-between border-b border-[var(--admin-border)] px-4">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
+            <p className="truncate text-sm font-semibold text-[var(--admin-fg)]">
               {storeName || t("admin.common.storeAdmin")}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[var(--admin-fg-muted)]">
               {t("admin.common.adminLabel")}
             </p>
           </div>
           <button
             type="button"
-            className="cursor-pointer rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden"
+            className="cursor-pointer rounded-md p-2 text-[var(--admin-fg-muted)] hover:bg-[var(--admin-accent-soft)] hover:text-[var(--admin-fg)] lg:hidden"
             aria-label={t("admin.common.closeNav")}
             onClick={onClose}
           >

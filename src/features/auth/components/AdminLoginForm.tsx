@@ -70,20 +70,22 @@ export function AdminLoginForm() {
 
   if (authLoading || isAuthorizedAdmin) {
     return (
-      <div className="flex w-full max-w-md justify-center py-12">
-        <LoadingState width="12rem" height="2.5rem" />
-      </div>
+      <AdminSurface compact className="w-full max-w-md">
+        <div className="flex justify-center py-6">
+          <LoadingState width="12rem" height="2.25rem" />
+        </div>
+      </AdminSurface>
     );
   }
 
   return (
-    <AdminSurface className="w-full max-w-md">
-      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+    <AdminSurface compact className="w-full max-w-md">
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          <h1 className="admin-page-header__title text-[1.25rem]">
             {t("auth.adminSignInTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="admin-page-header__description">
             {t("auth.adminSignInDescription")}
           </p>
         </div>

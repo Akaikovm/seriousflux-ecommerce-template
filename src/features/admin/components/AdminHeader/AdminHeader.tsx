@@ -19,17 +19,17 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="admin-header flex items-center justify-between gap-3 px-4 sm:px-6">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="admin-header flex items-center justify-between gap-3 px-3 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2.5">
         <button
           type="button"
-          className="cursor-pointer rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+          className="cursor-pointer rounded-md p-2 text-[var(--admin-fg-muted)] transition-colors hover:bg-[var(--admin-accent-soft)] hover:text-[var(--admin-fg)] lg:hidden"
           aria-label={t("admin.common.openNav")}
           onClick={onMenuClick}
         >
           <Menu className="size-5" aria-hidden />
         </button>
-        <h1 className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg">
+        <h1 className="truncate text-[0.9375rem] font-semibold tracking-tight text-[var(--admin-fg)] sm:text-base">
           {title}
         </h1>
       </div>
@@ -37,7 +37,7 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {user?.email ? (
           <span
-            className="hidden max-w-[12rem] truncate text-sm text-muted-foreground md:inline lg:max-w-[16rem]"
+            className="hidden max-w-[12rem] truncate text-xs text-[var(--admin-fg-muted)] md:inline lg:max-w-[16rem]"
             title={user.email}
           >
             {user.email}
@@ -45,12 +45,12 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
         ) : null}
         <Button
           type="button"
-          className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          className="admin-btn-ghost admin-btn-ghost--sm"
           onClick={() => {
             void signOut();
           }}
         >
-          <LogOut className="size-4 shrink-0" aria-hidden />
+          <LogOut className="size-3.5 shrink-0" aria-hidden />
           <span className="hidden sm:inline">{t("admin.common.signOut")}</span>
           <span className="sr-only sm:hidden">{t("admin.common.signOut")}</span>
         </Button>

@@ -60,15 +60,12 @@ export function OrderTimeline({ order, locale }: OrderTimelineProps) {
   ];
 
   return (
-    <ol className="flex flex-col gap-3">
+    <ol className="admin-timeline">
       {entries.map((entry) => (
-        <li
-          key={entry.id}
-          className="border-l-2 border-border pl-3"
-        >
-          <p className="text-sm font-medium text-foreground">{entry.title}</p>
-          <p className="text-sm text-muted-foreground">{entry.detail}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+        <li key={entry.id} className="admin-timeline__item">
+          <p className="admin-table__entity-title">{entry.title}</p>
+          <p className="admin-table__entity-meta">{entry.detail}</p>
+          <p className="mt-0.5 text-xs text-[var(--admin-fg-subtle)]">
             {formatDate(entry.at, locale)}
           </p>
         </li>
