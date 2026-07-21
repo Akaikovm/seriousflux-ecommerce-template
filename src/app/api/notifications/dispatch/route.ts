@@ -1,50 +1,34 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
+import { assertDispatchSecret } from "@/features/notifications/lib/assert-dispatch-secret";
 import { dispatchNotificationSafely } from "@/features/notifications/lib/dispatch-notification";
-import type { NotificationTrigger } from "@/features/notifications/types";
+import {
+  notificationDispatchSchema,
+  toNotificationTrigger,
+} from "@/features/notifications/lib/dispatch-schema";
 
 export const runtime = "nodejs";
 
-const dispatchSchema = z.discriminatedUnion("event", [
-  z.object({
-    event: z.literal("order.created"),
-    orderId: z.string().trim().min(1),
-  }),
-  z.object({
-    event: z.literal("payment.approved"),
-    orderId: z.string().trim().min(1),
-  }),
-  z.object({
-    event: z.literal("payment.failed"),
-    orderId: z.string().trim().min(1),
-  }),
-  z.object({
-    event: z.literal("order.cancelled"),
-    orderId: z.string().trim().min(1),
-  }),
-  z.object({
-    event: z.literal("order.shipped"),
-    orderId: z.string().trim().min(1),
-  }),
-  z.object({
-    event: z.literal("account.welcome"),
-    email: z.string().trim().email(),
-    displayName: z.string().trim().optional(),
-    customerId: z.string().trim().optional(),
-  }),
-]);
-
 /**
- * Transactional email dispatch (RFC-019).
+ * Transactional email dispatch (RFC-019 / GAP-003).
  *
  * POST /api/notifications/dispatch
  *
- * External integrations (email providers) run only on the server.
- * Callers fire-and-forget after successful business operations.
- * Failures are logged and never roll back orders / auth.
+ * Server-to-server only: requires `NOTIFICATIONS_DISPATCH_SECRET`
+ * (`x-notifications-dispatch-secret` or `Authorization: Bearer …`).
+ *
+ * Browser UI uses `requestNotification` → server action instead.
+ * Mercado Pago webhook calls `dispatchNotificationSafely` directly.
  */
 export async function POST(request: Request) {
+  const secretCheck = assertDispatchSecret(request);
+  if (!secretCheck.ok) {
+    return NextResponse.json(
+      { ok: false, error: secretCheck.error },
+      { status: secretCheck.status },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -55,7 +39,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = dispatchSchema.safeParse(body);
+  const parsed = notificationDispatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { ok: false, error: "Invalid notification payload." },
@@ -63,21 +47,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const data = parsed.data;
-  const trigger: NotificationTrigger =
-    data.event === "account.welcome"
-      ? {
-          type: "account.welcome",
-          email: data.email,
-          displayName: data.displayName,
-          customerId: data.customerId,
-        }
-      : {
-          type: data.event,
-          orderId: data.orderId,
-        };
-
-  const result = await dispatchNotificationSafely(trigger);
+  const result = await dispatchNotificationSafely(
+    toNotificationTrigger(parsed.data),
+  );
 
   // Always 202 — email outcome must not fail the client business flow.
   return NextResponse.json(

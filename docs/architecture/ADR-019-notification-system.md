@@ -135,7 +135,7 @@ features/notifications/
   index.ts        Public API: service, types, event helpers — NEVER concrete providers
 ```
 
-**Principle:** Client components and domain services never import Resend (or any provider SDK). They either finish persistence, then call `POST /api/notifications/dispatch`, or a server API route (e.g. Mercado Pago webhook) calls `NotificationService` after a successful write.
+**Principle:** Client components and domain services never import Resend (or any provider SDK). They either finish persistence, then call `requestNotification` (authorized server action), or a trusted server module (e.g. Mercado Pago webhook) calls `dispatchNotificationSafely` after a successful write. External tools may use secret-gated `POST /api/notifications/dispatch`.
 
 ### 1b. Project-wide rule — external integrations via server API routes
 
@@ -341,16 +341,25 @@ Rules:
 
 **Who calls NotificationService?**
 
-Only **server API routes** (and shared server helpers used exclusively by those routes):
+Only **trusted server paths** (API routes, server actions, or shared helpers used exclusively by those):
 
 | Trigger | Caller |
 |---------|--------|
-| Payment approved / failed | Mercado Pago webhook route → after successful `updatePayment` when status actually changes |
-| Admin marks paid / cancelled / shipped | Client updates order via `OrderService`, then fire-and-forget `POST /api/notifications/dispatch` |
-| Order created + admin new order | Client after successful `PaymentService.checkout`, then `POST /api/notifications/dispatch` |
-| Welcome | Client after successful signup / Google (new session), then dispatch; gated by `enableWelcomeEmail` |
+| Payment approved / failed | Mercado Pago webhook → `dispatchNotificationSafely` after successful `updatePayment` when status actually changes |
+| Admin marks paid / cancelled / shipped | Client updates order via `OrderService`, then fire-and-forget `requestNotification` → authorized server action |
+| Order created + admin new order | Client after successful `PaymentService.checkout`, then `requestNotification` → authorized server action |
+| Welcome | Client after successful signup / Google (new session), then `requestNotification`; gated by `enableWelcomeEmail` |
+| External / automation | `POST /api/notifications/dispatch` with `NOTIFICATIONS_DISPATCH_SECRET` (GAP-003) |
 
-**Server-only secrets:** Provider API keys exist only in env and are read inside provider modules used by the notifications API / webhook path.
+**Dispatch authorization (GAP-003):**
+
+| Entry | Gate |
+|-------|------|
+| `POST /api/notifications/dispatch` | Shared secret (`NOTIFICATIONS_DISPATCH_SECRET`) — fail closed if unset |
+| `dispatchNotificationAction` (browser) | Firebase ID token + event policy (welcome self, admin role for admin events, buyer/recent guest for `order.created`) |
+| Webhook / other server modules | Direct `dispatchNotificationSafely` (already on a trusted path) |
+
+**Server-only secrets:** Provider API keys and `NOTIFICATIONS_DISPATCH_SECRET` exist only in env and are read inside provider / dispatch auth modules — never shipped to the browser.
 
 ---
 
@@ -569,7 +578,7 @@ ForgotPasswordForm → AuthService.resetPassword → Firebase Auth email
 
 1. **Accepted** with adjustments above.
 2. Implement `features/notifications` with Resend as default provider.
-3. Expose send only via `POST /api/notifications/dispatch` (+ webhook calling the same service path).
+3. Expose send via authorized server action (`requestNotification`) + secret-gated `POST /api/notifications/dispatch` (+ webhook calling `dispatchNotificationSafely`).
 4. Wire fire-and-forget client requests after successful Checkout / Admin / Auth operations.
 5. Keep `OrderService` persistence-only; document future domain events without building a bus.
 

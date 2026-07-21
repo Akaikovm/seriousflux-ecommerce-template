@@ -119,7 +119,7 @@ Fill in your Firebase web config from the Firebase Console → Project settings 
 
 For Mercado Pago (optional locally; required for live redirect + auto-paid sync), also set `MERCADOPAGO_*` and `NEXT_PUBLIC_APP_URL`. See [`.env.example`](.env.example) and [`docs/payments-mercadopago.md`](docs/payments-mercadopago.md).
 
-For transactional email, set `RESEND_API_KEY`, then in **Admin → Settings → Notifications** set sender name/email and enable the toggles you need. The sender address must be verified in Resend. Admins do not choose email providers — Resend is the supported integration.
+For transactional email, set `RESEND_API_KEY`, then in **Admin → Settings → Notifications** set sender name/email and enable the toggles you need. The sender address must be verified in Resend. Admins do not choose email providers — Resend is the supported integration. Also set `NOTIFICATIONS_DISPATCH_SECRET` (long random string) so `POST /api/notifications/dispatch` stays locked for server-to-server use; the storefront/admin UI dispatches via an authorized server action instead.
 
 ### 3. Firebase setup (minimum)
 

@@ -82,7 +82,7 @@ Update Phase 1 when must-have GAPs are `done`.
 | 1 | Firestore + Storage security rules in-repo + deploy docs | [GAP-001](./gaps/GAP-001-firestore-storage-rules.md) | open |
 | 2 | Firebase Admin SDK for webhooks / privileged writes | [GAP-004](./gaps/GAP-004-firebase-admin-sdk.md) | open |
 | 3 | Server-side Admin auth (not UI-only gate) | [GAP-002](./gaps/GAP-002-server-admin-auth.md) | open |
-| 4 | Harden notifications dispatch API | [GAP-003](./gaps/GAP-003-harden-notifications-api.md) | open |
+| 4 | Harden notifications dispatch API | [GAP-003](./gaps/GAP-003-harden-notifications-api.md) | done |
 | 5 | Checkout price + availability revalidation | [GAP-006](./gaps/GAP-006-checkout-revalidation.md) | open |
 | 6 | Minimal automated tests (critical paths) | [GAP-005](./gaps/GAP-005-automated-tests.md) | open |
 
@@ -177,5 +177,6 @@ Status: **draft** until P0 GAPs land.
 
 | Date | Note |
 |------|------|
+| 2026-07-21 | GAP-003 notifications dispatch hardening marked done |
 | 2026-07-19 | Created: Phase 1 agency sell checklist |
 | 2026-07-19 | Documented Phase 2 optional plug-and-play + separate marketing site; Phase 3 parked |
