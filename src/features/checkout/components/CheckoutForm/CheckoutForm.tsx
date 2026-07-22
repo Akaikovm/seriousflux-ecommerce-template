@@ -5,16 +5,16 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { AccountService } from "@/features/account/services";
 import type { CartItem } from "@/features/cart/types";
+import { useCartStore } from "@/features/cart/store/cart.store";
 import { useCurrentUser } from "@/features/auth/hooks";
 import { createCheckoutFormSchema } from "@/features/checkout/lib/checkout-form-schema";
-import { mapCartItemsToOrderItems } from "@/features/checkout/lib/map-cart-to-order-items";
+import { revalidateCheckoutCart } from "@/features/checkout/lib/revalidate-checkout-cart";
 import {
   getAvailableShippingMethods,
   getShippingMethodById,
   STANDARD_SHIPPING_METHOD,
 } from "@/features/checkout/lib/shipping-methods";
 import type { CheckoutFormValues } from "@/features/checkout/types";
-import { validateCheckoutInventory } from "@/features/inventory/lib/validate-checkout-inventory";
 import { OrderError } from "@/features/orders/services";
 import { requestNotification } from "@/features/notifications";
 import { PaymentMethodSelector } from "@/features/payments/components/PaymentMethodSelector";
@@ -204,17 +204,20 @@ export function CheckoutForm({
     setLoading(true);
 
     try {
-      const inventoryCheck = await validateCheckoutInventory(
-        items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-      );
+      const revalidated = await revalidateCheckoutCart(items);
 
-      if (!inventoryCheck.ok) {
-        const message = inventoryCheck.errorCode
-          ? t(`checkout.inventory.${inventoryCheck.errorCode}`)
-          : (inventoryCheck.message ??
+      if (
+        revalidated.cartSnapshots.length > 0 &&
+        (revalidated.errorCode === "priceUpdated" ||
+          revalidated.errorCode === "insufficientStock")
+      ) {
+        useCartStore.getState().replaceItems(revalidated.cartSnapshots);
+      }
+
+      if (!revalidated.ok) {
+        const message = revalidated.errorCode
+          ? t(`checkout.inventory.${revalidated.errorCode}`)
+          : (revalidated.message ??
             t("checkout.inventory.insufficientStock"));
         setFormError(message);
         toast.error(message);
@@ -229,7 +232,7 @@ export function CheckoutForm({
           customerEmail: parsed.data.email,
           customerName: parsed.data.fullName,
           customerPhone: parsed.data.phone,
-          items: mapCartItemsToOrderItems(items),
+          items: revalidated.orderItems,
           shippingAddress: {
             fullName: parsed.data.fullName,
             line1: parsed.data.address,

@@ -45,7 +45,7 @@
 | GAP-003 | P0 | done | Harden notifications dispatch API | [gaps/GAP-003-harden-notifications-api.md](./gaps/GAP-003-harden-notifications-api.md) |
 | GAP-004 | P1 | done | Firebase Admin SDK for privileged server paths | [gaps/GAP-004-firebase-admin-sdk.md](./gaps/GAP-004-firebase-admin-sdk.md) |
 | GAP-005 | P1 | open | Minimal automated tests (inventory, payments, ownership) | [gaps/GAP-005-automated-tests.md](./gaps/GAP-005-automated-tests.md) |
-| GAP-006 | P1 | open | Checkout price & availability revalidation | [gaps/GAP-006-checkout-revalidation.md](./gaps/GAP-006-checkout-revalidation.md) |
+| GAP-006 | P1 | done | Checkout price & availability revalidation | [gaps/GAP-006-checkout-revalidation.md](./gaps/GAP-006-checkout-revalidation.md) |
 | GAP-007 | P2 | open | Real shipping methods from Settings | [gaps/GAP-007-shipping-methods.md](./gaps/GAP-007-shipping-methods.md) |
 | GAP-008 | P2 | open | Inventory reservations (close oversell window) | [gaps/GAP-008-inventory-reservations.md](./gaps/GAP-008-inventory-reservations.md) |
 | GAP-009 | P2 | open | Product variants (size/color + stockable ids) | [gaps/GAP-009-product-variants.md](./gaps/GAP-009-product-variants.md) |
@@ -91,6 +91,7 @@ Security first (001–004), then quality (005–006), then product depth.
 
 | Date | Note |
 |------|------|
+| 2026-07-22 | GAP-006 done — checkout cart revalidation (live prices + stock) |
 | 2026-07-22 | GAP-002 done — Admin `__session` cookie + dashboard layout gate (ADR-025) |
 | 2026-07-21 | GAP-001 + GAP-004 done — rules in-repo + Firebase Admin SDK |
 | 2026-07-21 | GAP-003 done — secret-gated HTTP dispatch + authorized server action |

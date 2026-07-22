@@ -281,6 +281,8 @@ export const en = {
         "One or more products in your cart are no longer available. Please update your cart.",
       insufficientStock:
         "Some items are out of stock or have insufficient quantity. Please update your cart.",
+      priceUpdated:
+        "Prices in your cart have changed. Review your cart and try again.",
       verifyFailed: "We could not verify stock availability. Please try again.",
     },
     errors: {

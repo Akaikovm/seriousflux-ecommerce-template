@@ -283,6 +283,8 @@ export const es: Dictionary = {
         "Uno o más productos de tu carrito ya no están disponibles. Actualiza el carrito.",
       insufficientStock:
         "Algunos artículos no tienen stock suficiente. Actualiza el carrito.",
+      priceUpdated:
+        "Los precios de tu carrito cambiaron. Revísalo e inténtalo de nuevo.",
       verifyFailed:
         "No pudimos verificar el stock. Inténtalo de nuevo.",
     },

@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Priority | **P1** |
-| Status | `open` |
-| Related | ADR-010, GAP inventory validate already exists |
+| Status | `done` |
+| Related | ADR-010, GAP inventory validate already exists, ADR-023 |
 
 ## Problem
 
@@ -27,9 +27,15 @@ Before creating an order / starting payment: re-load products from Firestore, re
 
 ## Acceptance criteria
 
-- [ ] Tampered unit prices cannot create cheaper orders
-- [ ] Inactive / OOS products blocked (aligned with inventory validation)
-- [ ] Documented in checkout ADR or brief update
+- [x] Tampered unit prices cannot create cheaper orders
+- [x] Inactive / OOS products blocked (aligned with inventory validation)
+- [x] Documented in checkout ADR or brief update
+
+## Shipped (2026-07-22)
+
+- [`revalidateCheckoutCart`](../../../src/features/checkout/lib/revalidate-checkout-cart.ts) loads live products, checks stock via `InventoryService`, compares unit prices, builds `OrderItem[]` from catalog
+- [`CheckoutForm`](../../../src/features/checkout/components/CheckoutForm/CheckoutForm.tsx) uses revalidated lines only; on `priceUpdated` syncs cart snapshots + shows i18n error
+- Stock-only helper [`validateCheckoutInventory`](../../../src/features/inventory/lib/validate-checkout-inventory.ts) remains for inventory-focused callers
 
 ## When done
 

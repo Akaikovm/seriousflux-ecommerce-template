@@ -28,8 +28,9 @@ export type CheckoutInventoryValidationResult = {
 };
 
 /**
- * Checkout validation pass #1 (ADR-023).
- * Loads live product policy + inventory; does not mutate stock.
+ * Checkout validation pass #1 — stock only (ADR-023).
+ * Prefer `revalidateCheckoutCart` at purchase time (GAP-006) which also
+ * rejects stale/tampered unit prices and returns live order lines.
  */
 export async function validateCheckoutInventory(
   lines: CartAvailabilityLine[],

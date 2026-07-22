@@ -397,10 +397,9 @@ For a new store, prefer changing data — not code:
 - Guest order claiming (orders without `customerId` stay unlinked — GAP-012)
 - Newsletter persistence (UI exists; subscribe is still local — GAP-013)
 - Multilingual catalog CMS content (UI chrome is bilingual; product/category copy is not)
-- Checkout price/availability revalidation at pay time (GAP-006)
 - Minimal automated tests for critical paths (GAP-005)
 
-**Security shipped (Phase 1 must-haves 1–4):** GAP-001 rules · GAP-004 Admin SDK · GAP-003 notifications harden · GAP-002 Admin session cookie. See [`SELL-READY.md`](docs/architecture/SELL-READY.md).
+**Security / commerce shipped (Phase 1 must-haves 1–5):** GAP-001 rules · GAP-004 Admin SDK · GAP-003 notifications harden · GAP-002 Admin session cookie · GAP-006 checkout revalidation. Remaining formal sell-ready blocker: **GAP-005**. See [`SELL-READY.md`](docs/architecture/SELL-READY.md).
 
 ---
 

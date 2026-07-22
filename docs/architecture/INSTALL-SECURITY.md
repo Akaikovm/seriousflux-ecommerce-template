@@ -150,8 +150,8 @@ Do not re-export Admin modules from barrels imported by Client Components (`orde
 | GAP-004 Admin SDK | done |
 | GAP-003 Notifications API | done |
 | GAP-002 Server admin auth | done |
+| GAP-006 Checkout revalidation | done |
 | GAP-005 Tests | open |
-| GAP-006 Checkout revalidation | open |
 
 ---
 

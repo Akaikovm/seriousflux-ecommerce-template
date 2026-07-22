@@ -31,6 +31,12 @@ export type CartStore = {
 
   /** Clears the entire cart. */
   clearCart: () => void;
+
+  /**
+   * Replaces cart lines with live catalog snapshots (GAP-006).
+   * Used when checkout revalidation detects price/catalog drift.
+   */
+  replaceItems: (items: CartItem[]) => void;
 };
 
 const STORAGE_KEY = "seriousflux-cart";
@@ -93,6 +99,22 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [] });
+      },
+
+      replaceItems: (items) => {
+        set({
+          items: items
+            .filter((item) => item.quantity > 0)
+            .map((item) => ({
+              productId: item.productId,
+              name: item.name,
+              slug: item.slug,
+              image: item.image,
+              price: item.price,
+              currency: item.currency,
+              quantity: item.quantity,
+            })),
+        });
       },
     }),
     {

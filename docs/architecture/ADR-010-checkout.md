@@ -315,8 +315,8 @@ Dependency rule:
 
 ### Risks
 
-- Client-side order creates need Security Rules before production.
-- Stale cart prices may be written into Order snapshots.
+- Client-side order creates need Security Rules before production (GAP-001 shipped).
+- ~~Stale cart prices may be written into Order snapshots.~~ **Mitigated (GAP-006):** `revalidateCheckoutCart` reloads catalog prices/stock before `OrderService.create`; tampered prices are rejected with a review-cart error.
 - Toast provider not yet on storefront shell.
 - RFC numbering docs (ADR-008 / ADR-009) need a one-line cross-link update when this ADR is accepted.
 
