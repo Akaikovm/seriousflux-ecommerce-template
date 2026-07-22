@@ -1,21 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import { establishAdminSessionAction } from "@/features/auth/lib/admin-session-actions";
 import { AuthError } from "@/features/auth/services";
 import { useAuth } from "@/features/auth/providers";
 import { AdminSurface } from "@/features/admin/ui/AdminSurface";
+import { getFirebaseAuth } from "@/firebase/auth";
 import { translateAuthError, useT } from "@/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { LoadingState } from "@/shared/ui/LoadingState";
 
 /**
- * Admin sign-in form (RFC-017).
+ * Admin sign-in form (RFC-017 / GAP-002).
  *
- * Requires resolved session with role=admin and status=active.
- * Authentication alone is not enough.
+ * Requires resolved session with role=admin and status=active, then
+ * establishes an httpOnly server session cookie before entering the dashboard.
  */
 export function AdminLoginForm() {
   const t = useT();
@@ -32,15 +34,42 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const establishingSession = useRef(false);
 
   const isAuthorizedAdmin =
     user !== null && role === "admin" && status === "active";
 
   useEffect(() => {
-    if (!authLoading && isAuthorizedAdmin) {
-      router.replace("/admin");
+    if (authLoading || !isAuthorizedAdmin || establishingSession.current) {
+      return;
     }
-  }, [authLoading, isAuthorizedAdmin, router]);
+
+    establishingSession.current = true;
+    void (async () => {
+      try {
+        const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+        if (!idToken) {
+          await signOut();
+          setError(t("auth.adminNotAuthorized"));
+          return;
+        }
+
+        const result = await establishAdminSessionAction(idToken);
+        if (!result.ok) {
+          await signOut();
+          setError(t("auth.adminNotAuthorized"));
+          return;
+        }
+
+        router.replace("/admin");
+      } catch {
+        await signOut();
+        setError(t("auth.signInFailed"));
+      } finally {
+        establishingSession.current = false;
+      }
+    })();
+  }, [authLoading, isAuthorizedAdmin, router, signOut, t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,8 +85,27 @@ export function AdminLoginForm() {
         return;
       }
 
+      establishingSession.current = true;
+
+      const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+      if (!idToken) {
+        establishingSession.current = false;
+        await signOut();
+        setError(t("auth.adminNotAuthorized"));
+        return;
+      }
+
+      const result = await establishAdminSessionAction(idToken);
+      if (!result.ok) {
+        establishingSession.current = false;
+        await signOut();
+        setError(t("auth.adminNotAuthorized"));
+        return;
+      }
+
       router.replace("/admin");
     } catch (err) {
+      establishingSession.current = false;
       if (err instanceof AuthError) {
         setError(translateAuthError(err, t));
       } else {
@@ -68,7 +116,7 @@ export function AdminLoginForm() {
     }
   }
 
-  if (authLoading || isAuthorizedAdmin) {
+  if (authLoading || (isAuthorizedAdmin && !error)) {
     return (
       <AdminSurface compact className="w-full max-w-md">
         <div className="flex justify-center py-6">

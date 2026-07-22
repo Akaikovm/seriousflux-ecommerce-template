@@ -34,6 +34,13 @@ Ship production-grade rules in the repo (and document how to deploy them) so the
 - [x] Documented local-dev vs production rule posture
 - [x] Smoke checklist for Auth admin CRUD still works with rules deployed
 
+## Shipped (2026-07-22)
+
+- [`firestore.rules`](../../firestore.rules) + [`storage.rules`](../../storage.rules) + [`firebase.json`](../../firebase.json)
+- Storefront list queries constrain `active == true` (rule-compatible)
+- Storage: public read on `media/**`; client writes denied — Admin uploads via Admin SDK ([ADR-024](../ADR-024-firestore-rules-admin-sdk.md), [INSTALL-SECURITY](../INSTALL-SECURITY.md))
+- ADR: [ADR-024](../ADR-024-firestore-rules-admin-sdk.md)
+
 ## When done
 
 Mark status `done` in [GAP-REGISTER.md](../GAP-REGISTER.md). Prefer a short ADR (e.g. ADR-024) capturing the rules model.

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { clearAdminSessionAction } from "@/features/auth/lib/admin-session-actions";
 import { AuthService } from "@/features/auth/services/auth.service";
 import { RoleResolver } from "@/features/auth/services/role-resolver.service";
 import type {
@@ -131,6 +132,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [applySession, authService, roleResolver]);
 
   const signOut = useCallback(async () => {
+    await clearAdminSessionAction();
     await authService.signOut();
     clearSession();
   }, [authService, clearSession]);

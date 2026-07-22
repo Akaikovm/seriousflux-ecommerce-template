@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 
 import { AdminDashboardShell } from "@/features/admin/components/AdminDashboardShell";
+import { requireAdminSession } from "@/features/auth/lib/admin-session";
 import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 
 /**
@@ -11,15 +13,21 @@ import { getStoreSettings } from "@/features/settings/lib/get-store-settings";
 export const dynamic = "force-dynamic";
 
 /**
- * Protected admin dashboard layout (RFC-011).
+ * Protected admin dashboard layout (RFC-011 / GAP-002).
  *
- * Loads store name for the sidebar; auth guard runs on the client.
+ * Server gate: Firebase session cookie + active admin. Client RequireRole
+ * remains for UX; security is this check + Firestore rules.
  */
 export default async function AdminProtectedLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const session = await requireAdminSession();
+  if (!session) {
+    redirect("/admin/login");
+  }
+
   const settings = await getStoreSettings();
 
   return (

@@ -33,10 +33,11 @@ Introduce `firebase-admin` (or equivalent) for server-only modules: webhooks, in
 
 ## Implementation notes (shipped)
 
-- `firebase-admin` + `getAdminDb()` credential chain
+- `firebase-admin` + `getAdminDb()` / `getAdminAuth()` / `getAdminStorage()` credential chain
 - `AdminOrderService` + inventory admin helpers for webhook/preference
-- Admin SSR loaders under `src/features/admin/lib/admin-server-data.ts`
-- See [ADR-024](../ADR-024-firestore-rules-admin-sdk.md)
+- Admin SSR loaders under `src/features/admin/lib/admin-server-data.ts` (gated by GAP-002 session)
+- Admin image uploads via `uploadMediaAction` + Admin Storage
+- See [ADR-024](../ADR-024-firestore-rules-admin-sdk.md) · [INSTALL-SECURITY](../INSTALL-SECURITY.md)
 
 ## When done
 

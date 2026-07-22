@@ -41,7 +41,7 @@
 | ID | Priority | Status | Title | Brief |
 |----|----------|--------|-------|-------|
 | GAP-001 | P0 | done | Firestore + Storage security rules in-repo | [gaps/GAP-001-firestore-storage-rules.md](./gaps/GAP-001-firestore-storage-rules.md) |
-| GAP-002 | P0 | open | Server-side Admin auth (middleware / session / claims) | [gaps/GAP-002-server-admin-auth.md](./gaps/GAP-002-server-admin-auth.md) |
+| GAP-002 | P0 | done | Server-side Admin auth (middleware / session / claims) | [gaps/GAP-002-server-admin-auth.md](./gaps/GAP-002-server-admin-auth.md) |
 | GAP-003 | P0 | done | Harden notifications dispatch API | [gaps/GAP-003-harden-notifications-api.md](./gaps/GAP-003-harden-notifications-api.md) |
 | GAP-004 | P1 | done | Firebase Admin SDK for privileged server paths | [gaps/GAP-004-firebase-admin-sdk.md](./gaps/GAP-004-firebase-admin-sdk.md) |
 | GAP-005 | P1 | open | Minimal automated tests (inventory, payments, ownership) | [gaps/GAP-005-automated-tests.md](./gaps/GAP-005-automated-tests.md) |
@@ -80,8 +80,10 @@ Security first (001–004), then quality (005–006), then product depth.
 - README “Deferred / not production-ready yet”
 - [`docs/firestore.md`](../firestore.md)
 - [`ADR-023`](./ADR-023-inventory-stock-management.md) (inventory MVP + accepted oversell window until GAP-008)
-- [`ADR-017`](./ADR-017-identity-foundation.md) (roles; claims deferred → GAP-002)
+- [`ADR-017`](./ADR-017-identity-foundation.md) (roles; custom claims deferred; session cookie → ADR-025 / GAP-002 done)
 - [`ADR-019`](./ADR-019-notification-system.md) (dispatch API → GAP-003)
+- [`ADR-024`](./ADR-024-firestore-rules-admin-sdk.md) · [`ADR-025`](./ADR-025-admin-session-cookie.md)
+- [`INSTALL-SECURITY.md`](./INSTALL-SECURITY.md) · [`SELL-READY.md`](./SELL-READY.md)
 
 ---
 
@@ -89,6 +91,7 @@ Security first (001–004), then quality (005–006), then product depth.
 
 | Date | Note |
 |------|------|
+| 2026-07-22 | GAP-002 done — Admin `__session` cookie + dashboard layout gate (ADR-025) |
 | 2026-07-21 | GAP-001 + GAP-004 done — rules in-repo + Firebase Admin SDK |
 | 2026-07-21 | GAP-003 done — secret-gated HTTP dispatch + authorized server action |
 | 2026-07-19 | Initial register created from post-RFC-023 readiness review |

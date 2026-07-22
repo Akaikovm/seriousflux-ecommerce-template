@@ -67,7 +67,7 @@ It does **not** mean: anyone can buy online and self-install without us.
 | Layer | Status | Notes |
 |-------|--------|-------|
 | Demo / pitch | **Ready** | Storefront + admin + `seed:demo` |
-| Phase 1 agency sell / install | **Not yet** | Blocked on must-have GAPs below |
+| Phase 1 agency sell / install | **Almost** | Security must-haves 1–4 done; blocked on GAP-005 + GAP-006 |
 | Phase 2 self-serve / plug-and-play | **Parked** | Revisit only if low complexity; needs marketing site + provisioning design |
 | Phase 3 full SaaS | **Out of scope** | — |
 
@@ -81,7 +81,7 @@ Update Phase 1 when must-have GAPs are `done`.
 |---|-----------|-----|--------|
 | 1 | Firestore + Storage security rules in-repo + deploy docs | [GAP-001](./gaps/GAP-001-firestore-storage-rules.md) | done |
 | 2 | Firebase Admin SDK for webhooks / privileged writes | [GAP-004](./gaps/GAP-004-firebase-admin-sdk.md) | done |
-| 3 | Server-side Admin auth (not UI-only gate) | [GAP-002](./gaps/GAP-002-server-admin-auth.md) | open |
+| 3 | Server-side Admin auth (not UI-only gate) | [GAP-002](./gaps/GAP-002-server-admin-auth.md) | done |
 | 4 | Harden notifications dispatch API | [GAP-003](./gaps/GAP-003-harden-notifications-api.md) | done |
 | 5 | Checkout price + availability revalidation | [GAP-006](./gaps/GAP-006-checkout-revalidation.md) | open |
 | 6 | Minimal automated tests (critical paths) | [GAP-005](./gaps/GAP-005-automated-tests.md) | open |

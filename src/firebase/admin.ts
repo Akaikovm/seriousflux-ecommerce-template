@@ -9,6 +9,7 @@ import {
   type ServiceAccount,
 } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getAuth, type Auth } from "firebase-admin/auth";
 import { getStorage, type Storage } from "firebase-admin/storage";
 
 /**
@@ -143,6 +144,13 @@ export function getAdminApp(): App {
  */
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp());
+}
+
+/**
+ * Privileged Auth (verify ID tokens / session cookies). Server-only.
+ */
+export function getAdminAuth(): Auth {
+  return getAuth(getAdminApp());
 }
 
 /**

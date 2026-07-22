@@ -68,6 +68,10 @@ With Admin configured, Admin SSR + webhooks + order emails + **Admin image uploa
 
 Storage rules allow public read under `media/**` and deny client writes. Uploads use `uploadMediaAction` → Admin SDK after verifying an active admin ID token.
 
+### Admin session (GAP-002)
+
+`/admin/(dashboard)` requires an httpOnly `__session` cookie (Firebase `createSessionCookie`) minted after Admin login. Without it, the layout redirects to `/admin/login` before SSR data loads. See [ADR-025](./ADR-025-admin-session-cookie.md).
+
 ### Storefront queries and rules
 
 Public list/get queries must include `active == true` (Firestore rule constraint).  
@@ -145,7 +149,7 @@ Do not re-export Admin modules from barrels imported by Client Components (`orde
 | GAP-001 Rules | done |
 | GAP-004 Admin SDK | done |
 | GAP-003 Notifications API | done |
-| GAP-002 Server admin auth | open |
+| GAP-002 Server admin auth | done |
 | GAP-005 Tests | open |
 | GAP-006 Checkout revalidation | open |
 
@@ -158,3 +162,4 @@ Do not re-export Admin modules from barrels imported by Client Components (`orde
 | 2026-07-22 | Rules + Admin SDK + App Hosting secret + install guide; order emails use Admin when configured |
 | 2026-07-22 | Doc in English; storefront product/category queries constrain `active == true` for locked rules |
 | 2026-07-22 | Admin image uploads via Admin SDK; Storage client writes denied (no cross-service IAM required) |
+| 2026-07-22 | GAP-002 Admin `__session` cookie + dashboard layout gate (ADR-025) |

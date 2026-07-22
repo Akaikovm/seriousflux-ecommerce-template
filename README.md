@@ -146,7 +146,7 @@ For production (and for Admin SSR / Mercado Pago webhooks once Security Rules ar
      ```
 
 4. **Firestore** — create the database. Commit rules live in [`firestore.rules`](firestore.rules) (see below). For a first local seed you may temporarily use open rules, then deploy the repo rules before production.
-5. **Storage** — enable Storage. Deploy [`storage.rules`](storage.rules) so only active admins can write under `media/` (public read for product images).
+5. **Storage** — enable Storage. Deploy [`storage.rules`](storage.rules): public read under `media/**`; **client writes denied**. Admin image uploads go through a server action + Firebase Admin SDK (requires Admin credentials). See [ADR-024](docs/architecture/ADR-024-firestore-rules-admin-sdk.md) / [INSTALL-SECURITY](docs/architecture/INSTALL-SECURITY.md).
 
 **Deploy security rules (required before production):**
 
@@ -156,9 +156,13 @@ firebase deploy --only firestore:rules,storage
 
 Requires the Firebase CLI and a project selected (`firebase use`). Full model: [`docs/firestore.md`](docs/firestore.md) and [ADR-024](docs/architecture/ADR-024-firestore-rules-admin-sdk.md).
 
-**Firebase Admin SDK (GAP-004)** — server-only. Set `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON) or `GOOGLE_APPLICATION_CREDENTIALS`, or rely on App Hosting ADC. Needed for Mercado Pago webhooks/preference writes and Admin SSR once rules are locked. Never put the service account in `NEXT_PUBLIC_*` vars.
+**Firebase Admin SDK (GAP-004)** — server-only. Set `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON) or `GOOGLE_APPLICATION_CREDENTIALS`, or rely on App Hosting ADC. Needed for Mercado Pago webhooks/preference writes, Admin SSR, Admin session cookies (GAP-002), and Admin image uploads once rules are locked. Never put the service account in `NEXT_PUBLIC_*` vars.
 
-**Install / security handoff:** [`docs/architecture/INSTALL-SECURITY.md`](docs/architecture/INSTALL-SECURITY.md) (rules, Admin secrets, template vs client data).
+**Admin server session (GAP-002)** — `/admin/(dashboard)` requires an httpOnly `__session` cookie minted after Admin login. See [ADR-025](docs/architecture/ADR-025-admin-session-cookie.md).
+
+**Install / security handoff:** [`docs/architecture/INSTALL-SECURITY.md`](docs/architecture/INSTALL-SECURITY.md) (rules, Admin secrets, template vs client data, App Hosting).
+
+**Sell-ready gaps:** [`docs/architecture/SELL-READY.md`](docs/architecture/SELL-READY.md) · [`docs/architecture/GAP-REGISTER.md`](docs/architecture/GAP-REGISTER.md).
 
 Collections used by the kit:
 
@@ -381,29 +385,34 @@ For a new store, prefer changing data — not code:
 **Deferred / not production-ready yet**
 - Stripe / PayPal providers (settings + env slots only)
 - `capturePayment` / `refund` on the payment interface (stubs)
-- Custom claims / Next.js middleware session cookies (client role gate + Firestore role in rules today — GAP-002)
-- First admin still seeded manually in Firestore (app never auto-creates `admin`)
+- Custom claims in ID tokens (Admin uses httpOnly `__session` + Firestore role today — ADR-025; claims still deferred)
+- First admin still seeded manually in Firestore (app never auto-creates `admin` — GAP-014)
 - Wishlist / Addresses / customer Notifications center
 - Apple / Facebook OAuth (Google is supported)
 - Per-client custom font families from Settings (kit default fonts today)
 - Product variants, coupons, reviews
 - Stock reservations / multi-warehouse (InventoryService API leaves room — ADR-023)
-- Real shipping methods (single free “Standard” stub today)
+- Real shipping methods (single free “Standard” stub today — GAP-007)
 - Category filters / sort (listing UI is presentational today)
-- Guest order claiming (orders without `customerId` stay unlinked)
+- Guest order claiming (orders without `customerId` stay unlinked — GAP-012)
 - Newsletter persistence (UI exists; subscribe is still local — GAP-013)
 - Multilingual catalog CMS content (UI chrome is bilingual; product/category copy is not)
+- Checkout price/availability revalidation at pay time (GAP-006)
+- Minimal automated tests for critical paths (GAP-005)
+
+**Security shipped (Phase 1 must-haves 1–4):** GAP-001 rules · GAP-004 Admin SDK · GAP-003 notifications harden · GAP-002 Admin session cookie. See [`SELL-READY.md`](docs/architecture/SELL-READY.md).
 
 ---
 
 ## Image uploads
 
-Admin forms use `ImageUpload` → `MediaService` → Firebase Storage.
+Admin forms use `ImageUpload` → `MediaService` → server action → Firebase Admin SDK → Storage.
 
 Requirements:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` set correctly
-- Storage enabled in Firebase
-- Rules that allow the signed-in admin to upload
+- Storage enabled in Firebase + [`storage.rules`](storage.rules) deployed (public read; client write denied)
+- Firebase Admin SDK configured (same as webhooks / Admin SSR)
+- Caller signed in as active `admin` (ID token checked on the server)
 
 Product image is **optional** at create time so you can save a product and set the image URL later if Storage is not ready.
 

@@ -36,7 +36,7 @@ Ensure only trusted server callers (webhooks, checkout server actions/routes, au
 - HTTP route requires `NOTIFICATIONS_DISPATCH_SECRET` (`x-notifications-dispatch-secret` or `Authorization: Bearer …`); fail closed if unset.
 - Browser callers use `requestNotification` → `dispatchNotificationAction` with Firebase ID token authorization (welcome self-match, admin role for admin events, buyer/recent guest for `order.created`).
 - Mercado Pago webhook continues to call `dispatchNotificationSafely` directly.
-- ID token verification uses Identity Toolkit until GAP-004 (Admin SDK).
+- ID token verification for the browser path still uses Identity Toolkit lookup; Admin SDK Auth is used elsewhere (session cookies — GAP-002 / ADR-025).
 
 ## When done
 

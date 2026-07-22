@@ -42,9 +42,10 @@ Seeds (`npm run seed:*`) write with the client SDK — use open rules locally or
 ## Consequences
 
 - Deploying rules without Admin credentials will break Admin SSR and MP paid sync.
-- GAP-002 should replace Firestore role lookups in rules with custom claims when ready.
+- GAP-002 should replace Firestore role lookups in rules with custom claims when ready (session cookie shipped in ADR-025; claims still deferred).
 - Order create remains client-side until a future checkout server route (GAP-006 adjacent).
 - Notification order loads use Admin SDK when configured (server dispatch has no Auth user).
+- Admin dashboard SSR is gated by `__session` (ADR-025); Admin SDK loaders must not run for anonymous requests.
 
 ## Practical guide
 
