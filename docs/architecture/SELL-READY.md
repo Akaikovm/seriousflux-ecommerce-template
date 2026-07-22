@@ -1,6 +1,6 @@
 # Sell-ready & product path (SeriousFlux)
 
-When the user asks **“¿está lista para vender?”**, **“sell-ready”**, **“punto para vender”**, or about **Shopify / self-serve / automático**, agents must read **this file first**, then `GAP-REGISTER.md`.
+When the user asks about **sell-ready**, **ready to sell**, **first client**, or **Shopify / self-serve / automation**, agents must read **this file first**, then `GAP-REGISTER.md`.
 
 ---
 
@@ -157,10 +157,10 @@ Status: **draft** until P0 GAPs land.
 
 | You say | Agent does |
 |---------|------------|
-| “¿Está lista para vender?” / “sell-ready?” | This file → Phase 1 checklist status |
-| “Avancemos lo de vender” | Next open must-have GAP |
-| “¿Y lo de Shopify / automático / Phase 2?” | Explain parked path; do **not** start SaaS unless asked to evaluate |
-| “Evaluar Phase 2” | Complexity/ADR sketch only — no big build by default |
+| “Is it sell-ready?” / “ready to sell?” | This file → Phase 1 checklist status |
+| “Let’s push sell readiness” | Next open must-have GAP |
+| “What about Shopify / automation / Phase 2?” | Explain parked path; do **not** start SaaS unless asked to evaluate |
+| “Evaluate Phase 2” | Complexity/ADR sketch only — no big build by default |
 | “GAP-001” | That gap only |
 
 ---
