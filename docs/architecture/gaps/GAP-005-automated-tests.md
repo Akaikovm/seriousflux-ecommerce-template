@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Priority | **P1** |
-| Status | `open` |
+| Status | `done` |
 | Related | RFC-023 inventory, payments, orders |
 
 ## Problem
@@ -28,9 +28,14 @@ Add a thin, high-value suite (Vitest or Jest) + `npm test` script. Prefer pure u
 
 ## Acceptance criteria
 
-- [ ] `npm test` exists and runs in CI-friendly mode
-- [ ] At least the inventory pure helpers + one service critical path covered
-- [ ] Documented in README Scripts table
+- [x] `npm test` exists and runs in CI-friendly mode
+- [x] At least the inventory pure helpers + one service critical path covered
+- [x] Documented in README Scripts table
+
+## Shipped (2026-07-22)
+
+- Vitest + `npm test` / `npm run test:watch` + [`vitest.config.ts`](../../../vitest.config.ts)
+- Suites: stock helpers, `InventoryService.commitSale`/`restoreSale`, `orderBelongsToCustomer` + payment map, checkout payment options registry
 
 ## When done
 

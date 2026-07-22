@@ -16,6 +16,7 @@ import {
 import { getFirestoreDb } from "@/firebase/firestore";
 import { mapOrder } from "@/features/orders/lib/map-order";
 import { generateOrderNumber } from "@/features/orders/lib/order-number";
+import { orderBelongsToCustomer } from "@/features/orders/lib/order-ownership";
 import {
   canTransitionOrderStatus,
   normalizeOrderStatus,
@@ -416,12 +417,7 @@ export class OrderService {
   ): Promise<Order | null> {
     try {
       const order = await this.getById(orderId);
-      if (!order) {
-        return null;
-      }
-
-      const ownerId = customerId.trim();
-      if (!ownerId || !order.customerId || order.customerId !== ownerId) {
+      if (!orderBelongsToCustomer(order, customerId)) {
         return null;
       }
 

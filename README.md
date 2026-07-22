@@ -275,6 +275,8 @@ npm run start
 | `npm run build` | Production build |
 | `npm run start` | Serve production build |
 | `npm run lint` | ESLint |
+| `npm test` | Unit tests (Vitest, CI-friendly) |
+| `npm run test:watch` | Vitest watch mode |
 | `npm run seed:demo` | Full SeriousFlux demo (settings + catalog + inventory + orders) |
 | `npm run seed:settings` | Seed `settings/general` (Serious Flux) |
 | `npm run seed:products` | Seed categories, products, and inventory |
@@ -397,9 +399,8 @@ For a new store, prefer changing data — not code:
 - Guest order claiming (orders without `customerId` stay unlinked — GAP-012)
 - Newsletter persistence (UI exists; subscribe is still local — GAP-013)
 - Multilingual catalog CMS content (UI chrome is bilingual; product/category copy is not)
-- Minimal automated tests for critical paths (GAP-005)
 
-**Security / commerce shipped (Phase 1 must-haves 1–5):** GAP-001 rules · GAP-004 Admin SDK · GAP-003 notifications harden · GAP-002 Admin session cookie · GAP-006 checkout revalidation. Remaining formal sell-ready blocker: **GAP-005**. See [`SELL-READY.md`](docs/architecture/SELL-READY.md).
+**Phase 1 sell-ready must-haves (kit):** GAP-001…006 all `done`. Remaining work is client ops smoke (domain, MP webhook, sandbox→live). See [`SELL-READY.md`](docs/architecture/SELL-READY.md).
 
 ---
 

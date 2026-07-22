@@ -67,7 +67,7 @@ It does **not** mean: anyone can buy online and self-install without us.
 | Layer | Status | Notes |
 |-------|--------|-------|
 | Demo / pitch | **Ready** | Storefront + admin + `seed:demo` |
-| Phase 1 agency sell / install | **Almost** | Must-haves 1–4 + GAP-006 done; blocked on GAP-005 tests |
+| Phase 1 agency sell / install | **Ready (kit)** | Must-have GAPs 001–006 done; still do client smoke + MP/webhook ops |
 | Phase 2 self-serve / plug-and-play | **Parked** | Revisit only if low complexity; needs marketing site + provisioning design |
 | Phase 3 full SaaS | **Out of scope** | — |
 
@@ -84,7 +84,7 @@ Update Phase 1 when must-have GAPs are `done`.
 | 3 | Server-side Admin auth (not UI-only gate) | [GAP-002](./gaps/GAP-002-server-admin-auth.md) | done |
 | 4 | Harden notifications dispatch API | [GAP-003](./gaps/GAP-003-harden-notifications-api.md) | done |
 | 5 | Checkout price + availability revalidation | [GAP-006](./gaps/GAP-006-checkout-revalidation.md) | done |
-| 6 | Minimal automated tests (critical paths) | [GAP-005](./gaps/GAP-005-automated-tests.md) | open |
+| 6 | Minimal automated tests (critical paths) | [GAP-005](./gaps/GAP-005-automated-tests.md) | done |
 
 **Phase 1 sell-ready = all six `done`.**
 
@@ -149,7 +149,17 @@ Possible future artifact: `GAP-015` or ADR “Self-serve provisioning” — **d
 8. Smoke: browse → cart → COD or MP sandbox → Admin order → stock  
 9. Hand off Admin URL + docs  
 
-Status: **draft** until P0 GAPs land.
+Status: **usable** — Phase 1 must-have GAPs (001–006) are `done`. Treat the steps above as the agency install checklist per client.
+
+### Still required per client go-live (ops, not code GAPs)
+
+- [ ] Custom domain + `NEXT_PUBLIC_APP_URL`
+- [ ] Auth authorized domains include the store hostname
+- [ ] First admin in `customers/{uid}` (`role: admin`, `status: active`)
+- [ ] Mercado Pago credentials + webhook URL + `MERCADOPAGO_WEBHOOK_SECRET`
+- [ ] Decide sandbox vs live (`MERCADOPAGO_SANDBOX`)
+- [ ] Optional: Resend verified sender + notification toggles
+- [ ] Manual smoke on the live URL (home → cart → checkout → Admin login/upload/order)
 
 ---
 
@@ -177,6 +187,7 @@ Status: **draft** until P0 GAPs land.
 
 | Date | Note |
 |------|------|
+| 2026-07-22 | Phase 1 must-haves complete (GAP-001–006); runbook marked usable + per-client ops checklist |
 | 2026-07-21 | GAP-001 + GAP-004 marked done (rules + Admin SDK) |
 | 2026-07-21 | GAP-003 notifications dispatch hardening marked done |
 | 2026-07-19 | Created: Phase 1 agency sell checklist |
